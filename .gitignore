@@ -1,0 +1,28 @@
+.tools/
+
+# ── ความลับ ห้ามหลุดเด็ดขาด ──────────────────────────────────
+# ไฟล์พวกนี้ถือ token ของบัญชี TikTok/Google ของลูกค้า
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*-service-account*.json
+google-services.json
+GoogleService-Info.plist
+
+# ── build output ────────────────────────────────────────────
+/backend/bin/
+/backend/out/
+*.exe
+
+# ── SDK / เครื่องมือที่โหลดมา ไม่ใช่ซอร์ส ────────────────────
+/flutter/
+flutter_sdk.zip
+
+# ── editor / ระบบปฏิบัติการ ─────────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

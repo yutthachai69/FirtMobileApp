@@ -1,0 +1,104 @@
+name: relaycontent
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: relaycontent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-relaycontent_dev}
+      POSTGRES_DB: relaycontent
+    ports:
+      - "${POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U relaycontent -d relaycontent"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # S3 จำลองสำหรับ dev — ทดสอบ flow อัปโหลดได้ครบโดยไม่ต้องมีบัญชี Cloudflare
+  # เปิดด้วย: docker compose --profile localstorage up -d
+  minio:
+    image: minio/minio:latest
+    profiles: [localstorage]
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: relaycontent
+      MINIO_ROOT_PASSWORD: relaycontent_dev
+    ports:
+      - "9000:9000"
+      - "9001:9001"   # web console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:latest
+    profiles: [localstorage]
+    depends_on:
+      minio: {condition: service_healthy}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 relaycontent relaycontent_dev &&
+      mc mb --ignore-existing local/relaycontent-media &&
+      echo 'bucket พร้อมใช้งาน'
+      "
+
+  api:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+    command: ["/app/api"]
+    env_file: [.env]
+    environment:
+      # ชื่อ service ใน compose network — ทับค่าใน .env ที่ชี้ localhost
+      DATABASE_URL: postgres://relaycontent:${POSTGRES_PASSWORD:-relaycontent_dev}@postgres:5432/relaycontent?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis:    {condition: service_healthy}
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+    command: ["/app/worker"]
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgres://relaycontent:${POSTGRES_PASSWORD:-relaycontent_dev}@postgres:5432/relaycontent?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      # ให้ api เป็นคนรัน migration คนเดียว กัน worker แย่งกันรันตอนสตาร์ตพร้อมกัน
+      DB_AUTO_MIGRATE: "false"
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis:    {condition: service_healthy}
+      api:      {condition: service_started}
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

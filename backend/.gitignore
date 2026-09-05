@@ -1,0 +1,22 @@
+# ห้าม commit ของจริง
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# build output
+/bin/
+/out/
+/tmp/
+
+# go
+*.test
+*.out
+coverage.*
+
+# editor
+.idea/
+.vscode/
+*.swp
+.DS_Store
