@@ -9,6 +9,8 @@ import '../core/storage/token_store.dart';
 import '../features/auth/data/auth_api.dart';
 import '../features/connections/data/connections_api.dart';
 import '../features/connections/presentation/connections_controller.dart';
+import '../features/home/data/home_api.dart';
+import '../features/home/presentation/home_controller.dart';
 
 /// dio ตัวเดียวใช้ร่วมกันทั้งแอป
 ///
@@ -41,10 +43,26 @@ final authProvider = Provider<AuthController>((ref) {
   return controller;
 });
 
+final connectionsApiProvider = Provider<ConnectionsApi>(
+  (ref) => HttpConnectionsApi(ref.watch(apiClientProvider)),
+);
+
 final connectionsProvider = Provider<ConnectionsController>((ref) {
   final controller = ConnectionsController(
     ref.watch(authProvider),
-    HttpConnectionsApi(ref.watch(apiClientProvider)),
+    ref.watch(connectionsApiProvider),
+  );
+  ref.onDispose(controller.dispose);
+  return controller;
+});
+
+final homeProvider = Provider<HomeController>((ref) {
+  final controller = HomeController(
+    ref.watch(authProvider),
+    HttpHomeApi(
+      ref.watch(apiClientProvider),
+      ref.watch(connectionsApiProvider),
+    ),
   );
   ref.onDispose(controller.dispose);
   return controller;

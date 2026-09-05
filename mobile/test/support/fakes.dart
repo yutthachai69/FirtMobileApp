@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:relaycontent/core/storage/token_store.dart';
 import 'package:relaycontent/features/auth/data/auth_api.dart';
 import 'package:relaycontent/features/auth/domain/session.dart';
+import 'package:relaycontent/features/home/data/home_api.dart';
+import 'package:relaycontent/features/home/domain/home_data.dart';
 
 const testAccount = Account(
   id: 'user-1',
@@ -74,5 +76,19 @@ class FakeAuthApi implements AuthApi {
   Future<void> logout(String refreshToken) async {
     if (logoutOffline) throw const AuthFailure('offline');
     revoked = refreshToken;
+  }
+}
+
+/// FakeHomeApi ให้เทสควบคุมสิ่งที่หน้าหลักแสดงได้
+/// โดยไม่ต้องยิง network จริง
+class FakeHomeApi implements HomeApi {
+  FakeHomeApi([this.data = const HomeData()]);
+  HomeData data;
+  int calls = 0;
+
+  @override
+  Future<HomeData> load(String access) async {
+    calls++;
+    return data;
   }
 }

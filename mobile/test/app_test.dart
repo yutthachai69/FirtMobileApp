@@ -5,6 +5,7 @@ import 'package:relaycontent/app/app.dart';
 import 'package:relaycontent/app/providers.dart';
 import 'package:relaycontent/core/auth/auth_controller.dart';
 import 'package:relaycontent/features/auth/domain/session.dart';
+import 'package:relaycontent/features/home/presentation/home_controller.dart';
 
 import 'support/fakes.dart';
 
@@ -15,7 +16,10 @@ void main() {
     final auth = AuthController(api, store);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authProvider.overrideWithValue(auth)],
+        overrides: [
+          authProvider.overrideWithValue(auth),
+          homeProvider.overrideWithValue(HomeController(auth, FakeHomeApi())),
+        ],
         child: const RelayApp(),
       ),
     );
@@ -26,23 +30,28 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('submit')));
     await tester.tap(find.byKey(const Key('submit')));
     await tester.pumpAndSettle();
-    expect(find.text('บัญชีของคุณ'), findsOneWidget);
-    expect(find.text('user@example.com'), findsOneWidget);
+    // หน้าหลักใหม่เป็นห้องควบคุม ไม่ใช่หน้าโปรไฟล์
+    expect(find.text('สวัสดี, Tester'), findsOneWidget);
+    expect(find.text('ยังไม่มีคอนเทนต์เลย'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     auth.dispose();
     final restarted = AuthController(api, store);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authProvider.overrideWithValue(restarted)],
+        overrides: [
+          authProvider.overrideWithValue(restarted),
+          homeProvider.overrideWithValue(
+            HomeController(restarted, FakeHomeApi()),
+          ),
+        ],
         child: const RelayApp(),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('บัญชีของคุณ'), findsOneWidget);
+    expect(find.text('สวัสดี, Tester'), findsOneWidget);
     expect(api.loginCount, 1);
-    await tester.ensureVisible(find.text('ออกจากระบบ'));
-    await tester.tap(find.text('ออกจากระบบ'));
+    await tester.tap(find.byTooltip('ออกจากระบบ'));
     await tester.pumpAndSettle();
     expect(find.text('ยินดีต้อนรับกลับ'), findsOneWidget);
     expect(store.value, isNull);

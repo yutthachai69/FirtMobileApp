@@ -26,3 +26,7 @@ flutter_sdk.zip
 *.swp
 .DS_Store
 Thumbs.db
+
+# ภาพ preview ที่ render จากเทส — สร้างใหม่ได้เสมอ
+/mobile/.preview/
+/mobile/build/

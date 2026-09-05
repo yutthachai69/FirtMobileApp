@@ -50,7 +50,8 @@ class _RelayAppState extends ConsumerState<RelayApp> {
         ),
         GoRoute(
           path: '/',
-          builder: (_, _) => HomePage(auth: auth),
+          builder: (_, _) =>
+              HomePage(auth: auth, controller: ref.read(homeProvider)),
         ),
         GoRoute(
           path: '/connections',
