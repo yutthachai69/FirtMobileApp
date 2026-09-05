@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/auth/auth_controller.dart';
 import '../features/auth/presentation/auth_page.dart';
+import '../features/connections/presentation/connections_page.dart';
 import '../features/home/presentation/home_page.dart';
 import 'providers.dart';
 import 'theme/app_theme.dart';
@@ -25,12 +26,18 @@ class _RelayAppState extends ConsumerState<RelayApp> {
       initialLocation: '/session',
       refreshListenable: auth,
       redirect: (context, state) {
-        final target = switch (auth.phase) {
-          SessionPhase.starting || SessionPhase.unavailable => '/session',
-          SessionPhase.signedOut => '/login',
-          SessionPhase.signedIn => '/',
+        final path = state.uri.path;
+
+        // ล็อกอินแล้วต้องเดินไปหน้าไหนก็ได้ — เดิม redirect บังคับกลับ '/' เสมอ
+        // ทำให้เปิดหน้าอื่นไม่ได้เลย
+        return switch (auth.phase) {
+          SessionPhase.starting ||
+          SessionPhase.unavailable =>
+            path == '/session' ? null : '/session',
+          SessionPhase.signedOut => path == '/login' ? null : '/login',
+          SessionPhase.signedIn =>
+            (path == '/login' || path == '/session') ? '/' : null,
         };
-        return state.uri.path == target ? null : target;
       },
       routes: [
         GoRoute(
@@ -44,6 +51,11 @@ class _RelayAppState extends ConsumerState<RelayApp> {
         GoRoute(
           path: '/',
           builder: (_, _) => HomePage(auth: auth),
+        ),
+        GoRoute(
+          path: '/connections',
+          builder: (_, _) =>
+              ConnectionsPage(controller: ref.read(connectionsProvider)),
         ),
       ],
     );

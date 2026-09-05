@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../core/auth/auth_controller.dart';
@@ -101,6 +102,12 @@ class HomePage extends StatelessWidget {
                         auth.error!,
                         style: TextStyle(color: context.t.error),
                       ),
+                    FilledButton.icon(
+                      onPressed: () => context.push('/connections'),
+                      icon: const Icon(Icons.link_rounded),
+                      label: const Text('เชื่อมต่อบัญชี'),
+                    ),
+                    const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: auth.busy ? null : auth.signOut,
                       icon: const Icon(Icons.logout_rounded),

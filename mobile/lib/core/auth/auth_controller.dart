@@ -92,19 +92,25 @@ class AuthController extends ChangeNotifier {
     _tokens = next;
   }
 
-  Future<Account> currentAccount() async {
+  /// authorized เรียก API ที่ต้องใช้ access token พร้อมจัดการ 401 ให้เอง
+  ///
+  /// ทุก feature ต้องเรียกผ่านตัวนี้ ห้ามหยิบ token ไปใช้เอง
+  /// เพราะ logic ต่ออายุ (รวมถึง single-flight ใน [_refresh]) อยู่ที่นี่ที่เดียว
+  /// ถ้าแต่ละ feature จัดการ 401 เอง จะเกิด refresh พร้อมกันหลายเส้น
+  /// แล้ว backend จะมองว่า refresh token ถูกใช้ซ้ำ = ตัดทุกเซสชันทิ้ง
+  Future<T> authorized<T>(Future<T> Function(String access) call) async {
     final access = _tokens?.access;
     if (access == null) {
       throw const AuthFailure('กรุณาเข้าสู่ระบบใหม่', status: 401);
     }
     try {
-      return await api.me(access);
+      return await call(access);
     } on AuthFailure catch (failure) {
       if (failure.status != 401) rethrow;
       try {
         // Other concurrent requests may have already renewed this token.
         if (_tokens?.access == access) await _refresh();
-        return await api.me(_tokens!.access);
+        return await call(_tokens!.access);
       } on AuthFailure catch (renewalFailure) {
         if (renewalFailure.sessionRejected) {
           await _clear();
@@ -115,6 +121,8 @@ class AuthController extends ChangeNotifier {
       }
     }
   }
+
+  Future<Account> currentAccount() => authorized(api.me);
 
   Future<void> signOut() async {
     if (busy) return;

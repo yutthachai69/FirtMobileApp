@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- แอปคุยกับ backend และเปิดหน้าอนุญาตของ TikTok -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="relaycontent"
+        android:label="RelayContent"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -25,6 +28,21 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- รับ deep link กลับจาก OAuth: relaycontent://oauth/tiktok?status=...
+             backend เป็นคนแลก code เป็น token แล้ว redirect มาที่ scheme นี้
+             ถ้าไม่ประกาศไว้ ผู้ใช้จะกดอนุญาตบน TikTok เสร็จแล้วค้างอยู่ที่ browser
+             scheme ต้องตรงกับ APP_SCHEME ฝั่ง server และ AppConfig.appScheme -->
+        <activity
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true">
+            <intent-filter android:label="flutter_web_auth_2">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="relaycontent"/>
+            </intent-filter>
+        </activity>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
