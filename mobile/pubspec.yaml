@@ -66,6 +66,14 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # ฟอนต์ default ของ Flutter ตัดคำไทยไม่สวย — สระบนล่างลอย วรรณยุกต์ซ้อนผิดที่
+  # ต้องประกาศตรงนี้ ไม่งั้น fontFamily ใน theme จะถูกละเลยแบบเงียบ ๆ
+  # และ analyze/test จะไม่ฟ้องอะไรเลย
+  fonts:
+    - family: NotoSansThai
+      fonts:
+        - asset: assets/fonts/NotoSansThai.ttf
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
