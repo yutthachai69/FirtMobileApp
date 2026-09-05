@@ -43,7 +43,9 @@ func New(cfg *config.Config, log *slog.Logger, deps Deps) *Server {
 	}
 
 	r := gin.New()
-	r.Use(RequestID(), Logger(log), Recovery(log))
+	// CORS ต้องมาก่อน middleware อื่น เพราะ preflight (OPTIONS) ต้องตอบกลับ
+	// ตั้งแต่ต้นทาง ไม่ต้องผ่าน auth หรือ rate limit
+	r.Use(CORS(cfg.CORSAllowedOrigins), RequestID(), Logger(log), Recovery(log))
 
 	// เชื่อถือเฉพาะ proxy ในเครือข่ายเรา (Nginx/Caddy) เวลาอ่าน client IP
 	// สำคัญกับ rate limit — ถ้าเชื่อ header จากใครก็ได้ จะปลอม IP หลบ limit ได้

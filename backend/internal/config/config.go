@@ -38,6 +38,13 @@ type Config struct {
 	// AppScheme ใช้เด้งกลับเข้าแอปหลัง OAuth เสร็จ เช่น relaycontent://oauth/tiktok
 	AppScheme string
 
+	// CORSAllowedOrigins คือ origin ที่เบราว์เซอร์เรียก API ได้
+	//
+	// แอปมือถือไม่ต้องใช้ CORS (ไม่มี origin) — ตัวนี้มีไว้ให้ Flutter web
+	// ตอน dev และเผื่อทำ dashboard บนเว็บในอนาคต
+	// เว้นว่าง = ไม่อนุญาต origin ไหนเลย ซึ่งเป็นค่าที่ปลอดภัยสำหรับ production
+	CORSAllowedOrigins []string
+
 	TikTok  TikTokConfig
 	Google  GoogleConfig
 	Storage StorageConfig
@@ -115,6 +122,8 @@ func Load() (*Config, error) {
 
 		PublicBaseURL: strings.TrimRight(env("PUBLIC_BASE_URL", "http://localhost:8080"), "/"),
 		AppScheme:     env("APP_SCHEME", "relaycontent"),
+
+		CORSAllowedOrigins: splitList(env("CORS_ALLOWED_ORIGINS", "")),
 
 		TikTok: TikTokConfig{
 			ClientKey:    env("TIKTOK_CLIENT_KEY", ""),
