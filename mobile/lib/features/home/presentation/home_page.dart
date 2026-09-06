@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage> {
             floatingActionButton: (data?.isEmpty ?? true)
                 ? null
                 : FloatingActionButton.extended(
-                    onPressed: () => _comingSoon(context),
+                    onPressed: () => _create(context),
                     icon: const Icon(Icons.add),
                     label: const Text('สร้างคอนเทนต์'),
                   ),
@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (data == null || data.isEmpty) {
-      return _EmptyState(onCreate: () => _comingSoon(context));
+      return _EmptyState(onCreate: () => _create(context));
     }
 
     return ListView(
@@ -142,10 +142,10 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _comingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('หน้าอัปโหลดวิดีโอกำลังทำอยู่')),
-    );
+  /// กลับมาถึงหน้าหลักแล้วโหลดใหม่ เพราะอาจมีงานใหม่เพิ่มเข้ามา
+  Future<void> _create(BuildContext context) async {
+    await context.push('/create');
+    if (context.mounted) await widget.controller.load();
   }
 }
 

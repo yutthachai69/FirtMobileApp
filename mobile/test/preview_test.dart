@@ -8,7 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:relaycontent/app/theme/app_theme.dart';
 import 'package:relaycontent/core/auth/auth_controller.dart';
 import 'package:relaycontent/features/auth/presentation/auth_page.dart';
+import 'package:relaycontent/features/connections/data/connections_api.dart';
 import 'package:relaycontent/features/connections/domain/connection.dart';
+import 'package:relaycontent/features/create/data/create_api.dart';
+import 'package:relaycontent/features/create/domain/picked_video.dart';
+import 'package:relaycontent/features/create/presentation/create_controller.dart';
+import 'package:relaycontent/features/create/presentation/create_page.dart';
 import 'package:relaycontent/features/home/data/home_api.dart';
 import 'package:relaycontent/features/home/domain/home_data.dart';
 import 'package:relaycontent/features/home/presentation/home_controller.dart';
@@ -73,7 +78,16 @@ void main() {
     final empty = HomeController(auth, _SampleHomeApi(const HomeData()));
     await capture('home-empty', HomePage(auth: auth, controller: empty));
 
+    // หน้าสร้างคอนเทนต์ ขั้นเลือกวิดีโอ
+    final create = CreateController(
+      auth: auth,
+      api: _StubCreateApi(),
+      connections: _StubConnectionsApi(),
+    );
+    await capture('create', CreatePage(controller: create));
+
     await tester.pumpWidget(const SizedBox.shrink());
+    create.dispose();
     busy.dispose();
     empty.dispose();
     auth.dispose();
@@ -120,4 +134,41 @@ HomeData _busySample() {
           now.subtract(const Duration(hours: 3))),
     ],
   );
+}
+
+
+class _StubCreateApi implements CreateApi {
+  @override
+  Future<UploadTicket> requestUpload(String a, PickedVideo v) async =>
+      const UploadTicket(assetId: 'a', url: 'https://example.test', headers: {});
+  @override
+  Future<void> upload(UploadTicket t, PickedVideo v,
+      {void Function(int, int)? onProgress}) async {}
+  @override
+  Future<String> completeUpload(String a, String id) async => '';
+  @override
+  Future<String> createContent(String a,
+          {required String caption, required String mediaAssetId}) async =>
+      'content-1';
+}
+
+class _StubConnectionsApi implements ConnectionsApi {
+  @override
+  Future<ConnectionList> list(String access) async => ConnectionList(
+        tiktokEnabled: true,
+        items: [
+          Connection.fromJson(const {
+            'id': 'c1',
+            'provider': 'tiktok',
+            'display_name': '@yutthachai',
+            'status': 'active',
+          }),
+        ],
+      );
+  @override
+  Future<String> startTikTokOAuth(String access) async => '';
+  @override
+  Future<void> remove(String access, String id) async {}
+  @override
+  Future<Map<String, dynamic>> creatorInfo(String a, String id) async => const {};
 }

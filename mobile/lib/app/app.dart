@@ -4,7 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../core/auth/auth_controller.dart';
 import '../features/auth/presentation/auth_page.dart';
+import '../features/composer/data/composer_api.dart';
+import '../features/composer/presentation/composer_controller.dart';
+import '../features/composer/presentation/tiktok_composer_page.dart';
 import '../features/connections/presentation/connections_page.dart';
+import '../features/create/presentation/create_page.dart';
 import '../features/home/presentation/home_page.dart';
 import 'providers.dart';
 import 'theme/app_theme.dart';
@@ -57,6 +61,30 @@ class _RelayAppState extends ConsumerState<RelayApp> {
           path: '/connections',
           builder: (_, _) =>
               ConnectionsPage(controller: ref.read(connectionsProvider)),
+        ),
+        GoRoute(
+          path: '/create',
+          builder: (_, _) => CreatePage(controller: ref.read(createProvider)),
+        ),
+        GoRoute(
+          path: '/composer',
+          builder: (context, state) {
+            // Composer ต้องรู้ว่าโพสต์คอนเทนต์ไหน ด้วยบัญชีไหน และวิดีโอยาวเท่าไหร่
+            // (ความยาวใช้ตรวจกฎ R7 ของ TikTok) จึงรับผ่าน extra แทน query param
+            final args = state.extra as ComposerArgs?;
+            if (args == null) return const _MissingArgs();
+
+            return TikTokComposerPage(
+              controller: ComposerController(
+                auth: auth,
+                api: HttpComposerApi(ref.read(apiClientProvider)),
+                contentId: args.contentId,
+                connectionId: args.connectionId,
+                videoDurationSec: args.videoDurationSec,
+                isAigc: args.isAigc,
+              ),
+            );
+          },
         ),
       ],
     );
@@ -125,6 +153,36 @@ class SessionPage extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// _MissingArgs กันหน้า Composer พังเมื่อถูกเปิดตรง ๆ โดยไม่มีข้อมูล
+/// (เช่นผู้ใช้ refresh หน้าเว็บตอนอยู่ที่ /composer)
+class _MissingArgs extends StatelessWidget {
+  const _MissingArgs();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('โพสต์ลง TikTok')),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'เปิดหน้านี้ตรง ๆ ไม่ได้\nกรุณาเริ่มจากการเลือกวิดีโอ',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: () => context.go('/'),
+              child: const Text('กลับหน้าหลัก'),
+            ),
+          ],
         ),
       ),
     ),

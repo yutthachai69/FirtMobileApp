@@ -9,6 +9,8 @@ import '../core/storage/token_store.dart';
 import '../features/auth/data/auth_api.dart';
 import '../features/connections/data/connections_api.dart';
 import '../features/connections/presentation/connections_controller.dart';
+import '../features/create/data/create_api.dart';
+import '../features/create/presentation/create_controller.dart';
 import '../features/home/data/home_api.dart';
 import '../features/home/presentation/home_controller.dart';
 
@@ -51,6 +53,25 @@ final connectionsProvider = Provider<ConnectionsController>((ref) {
   final controller = ConnectionsController(
     ref.watch(authProvider),
     ref.watch(connectionsApiProvider),
+  );
+  ref.onDispose(controller.dispose);
+  return controller;
+});
+
+final createProvider = Provider<CreateController>((ref) {
+  // dio แยกสำหรับยิงไฟล์ขึ้น storage โดยตรง
+  // ห้ามใช้ตัวเดียวกับ backend เพราะ presigned URL ต้องไม่มี Authorization ของเราติดไป
+  final uploadDio = Dio(BaseOptions(
+    // ไฟล์ใหญ่ใช้เวลานาน timeout สั้นจะตัดกลางคัน
+    sendTimeout: const Duration(minutes: 10),
+    receiveTimeout: const Duration(minutes: 2),
+  ));
+  ref.onDispose(uploadDio.close);
+
+  final controller = CreateController(
+    auth: ref.watch(authProvider),
+    api: HttpCreateApi(ref.watch(apiClientProvider), uploadDio),
+    connections: ref.watch(connectionsApiProvider),
   );
   ref.onDispose(controller.dispose);
   return controller;
