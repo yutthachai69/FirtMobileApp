@@ -64,19 +64,35 @@ class AppTokens extends ThemeExtension<AppTokens> {
     error: Color(0xFFDC2626),
   );
 
+  /// ค่าตรงตัวจาก stitch_relaycontent_mobile_ux_review3/relaycontent_creator_system
+  /// /DESIGN.md — เวอร์ชันล่าสุดที่อนุมัติแล้ว (เช็ค timestamp ยืนยันแล้วว่าใหม่สุด
+  /// ในบรรดา review1/2/3) ห้ามแก้ค่าตรงนี้ลอย ๆ โดยไม่เทียบกับไฟล์ต้นทางก่อน
+  ///
+  /// mapping จาก Material 3 token name → AppTokens:
+  ///   surface           = background / surface
+  ///   surfaceContainer  = surface-container
+  ///   surfaceElevated   = surface-container-high
+  ///   primary           = primary-container (สีปุ่มจริง ไม่ใช่ "primary" เฉย ๆ
+  ///                        ซึ่งใน M3 dark scheme เป็นสีอ่อนสำหรับตัวอักษรบนพื้นเข้ม)
+  ///   onPrimary         = on-primary (ตัวอักษรบนปุ่ม primary-container)
+  ///   creative          = secondary-container (ปุ่ม/แถบเน้นงานสร้างคอนเทนต์)
+  ///   textPrimary       = on-surface
+  ///   textSecondary     = on-surface-variant
+  ///   border            = outline-variant (ไม่ใช้ outline เพราะสว่างเกินไปสำหรับเส้นขอบ)
+  ///   success           = tertiary-container
   static const dark = AppTokens(
-    surface: Color(0xFF090D14),
-    surfaceContainer: Color(0xFF0E1524),
-    surfaceElevated: Color(0xFF151F32),
-    primary: Color(0xFF22D3EE),
-    creative: Color(0xFFE4004F),
-    onPrimary: Color(0xFF001F25),
-    textPrimary: Color(0xFFF4F7FB),
-    textSecondary: Color(0xFF94A3B8),
-    border: Color(0xFF223047),
-    success: Color(0xFF2EE59D),
+    surface: Color(0xFF051424),
+    surfaceContainer: Color(0xFF122131),
+    surfaceElevated: Color(0xFF1C2B3C),
+    primary: Color(0xFF00F2FE),
+    creative: Color(0xFFB90039),
+    onPrimary: Color(0xFF00373A),
+    textPrimary: Color(0xFFD4E4FA),
+    textSecondary: Color(0xFFB9CACB),
+    border: Color(0xFF3A494B),
+    success: Color(0xFF4AF7AD),
     warning: Color(0xFFF59E0B),
-    error: Color(0xFFEF4444),
+    error: Color(0xFFFFB4AB),
   );
 
   @override
