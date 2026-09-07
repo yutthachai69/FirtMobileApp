@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Relay Job Detail &amp; Telemetry Log (#RLY-8842)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-tertiary-container": "#00452e",
+            "background": "#0f131b",
+            "surface-container-high": "#262a32",
+            "on-secondary-container": "#ffc2c4",
+            "secondary-container": "#b50036",
+            "outline": "#869397",
+            "error-container": "#93000a",
+            "on-secondary": "#67001b",
+            "surface-container": "#1c2027",
+            "inverse-primary": "#00687a",
+            "on-background": "#dfe2ed",
+            "on-surface": "#dfe2ed",
+            "tertiary": "#4edea3",
+            "on-primary-container": "#00424f",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed-dim": "#4edea3",
+            "outline-variant": "#3d494c",
+            "secondary": "#ffb2b7",
+            "on-tertiary": "#003824",
+            "surface-container-low": "#181c23",
+            "primary-container": "#06b6d4",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-fixed": "#ffdadb",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-secondary-fixed": "#40000d",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-tint": "#4cd7f6",
+            "on-primary": "#003640",
+            "secondary-fixed-dim": "#ffb2b7",
+            "on-secondary-fixed-variant": "#92002a",
+            "on-surface-variant": "#bcc9cd",
+            "surface-variant": "#31353d",
+            "on-error": "#690005",
+            "surface-container-lowest": "#0a0e15",
+            "on-primary-fixed": "#001f26",
+            "surface-dim": "#0f131b",
+            "primary-fixed-dim": "#4cd7f6",
+            "inverse-surface": "#dfe2ed",
+            "surface-bright": "#353941",
+            "primary": "#4cd7f6",
+            "inverse-on-surface": "#2d3038",
+            "on-error-container": "#ffdad6",
+            "surface": "#0f131b",
+            "primary-fixed": "#acedff",
+            "surface-container-highest": "#31353d",
+            "error": "#ffb4ab",
+            "tertiary-container": "#1bbd85"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "gutter-card": "0.75rem",
+            "nav-height": "4.5rem",
+            "fab-elevate": "-1.25rem",
+            "stack-loose": "1.5rem",
+            "stack-base": "1rem",
+            "margin-screen": "1.25rem",
+            "nav-item-pad": "0.5rem",
+            "stack-tight": "0.5rem"
+          },
+          fontFamily: {
+            "headline-sm": ["Noto Sans"],
+            "body-md": ["Noto Sans"],
+            "headline-lg": ["Noto Sans"],
+            "body-sm": ["Noto Sans"],
+            "label-telemetry": ["Inter"],
+            "label-thai-nav": ["Noto Sans"],
+            "headline-md": ["Noto Sans"],
+            "label-numeric-md": ["Inter"],
+            "body-lg": ["Noto Sans"],
+            "label-numeric-lg": ["Inter"]
+          },
+          fontSize: {
+            "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-telemetry": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "label-thai-nav": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-numeric-md": ["15px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-numeric-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Hardware viewport container clamp */
+    body {
+      background-color: #090D14;
+      color: #dfe2ed;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    /* Custom scrollbar for control room telemetry */
+    ::-webkit-scrollbar {
+      width: 3px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0e15;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1c2027;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest min-h-screen flex justify-center items-start antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Viewport Shell (Strict 390px Clamped Canvas) -->
+<main class="w-full max-w-[390px] min-h-screen bg-surface flex flex-col relative overflow-x-hidden border-x border-outline-variant/30 shadow-2xl pb-24">
+<!-- Top App Bar & Safe Margin -->
+<header class="sticky top-0 z-40 bg-surface/90 backdrop-blur-md px-5 pt-3 pb-3 flex items-center justify-between border-b border-outline-variant/30">
+<a class="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors duration-150 active:scale-95 py-1" href="javascript:void(0)">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_back_ios">arrow_back_ios</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">จัดการคอนเทนต์</span>
+</a>
+<div class="flex items-center gap-2">
+<!-- Strictly maximum ONE micro-telemetry badge per primary view -->
+<span class="font-label-telemetry text-[10px] tracking-wider px-2 py-0.5 rounded border border-primary/30 bg-primary/10 text-primary font-semibold">
+          PIPELINE::DISPATCHED
+        </span>
+<button aria-label="Share" class="w-8 h-8 rounded-lg bg-surface-container-low border border-outline-variant/50 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[18px]" data-icon="ios_share">ios_share</span>
+</button>
+</div>
+</header>
+<!-- Sub-Header Title Bar -->
+<section class="px-5 pt-4 pb-2">
+<div class="flex items-center justify-between">
+<div>
+<span class="font-label-telemetry text-label-telemetry text-outline tracking-wider uppercase block">Job Registry Telemetry</span>
+<h1 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">รายละเอียดงาน #RLY-8842</h1>
+</div>
+<div class="flex items-center gap-1.5 bg-tertiary-container/10 border border-tertiary/30 px-2.5 py-1 rounded-full">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+<span class="font-label-thai-nav text-label-thai-nav text-tertiary font-medium">เผยแพร่สด</span>
+</div>
+</div>
+</section>
+<!-- Primary Canvas Content -->
+<div class="px-5 flex flex-col gap-3.5 mt-2">
+<!-- Module 1: Job Overview Card (Bento Style) -->
+<article class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-4 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-28 h-28 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex gap-3.5 items-start">
+<div class="w-20 h-24 rounded-lg bg-surface-container overflow-hidden relative flex-shrink-0 border border-outline-variant/50 group">
+<img class="w-full h-full object-cover object-center" data-alt="A sleek vertical smartphone screen showcasing a modern Thai beauty serum advertisement, soft studio lighting highlighting a glass droplet bottle of Bio-Glow serum with a subtle mint cyan holographic ambient glow and minimalist typography in a clean high-tech cosmetic lab setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4C4PCBWTwU99dVab38l6gniOWjz_d1e_sHTkncqu1hpicIr-4WdokDxDsXeXBoPa1nsQ8qsis4WKO2yZNPtN_NNJkSqVkrcf0cdafA3r-XB_QAnnIY_7imIp6WyTFlGoslysbIAfhSgTL7Swf3tvCk9ePsO9k-eZ87yGM9OZVSI8MyolLsvGJ0D1rPmWPVdmT3I5ForcdrOsk8bDzhTwuKQuvn-eARxtHIfBB-CEEeVudpOIN62r8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent flex items-end p-1">
+<span class="font-label-telemetry text-[10px] text-white/90 bg-background/80 px-1 py-0.5 rounded">00:30</span>
+</div>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]" data-icon="videocam">videocam</span>
+<span class="font-label-telemetry text-[10px] tracking-wider uppercase">Auto-Generated Short</span>
+</div>
+<h2 class="font-headline-sm text-[16px] leading-snug text-on-surface font-semibold truncate mt-0.5">
+                เซรั่ม Bio-Glow หน้าใสป้ายยา 30s
+              </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate mt-1">
+                สินค้า: <span class="text-on-surface font-medium">เซรั่ม Bio-Glow 30ml</span>
+</p>
+<p class="font-label-telemetry text-[11px] text-outline font-mono">
+                SKU: <span class="text-primary/90 font-medium">SKU-BG30-VT</span>
+</p>
+</div>
+<div class="mt-2 pt-2 border-t border-outline-variant/30 flex items-center justify-between text-[11px]">
+<span class="font-body-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="schedule">schedule</span>
+                6 ก.ย. 2026, 19:30 น.
+              </span>
+<span class="font-label-thai-nav text-tertiary font-medium">Published Live</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Module 2: Metrics Summary Cluster (Tactile Telemetry Display) -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-3.5">
+<div class="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant/30">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="analytics">analytics</span>
+<span class="font-headline-sm text-[13px] text-on-surface font-semibold">สรุปผลตอบรับแบบเรียลไทม์</span>
+</div>
+<span class="font-label-telemetry text-[10px] text-outline flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> SYNCED
+          </span>
+</div>
+<div class="grid grid-cols-4 gap-2 text-center">
+<div class="bg-surface-container p-2 rounded-lg border border-outline-variant/20">
+<span class="font-body-sm text-[11px] text-outline block">Views</span>
+<span class="font-label-numeric-lg text-[17px] text-on-surface font-semibold tracking-tight">12.4K</span>
+<span class="font-label-telemetry text-[9px] text-tertiary block mt-0.5">+18%</span>
+</div>
+<div class="bg-surface-container p-2 rounded-lg border border-outline-variant/20">
+<span class="font-body-sm text-[11px] text-outline block">Likes</span>
+<span class="font-label-numeric-lg text-[17px] text-on-surface font-semibold tracking-tight">840</span>
+<span class="font-label-telemetry text-[9px] text-tertiary block mt-0.5">+6.8%</span>
+</div>
+<div class="bg-surface-container p-2 rounded-lg border border-outline-variant/20">
+<span class="font-body-sm text-[11px] text-outline block">Shares</span>
+<span class="font-label-numeric-lg text-[17px] text-on-surface font-semibold tracking-tight">94</span>
+<span class="font-label-telemetry text-[9px] text-outline block mt-0.5">Norm</span>
+</div>
+<div class="bg-surface-container p-2 rounded-lg border border-outline-variant/20 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-6 h-6 bg-secondary-container/20 rounded-bl-lg"></div>
+<span class="font-body-sm text-[11px] text-secondary font-medium block">Cart Click</span>
+<span class="font-label-numeric-lg text-[17px] text-on-surface font-semibold tracking-tight">218</span>
+<span class="font-label-telemetry text-[9px] text-primary block mt-0.5">CTR 1.7%</span>
+</div>
+</div>
+</section>
+<!-- Module 3: Content & Basket Verification Deck -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-body-lg text-on-surface font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="verified">verified</span>
+            การตรวจสอบคอนเทนต์และตะกร้า
+          </h3>
+<span class="font-label-telemetry text-[10px] text-tertiary bg-tertiary/10 border border-tertiary/20 px-2 py-0.5 rounded">PASSED</span>
+</div>
+<!-- Sub Item: TikTok Video ID -->
+<div class="bg-surface-container rounded-lg p-2.5 border border-outline-variant/30 flex items-center justify-between">
+<div class="min-w-0 pr-2">
+<div class="flex items-center gap-1 text-[11px] text-outline font-label-telemetry">
+<span class="material-symbols-outlined text-[13px]" data-icon="fingerprint">fingerprint</span>
+<span>TIKTOK VIDEO ID</span>
+</div>
+<p class="font-label-telemetry text-body-sm text-on-surface font-mono font-medium truncate mt-0.5">
+              7412894109281563910
+            </p>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button class="p-1.5 rounded-md hover:bg-surface-bright text-outline hover:text-primary transition-colors active:scale-95" title="Copy ID">
+<span class="material-symbols-outlined text-[16px]" data-icon="content_copy">content_copy</span>
+</button>
+<a class="px-2.5 py-1 text-label-thai-nav rounded-md bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all flex items-center gap-1 active:scale-95" href="javascript:void(0)">
+<span>เปิดดู</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Sub Item: Basket Binding State -->
+<div class="bg-surface-container rounded-lg p-2.5 border border-outline-variant/30 flex items-start gap-2.5">
+<div class="w-7 h-7 rounded-md bg-tertiary-container/20 border border-tertiary/30 flex items-center justify-center text-tertiary flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="shopping_basket">shopping_basket</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-sm font-semibold text-on-surface">ตะกร้าสินค้า TikTok Shop</span>
+<span class="font-label-telemetry text-[10px] text-tertiary font-mono">CODE: 200_OK</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight mt-0.5">
+              ปักตะกร้าสำเร็จผ่าน API <code class="font-label-telemetry text-primary text-[11px]">creator.video.write</code> เชื่อมโยงสต็อกอัตโนมัติ
+            </p>
+</div>
+</div>
+<!-- Sub Item: Audio Rights Clearance -->
+<div class="bg-surface-container rounded-lg p-2.5 border border-outline-variant/30 flex items-start gap-2.5">
+<div class="w-7 h-7 rounded-md bg-primary-container/20 border border-primary/30 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="music_note">music_note</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-sm font-semibold text-on-surface">สิทธิ์เสียงเพลงประกอบ</span>
+<span class="font-label-telemetry text-[10px] text-tertiary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]" data-icon="check_circle">check_circle</span>
+                CLEARED
+              </span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight mt-0.5">
+              Commercial Music Library (ผ่านการรับรองสำหรับการโฆษณาและการค้า)
+            </p>
+</div>
+</div>
+</section>
+<!-- Module 4: Telemetry & Execution Pipeline Log -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-4">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="terminal">terminal</span>
+<h3 class="font-headline-sm text-body-lg text-on-surface font-semibold">Telemetry &amp; Execution Pipeline Log</h3>
+</div>
+<span class="font-label-telemetry text-[10px] text-outline font-mono">UTC+07:00</span>
+</div>
+<!-- Structured Timeline Node List -->
+<div class="relative pl-5 flex flex-col gap-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[1px] before:bg-outline-variant/40">
+<!-- Node 1: AI Script Creation -->
+<div class="relative flex flex-col">
+<div class="absolute -left-5 top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-surface"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-telemetry text-[11px] font-mono text-primary font-semibold">[18:45] สคริปต์และฉาก AI</span>
+<span class="font-label-telemetry text-[10px] text-tertiary">สำเร็จ (3.2 วินาที)</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">
+              วิเคราะห์คีย์เวิร์ดผลิตภัณฑ์และสร้าง Prompt วิดีโอ 3 ฉากสำหรับ TikTok Conversion
+            </p>
+</div>
+<!-- Node 2: Voice Synthesizer -->
+<div class="relative flex flex-col">
+<div class="absolute -left-5 top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-surface"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-telemetry text-[11px] font-mono text-primary font-semibold">[18:48] สังเคราะห์เสียงบรรยาย</span>
+<span class="font-label-telemetry text-[10px] text-tertiary">สำเร็จ</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">
+              Thai Natural Neural Voice Model v4 (Speed: 1.1x, Pacing: Casual)
+            </p>
+</div>
+<!-- Node 3: User Approval -->
+<div class="relative flex flex-col">
+<div class="absolute -left-5 top-1.5 w-2 h-2 rounded-full bg-tertiary border-2 border-surface"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-telemetry text-[11px] font-mono text-tertiary font-semibold">[18:52] ครีเอเตอร์อนุมัติคลิป</span>
+<span class="font-label-telemetry text-[10px] text-outline font-mono">User Approved</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">
+              ยืนยันผ่าน Quick Preview Portal โดย Creator Studio Relay App
+            </p>
+</div>
+<!-- Node 4: Auto Dispatch Live -->
+<div class="relative flex flex-col">
+<div class="absolute -left-5 top-1.5 w-2.5 h-2.5 rounded-full bg-tertiary border-2 border-surface shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-telemetry text-[11px] font-mono text-tertiary font-semibold">[19:30] Auto-Dispatch สู่ TikTok</span>
+<span class="font-label-telemetry text-[10px] text-tertiary font-mono">HTTP 200 OK</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">
+              อัปโหลด Payload ความละเอียด 1080p, ปักตะกร้าสำเร็จ, เปิดใช้งานสิทธิ์ Affiliate
+            </p>
+</div>
+</div>
+</section>
+</div>
+<!-- Bottom Sticky Action Dock (Two Primary Utility Actions) -->
+<div class="fixed bottom-0 left-0 right-0 w-full max-w-[390px] mx-auto z-50 bg-surface-container-lowest/95 backdrop-blur-lg px-4 pt-3 pb-7 border-t border-outline-variant/30 flex flex-col gap-2">
+<div class="flex items-center gap-2.5">
+<!-- Secondary Action Button: Download Video MP4 -->
+<button class="flex-1 h-12 rounded-xl bg-surface-container border border-outline-variant/60 flex items-center justify-center gap-1.5 text-on-surface font-body-md text-[13px] font-medium hover:border-primary/50 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="download">download</span>
+<span>ดาวน์โหลดวิดีโอ (MP4)</span>
+</button>
+<!-- Primary Action Button: Rose Creative Command -->
+<button class="flex-1 h-12 rounded-xl bg-secondary-container text-white flex items-center justify-center gap-1.5 font-body-md text-[13px] font-medium shadow-[0px_6px_20px_rgba(181,0,54,0.35)] hover:opacity-95 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[18px]" data-icon="auto_fix_high">auto_fix_high</span>
+<span>สร้างคลิปเวอร์ชันใหม่</span>
+</button>
+</div>
+</div>
+</main>
+<script>
+    // Lightweight tactile feedback for operator-style buttons
+    document.querySelectorAll('button, a').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (window.navigator && window.navigator.vibrate) {
+          window.navigator.vibrate(10);
+        }
+      });
+    });
+  </script>
+</body></html>

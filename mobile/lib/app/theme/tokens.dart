@@ -11,7 +11,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
   const AppTokens({
     required this.surface,
     required this.surfaceContainer,
+    required this.surfaceElevated,
     required this.primary,
+    required this.creative,
     required this.onPrimary,
     required this.textPrimary,
     required this.textSecondary,
@@ -27,8 +29,14 @@ class AppTokens extends ThemeExtension<AppTokens> {
   /// การ์ด, sheet, ช่องกรอก
   final Color surfaceContainer;
 
+  /// การ์ดที่ต้องเด่นกว่าพื้นผิวหลัก เช่น งานที่ต้องตรวจและแถบนำทาง
+  final Color surfaceElevated;
+
   /// ปุ่มหลัก, ลิงก์
   final Color primary;
+
+  /// การกระทำด้านการสร้างคอนเทนต์เท่านั้น
+  final Color creative;
 
   /// ตัวอักษรบน primary
   final Color onPrimary;
@@ -42,9 +50,11 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color error;
 
   static const light = AppTokens(
-    surface: Color(0xFFFFFFFF),
-    surfaceContainer: Color(0xFFF5F6F8),
-    primary: Color(0xFF2563EB),
+    surface: Color(0xFFF5F7FA),
+    surfaceContainer: Color(0xFFFFFFFF),
+    surfaceElevated: Color(0xFFEDF2F7),
+    primary: Color(0xFF007F92),
+    creative: Color(0xFFD5004D),
     onPrimary: Color(0xFFFFFFFF),
     textPrimary: Color(0xFF111827),
     textSecondary: Color(0xFF6B7280),
@@ -55,14 +65,16 @@ class AppTokens extends ThemeExtension<AppTokens> {
   );
 
   static const dark = AppTokens(
-    surface: Color(0xFF0F1115),
-    surfaceContainer: Color(0xFF1A1D23),
-    primary: Color(0xFF3B82F6),
-    onPrimary: Color(0xFF0F1115),
-    textPrimary: Color(0xFFF3F4F6),
-    textSecondary: Color(0xFF9CA3AF),
-    border: Color(0xFF2A2F3A),
-    success: Color(0xFF22C55E),
+    surface: Color(0xFF090D14),
+    surfaceContainer: Color(0xFF0E1524),
+    surfaceElevated: Color(0xFF151F32),
+    primary: Color(0xFF22D3EE),
+    creative: Color(0xFFE4004F),
+    onPrimary: Color(0xFF001F25),
+    textPrimary: Color(0xFFF4F7FB),
+    textSecondary: Color(0xFF94A3B8),
+    border: Color(0xFF223047),
+    success: Color(0xFF2EE59D),
     warning: Color(0xFFF59E0B),
     error: Color(0xFFEF4444),
   );
@@ -71,7 +83,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
   AppTokens copyWith({
     Color? surface,
     Color? surfaceContainer,
+    Color? surfaceElevated,
     Color? primary,
+    Color? creative,
     Color? onPrimary,
     Color? textPrimary,
     Color? textSecondary,
@@ -83,7 +97,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     return AppTokens(
       surface: surface ?? this.surface,
       surfaceContainer: surfaceContainer ?? this.surfaceContainer,
+      surfaceElevated: surfaceElevated ?? this.surfaceElevated,
       primary: primary ?? this.primary,
+      creative: creative ?? this.creative,
       onPrimary: onPrimary ?? this.onPrimary,
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
@@ -99,8 +115,14 @@ class AppTokens extends ThemeExtension<AppTokens> {
     if (other is! AppTokens) return this;
     return AppTokens(
       surface: Color.lerp(surface, other.surface, t)!,
-      surfaceContainer: Color.lerp(surfaceContainer, other.surfaceContainer, t)!,
+      surfaceContainer: Color.lerp(
+        surfaceContainer,
+        other.surfaceContainer,
+        t,
+      )!,
+      surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
+      creative: Color.lerp(creative, other.creative, t)!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,

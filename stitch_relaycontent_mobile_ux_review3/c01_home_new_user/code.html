@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>RelayContent - หน้าหลัก</title>
+<!-- Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#67001c",
+            "on-tertiary-fixed-variant": "#005234",
+            "secondary-fixed-dim": "#ffb2b7",
+            "error": "#ffb4ab",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "inverse-primary": "#00696f",
+            "tertiary-fixed-dim": "#26e19a",
+            "outline-variant": "#3a494b",
+            "on-primary": "#00373a",
+            "surface": "#051424",
+            "on-primary-fixed": "#002022",
+            "primary-fixed": "#6ff6ff",
+            "on-primary-fixed-variant": "#004f53",
+            "secondary-fixed": "#ffdadb",
+            "inverse-on-surface": "#233143",
+            "on-secondary-fixed-variant": "#91002b",
+            "tertiary-fixed": "#53feb4",
+            "primary-container": "#00f2fe",
+            "surface-container-highest": "#273647",
+            "primary": "#e0fdff",
+            "surface-dim": "#051424",
+            "error-container": "#93000a",
+            "on-tertiary-container": "#006e48",
+            "primary-fixed-dim": "#00dce6",
+            "surface-variant": "#273647",
+            "on-surface-variant": "#b9cacb",
+            "on-surface": "#d4e4fa",
+            "surface-tint": "#00dce6",
+            "on-tertiary": "#003823",
+            "on-primary-container": "#006a70",
+            "on-secondary-container": "#ffc7c9",
+            "surface-container-low": "#0d1c2d",
+            "inverse-surface": "#d4e4fa",
+            "outline": "#849495",
+            "tertiary": "#e1ffeb",
+            "surface-container-high": "#1c2b3c",
+            "on-secondary-fixed": "#40000e",
+            "surface-container": "#122131",
+            "on-background": "#d4e4fa",
+            "surface-bright": "#2c3a4c",
+            "surface-container-lowest": "#010f1f",
+            "secondary-container": "#b90039",
+            "on-tertiary-fixed": "#002112",
+            "background": "#051424",
+            "secondary": "#ffb2b7",
+            "tertiary-container": "#4af7ad"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.25rem",
+            "touch-min": "2.75rem",
+            "space-2xl": "2rem",
+            "space-xxs": "0.25rem",
+            "space-sm": "0.75rem",
+            "screen-edge": "1rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "numeric-metric": ["Plus Jakarta Sans"],
+            "body-md": ["Noto Sans"],
+            "label-md": ["Noto Sans"],
+            "body-sm": ["Noto Sans"],
+            "title-sm": ["Noto Sans"],
+            "title-md": ["Noto Sans"],
+            "label-sm": ["Noto Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Noto Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Noto Sans"]
+          },
+          "fontSize": {
+            "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "numeric-metric": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "21px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "title-sm": ["15px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "18px", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface flex justify-center min-h-screen antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- iPhone Frame Shell: 390px fixed width simulated on screen -->
+<div class="w-[390px] min-h-[844px] bg-background relative flex flex-col shadow-2xl overflow-hidden pb-[140px]">
+<!-- TopAppBar (from Shared Components JSON & Style Guidance) -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-screen-edge h-14 max-w-[390px] mx-auto bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 shadow-sm dark:shadow-none">
+<div class="flex items-center space-x-space-sm">
+<!-- Creator Avatar / Leading Item -->
+<div class="relative w-9 h-9 rounded-full overflow-hidden border border-primary-container/40 p-0.5 active:scale-95 transition-transform duration-150 cursor-pointer">
+<img class="w-full h-full object-cover rounded-full" data-alt="A portrait shot of a young, stylish Thai content creator with glowing studio rim lighting. Warm ambient lighting, neon accents reflected in spectacles, confident creator aesthetic, professional and modern atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEkRC8vSFwPROyMa33B0oqlz1CMugS2YS3ILYlzp2T5q7ojYHajhqF_zkavAPQYOVJ_SwbWPDq4bDeXmZlXda2ZlYIDEPlDMR9P_x4NbuUSFwpmLBDlr87GD2BAdZ4xHck5vTE0PCLWLoN5dZzXrFIcnAfivn8Igt-rR1DKVGtvrYwc4e52fjY8N-nuHyNCILvnm4CqJEru95CNS0B4ISU9STL4CTw7XrJGOVMjOSMFHpo2zNgp-hw6Q"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-tertiary-container rounded-full border-2 border-surface"></span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-primary-container uppercase tracking-wider block">ครีเอเตอร์ใหม่ ✨</span>
+<h1 class="text-title-sm font-title-sm text-on-surface leading-tight font-bold">ยินดีต้อนรับ ครีเอเตอร์ใหม่ ✨</h1>
+</div>
+</div>
+<!-- Trailing Notification Bell -->
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container active:scale-95 transition-transform duration-150 relative">
+<span class="material-symbols-outlined text-primary-container" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+</button>
+</header>
+<!-- Main Content Canvas (Scrollable Area) -->
+<main class="flex-1 px-screen-edge pt-16 flex flex-col space-y-space-lg">
+<!-- Actionable Urgent Notification Banner -->
+<div class="mt-2 rounded-xl p-3 bg-primary-container/10 border-l-4 border-primary-container flex items-center justify-between">
+<div class="flex items-start space-x-2">
+<span class="material-symbols-outlined text-primary-container text-lg leading-tight mt-0.5" data-icon="rocket_launch">rocket_launch</span>
+<p class="text-body-sm font-body-sm text-on-surface leading-tight">
+            เชื่อมต่อ Showcase สำเร็จแล้ว พร้อมรับค่าคอมมิชชันสูงสุด <span class="font-bold text-tertiary-container">25%</span>
+</p>
+</div>
+</div>
+<!-- Hero Guidance Card: 3 ขั้นตอนง่ายๆ -->
+<section class="relative rounded-2xl p-card-padding bg-gradient-to-br from-surface-container-high to-surface-container border border-outline-variant/30 overflow-hidden shadow-lg">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="relative z-10">
+<div class="flex items-center justify-between mb-2">
+<span class="px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-primary-container/20 text-primary-container font-bold tracking-wide">
+              เริ่มต้นปังใน TikTok
+            </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-numeric-metric">1 / 3 เสร็จสิ้น</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-extrabold tracking-tight">
+            เริ่มต้นสร้างรายได้นายหน้า TikTok ใน 3 ขั้นตอนง่ายๆ
+          </h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+            ทำตามคู่มือแนะนำนี้เพื่อปลดล็อกยอดวิวและตะกร้าแรกของคุณ
+          </p>
+</div>
+</section>
+<!-- Steps Roadmap (High-Velocity Onboarding Bento) -->
+<section class="flex flex-col space-y-3">
+<!-- Step 1 (Completed) -->
+<div class="p-card-padding rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-start space-x-space-sm opacity-90 transition-all">
+<div class="w-8 h-8 rounded-full bg-tertiary-container/20 text-tertiary-container flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-lg" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="text-title-sm font-title-sm text-on-surface font-semibold truncate">1. เลือกสินค้าจาก Showcase ของคุณ</h3>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary-container font-bold">เสร็จสิ้น</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 leading-snug">
+              ดึงรายการสินค้าที่คุณบันทึกไว้ใน TikTok Shop มาทำคลิปได้ทันที
+            </p>
+</div>
+</div>
+<!-- Step 2 (Active Step Highlighted) -->
+<div class="p-card-padding rounded-xl bg-surface-container border-2 border-primary-container shadow-[0_4px_20px_rgba(0,242,254,0.18)] flex items-start space-x-space-sm relative">
+<div class="absolute -top-2.5 right-4 bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full text-label-sm font-label-sm font-bold shadow-sm flex items-center space-x-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="play_arrow">play_arrow</span>
+<span>กำลังทำ</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0 mt-0.5 shadow-md">
+<span class="material-symbols-outlined text-lg" data-icon="movie_edit">movie_edit</span>
+</div>
+<div class="flex-1 min-w-0 pt-0.5">
+<h3 class="text-title-sm font-title-sm text-primary-fixed font-bold">2. สร้างหรืออัปโหลดวิดีโอป้ายยา</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1 leading-snug">
+              ให้ระบบช่วยเรียบเรียงจุดขาย หรืออัปโหลดคลิปที่คุณถ่ายไว้
+            </p>
+<div class="mt-3 flex items-center space-x-2">
+<span class="text-label-sm font-label-sm text-primary-container bg-surface-container-highest px-2 py-1 rounded">
+                ⚡ ระบบช่วยสร้างสคริปต์อัตโนมัติ
+              </span>
+</div>
+</div>
+</div>
+<!-- Step 3 (Pending) -->
+<div class="p-card-padding rounded-xl bg-surface-container-low/60 border border-outline-variant/20 flex items-start space-x-space-sm opacity-60">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-lg" data-icon="shopping_bag">shopping_bag</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="text-title-sm font-title-sm text-on-surface font-semibold truncate">3. ตรวจสอบตะกร้าและอนุมัติโพสต์</h3>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">รอดำเนินการ</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 leading-snug">
+              ยืนยันตะกร้าสินค้าในคลิปก่อนโพสต์ลง TikTok เสมอ
+            </p>
+</div>
+</div>
+</section>
+<!-- Quick Showcase Preview Section -->
+<section class="flex flex-col space-y-space-sm pt-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-primary-container" data-icon="inventory_2">inventory_2</span>
+<h2 class="text-title-md font-title-md text-on-surface font-bold">สินค้าพร้อมทำคลิป (Showcase)</h2>
+</div>
+<a class="text-label-md font-label-md text-primary-container hover:underline" href="#">ดูทั้งหมด (2)</a>
+</div>
+<!-- Showcase Product 1 -->
+<div class="p-card-padding rounded-xl bg-surface-container border border-outline-variant/30 flex items-center space-x-space-md shadow-md">
+<div class="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-surface-container-highest border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="A premium glass dropper bottle of bright citrus vitamin C serum placed cleanly on a dark slate reflective surface with subtle water droplets and soft ambient teal and cyan studio rim lighting, commercial product photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCn8J6-Q7-CDMqyBrjuraFHYAZDPM_4gXBM07-tb_WIBF97ZuA6BT9POlkDuA8iSpLs7VZ6ghZkHPyQYO_iT0novoImeIHaDupc2NNeuN-WjeaesFpa6LoxTjUJZ5C4VnpBZvyup531UBnOp-Eser7sXO7NTagQGBjl94eiK9tP8jvFU8DdTXlONNdNh77uRjZkztzO2juiM5fyUuR1YeuP78od36pl2HhGhiwJb9hq1UpoMr6prkX5fA"/>
+<div class="absolute top-1 left-1 bg-secondary-container/90 text-on-secondary-container px-1.5 py-0.5 rounded text-[10px] font-bold">
+              คอม 20%
+            </div>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between h-20 py-0.5">
+<div>
+<h4 class="text-title-sm font-title-sm text-on-surface font-bold truncate">เซรั่มวิตซีหน้าใส</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant truncate">แบรนด์ยอดนิยม • ยอดขาย 24.5k ชิ้น</p>
+</div>
+<div class="flex items-baseline justify-between">
+<span class="text-numeric-metric font-numeric-metric text-on-surface font-bold">฿290</span>
+<span class="text-label-md font-label-md text-tertiary-container font-semibold">รับ ฿58.00/ชิ้น</span>
+</div>
+</div>
+</div>
+<!-- Showcase Product 2 -->
+<div class="p-card-padding rounded-xl bg-surface-container border border-outline-variant/30 flex items-center space-x-space-md shadow-md">
+<div class="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-surface-container-highest border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="Sleek dual wireless lavalier clip microphone kit inside open charging case on modern deep obsidian desk setup, illuminated by vibrant cyan and magenta backlighting, high-tech live commerce streaming hardware aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvhtukBoV3x54b8P7GmEpS0E9ZiWoznkhPg4A-0D31rmVPLvNskMxoTCcBkwdhqt4fZ-nR0UAA_0FCr8-vlX_8GI4ZDvjII_kY3zXr-ylW9gpot4d3IRBKAxaiVpa3wrKOltGM7VK-a5kfjcgGGJgde2es5r0ywCmQspnwOGDYlVpNGhaYJUkasR_vup4GYrvfDYNJ1EVBxepGYtmcFcqp-Mm57K1d6BTtgJZcFzNmjpW1Hb3m5Cv7xQ"/>
+<div class="absolute top-1 left-1 bg-secondary-container/90 text-on-secondary-container px-1.5 py-0.5 rounded text-[10px] font-bold">
+              คอม 15%
+            </div>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between h-20 py-0.5">
+<div>
+<h4 class="text-title-sm font-title-sm text-on-surface font-bold truncate">ไมค์ไร้สายไลฟ์สด</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant truncate">เสียงคมชัด ตัดเสียงรบกวน 99%</p>
+</div>
+<div class="flex items-baseline justify-between">
+<span class="text-numeric-metric font-numeric-metric text-on-surface font-bold">฿850</span>
+<span class="text-label-md font-label-md text-tertiary-container font-semibold">รับ ฿127.50/ชิ้น</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Primary Action Button Wrapper (Floating Above Bottom Tab Bar) -->
+<div class="fixed bottom-16 left-0 right-0 max-w-[390px] mx-auto px-screen-edge py-2 z-40 bg-gradient-to-t from-background via-background/95 to-transparent">
+<button class="w-full h-12 rounded-xl bg-gradient-to-r from-primary-container to-tertiary-fixed-dim text-on-primary font-headline-sm text-headline-sm font-extrabold flex items-center justify-center space-x-2 shadow-[0_6px_20px_rgba(0,242,254,0.35)] active:scale-98 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="videocam" style="font-variation-settings: 'FILL' 1;">videocam</span>
+<span>สร้างคลิปแรกทันที</span>
+</button>
+</div>
+<!-- BottomNavBar (from Shared Components JSON & Style Guidance) -->
+<!-- Active State: "หน้าหลัก" tab is active. Labels and icons exactly verbatim as provided in JSON -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-16 pb-safe max-w-[390px] mx-auto px-2 bg-surface-container-low/95 dark:bg-surface-container-low/95 backdrop-blur-lg border-t border-outline-variant/30 shadow-lg dark:shadow-none">
+<!-- Tab 1: หน้าหลัก (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary-container dark:text-primary-container font-bold active:scale-95 transition-transform duration-150 min-w-[56px] py-1" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-label-sm font-label-sm mt-0.5 tracking-normal">หน้าหลัก</span>
+<span class="w-1 h-1 rounded-full bg-primary-container mt-0.5"></span>
+</a>
+<!-- Tab 2: สินค้า -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed-dim dark:hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 min-w-[56px] py-1" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="shopping_bag">shopping_bag</span>
+<span class="text-label-sm font-label-sm mt-0.5 tracking-normal">สินค้า</span>
+</a>
+<!-- Tab 3: สร้าง (Elevated Action Center Glyph) -->
+<a class="flex flex-col items-center justify-center -mt-5 active:scale-95 transition-transform duration-150 group" href="#">
+<div class="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-container to-tertiary-container text-on-primary-container flex items-center justify-center shadow-[0_4px_16px_rgba(0,242,254,0.4)]">
+<span class="material-symbols-outlined text-3xl font-bold" data-icon="add_circle" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant mt-1">สร้าง</span>
+</a>
+<!-- Tab 4: คอนเทนต์ -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed-dim dark:hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 min-w-[56px] py-1 relative" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="video_library">video_library</span>
+<span class="text-label-sm font-label-sm mt-0.5 tracking-normal">คอนเทนต์</span>
+</a>
+<!-- Tab 5: โปรไฟล์ -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed-dim dark:hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 min-w-[56px] py-1" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="account_circle">account_circle</span>
+<span class="text-label-sm font-label-sm mt-0.5 tracking-normal">โปรไฟล์</span>
+</a>
+</nav>
+</div>
+</body></html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>D01 My Showcase - RelayContent</title>
+<!-- Material Symbols Outlined Font -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans & Noto Sans Thai -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS Play CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#67001c",
+            "on-tertiary-fixed-variant": "#005234",
+            "secondary-fixed-dim": "#ffb2b7",
+            "error": "#ffb4ab",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "inverse-primary": "#00696f",
+            "tertiary-fixed-dim": "#26e19a",
+            "outline-variant": "#3a494b",
+            "on-primary": "#00373a",
+            "surface": "#051424",
+            "on-primary-fixed": "#002022",
+            "primary-fixed": "#6ff6ff",
+            "on-primary-fixed-variant": "#004f53",
+            "secondary-fixed": "#ffdadb",
+            "inverse-on-surface": "#233143",
+            "on-secondary-fixed-variant": "#91002b",
+            "tertiary-fixed": "#53feb4",
+            "primary-container": "#00f2fe",
+            "surface-container-highest": "#273647",
+            "primary": "#e0fdff",
+            "surface-dim": "#051424",
+            "error-container": "#93000a",
+            "on-tertiary-container": "#006e48",
+            "primary-fixed-dim": "#00dce6",
+            "surface-variant": "#273647",
+            "on-surface-variant": "#b9cacb",
+            "on-surface": "#d4e4fa",
+            "surface-tint": "#00dce6",
+            "on-tertiary": "#003823",
+            "on-primary-container": "#006a70",
+            "on-secondary-container": "#ffc7c9",
+            "surface-container-low": "#0d1c2d",
+            "inverse-surface": "#d4e4fa",
+            "outline": "#849495",
+            "tertiary": "#e1ffeb",
+            "surface-container-high": "#1c2b3c",
+            "on-secondary-fixed": "#40000e",
+            "surface-container": "#122131",
+            "on-background": "#d4e4fa",
+            "surface-bright": "#2c3a4c",
+            "surface-container-lowest": "#010f1f",
+            "secondary-container": "#b90039",
+            "on-tertiary-fixed": "#002112",
+            "background": "#051424",
+            "secondary": "#ffb2b7",
+            "tertiary-container": "#4af7ad"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.25rem",
+            "touch-min": "2.75rem",
+            "space-2xl": "2rem",
+            "space-xxs": "0.25rem",
+            "space-sm": "0.75rem",
+            "screen-edge": "1rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans", "Noto Sans Thai"],
+            "numeric-metric": ["Plus Jakarta Sans"],
+            "body-md": ["Noto Sans", "Noto Sans Thai"],
+            "label-md": ["Noto Sans", "Noto Sans Thai"],
+            "body-sm": ["Noto Sans", "Noto Sans Thai"],
+            "title-sm": ["Noto Sans", "Noto Sans Thai"],
+            "title-md": ["Noto Sans", "Noto Sans Thai"],
+            "label-sm": ["Noto Sans", "Noto Sans Thai"],
+            "headline-md": ["Plus Jakarta Sans", "Noto Sans Thai"],
+            "label-lg": ["Noto Sans", "Noto Sans Thai"],
+            "headline-sm": ["Plus Jakarta Sans", "Noto Sans Thai"],
+            "body-lg": ["Noto Sans", "Noto Sans Thai"]
+          },
+          "fontSize": {
+            "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "numeric-metric": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+            "body-md": ["14px", {"lineHeight": "21px", "fontWeight": "400"}],
+            "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "title-sm": ["15px", {"lineHeight": "22px", "fontWeight": "600"}],
+            "title-md": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "label-sm": ["10px", {"lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "700"}],
+            "headline-md": ["22px", {"lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+            "label-lg": ["14px", {"lineHeight": "18px", "fontWeight": "600"}],
+            "headline-sm": ["18px", {"lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #010f1f;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Noto Sans Thai', 'Noto Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Hide scrollbar for tabs carousel */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface select-none">
+<!-- Outer Mobile Container: Strict 390x844 px -->
+<main class="relative w-[390px] h-[844px] bg-background overflow-hidden flex flex-col shadow-2xl">
+<!-- Top Glow Refraction Element -->
+<div class="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-primary-container/10 blur-3xl pointer-events-none z-0"></div>
+<div class="absolute top-48 -right-20 w-64 h-64 rounded-full bg-secondary-container/10 blur-3xl pointer-events-none z-0"></div>
+<!-- SHARED TOP APP BAR -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-screen-edge h-14 max-w-[390px] mx-auto bg-surface/90 dark:bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-2.5">
+<!-- Creator Avatar with Live Ring -->
+<div class="relative w-8 h-8 rounded-full ring-2 ring-primary-container/60 overflow-hidden flex-shrink-0 bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="A modern profile avatar of an energetic Thai digital creator in stylish studio lighting with electric cyan neon backlighting and rich dark slate background tones, sharp focus and ultra realistic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOPgI1riGQ1X0yWrgJYvuBwFALB_T1ODLEUnI0zOOVOUgz67tTpYQUy3q6YIAgw3yYSlzVH3IpVZpRdRVhB7ubHTCG0IioLUVQR17WTF2334YnGNz6EjkkwaMUNW13gbV77nMvdfB38JldLOtjKLetf1MNZVkSj9Lv3bNpEhNQ8Y9nL3U9q7XemUX2IOIb-z60wfcAnEAF4v0HIvtwYFNSdK-fHlhU2rdJGZfXkwY_nI4L8LdiBJMK2Q"/>
+<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-1 ring-surface"></span>
+</div>
+<div class="flex flex-col">
+<span class="text-title-md font-title-md font-bold text-on-surface dark:text-on-surface tracking-tight">RelayContent</span>
+</div>
+</div>
+<!-- Action Right / Notification Icon -->
+<button class="relative w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container hover:bg-surface-container-highest transition-colors active:scale-95 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute 2.5 top-2 right-2 w-2 h-2 bg-secondary rounded-full ring-2 ring-surface"></span>
+</button>
+</header>
+<!-- MAIN SCROLLABLE CONTENT CANVAS -->
+<div class="flex-1 overflow-y-auto pt-16 pb-24 px-screen-edge no-scrollbar z-10 space-y-4">
+<!-- Showcase Status Header Section -->
+<section class="mt-2">
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-headline-md font-headline-md text-on-surface tracking-tight">Showcase ของฉัน</h1>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-tertiary-fixed animate-pulse"></span>
+<p class="text-label-md font-label-md text-on-surface-variant">อัปเดตล่าสุด 10 นาทีที่แล้ว</p>
+</div>
+</div>
+<!-- Sync Button -->
+<button class="h-9 px-3 rounded-xl bg-surface-container border border-outline-variant/40 flex items-center gap-1.5 hover:bg-surface-container-high active:scale-95 transition-all text-primary-container shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="sync">sync</span>
+<span class="text-label-md font-label-md font-bold">ซิงค์</span>
+</button>
+</div>
+<!-- Metric Pulse Snippet -->
+<div class="mt-3 p-3 rounded-xl bg-surface-container/70 border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary-container/15 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[20px]" data-icon="storefront">storefront</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">สินค้าในตะกร้าโปรไฟล์</p>
+<p class="text-headline-sm font-headline-sm text-primary">24 รายการ</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-tertiary-fixed-dim bg-tertiary-fixed-dim/10 px-2 py-0.5 rounded-full font-medium">พร้อมปักหมุดคลิป</span>
+</div>
+</div>
+</section>
+<!-- Search & Filter Controls -->
+<section class="space-y-3">
+<!-- Search Input Bar -->
+<div class="flex items-center gap-2">
+<div class="flex-1 relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="w-full h-11 pl-10 pr-3 rounded-xl bg-surface-container border border-outline-variant/40 text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="ค้นหาชื่อสินค้าใน Showcase..." type="text"/>
+</div>
+<button class="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-xl bg-surface-container border border-outline-variant/40 text-on-surface-variant hover:text-primary-container hover:bg-surface-container-high active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+</div>
+<!-- Filter Chips Carousel -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-screen-edge px-screen-edge">
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary font-bold text-label-md font-label-md shadow-sm active:scale-95 transition-transform">
+            ทั้งหมด (24)
+          </button>
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container border border-outline-variant/50 text-on-surface-variant hover:text-on-surface text-label-md font-label-md active:scale-95 transition-transform">
+            คอมมิชชันสูง (&gt;15%)
+          </button>
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container border border-outline-variant/50 text-on-surface-variant hover:text-on-surface text-label-md font-label-md active:scale-95 transition-transform">
+            สินค้าขายดี
+          </button>
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container border border-outline-variant/50 text-on-surface-variant hover:text-on-surface text-label-md font-label-md active:scale-95 transition-transform">
+            พร้อมส่งด่วน
+          </button>
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container border border-outline-variant/50 text-on-surface-variant hover:text-on-surface text-label-md font-label-md active:scale-95 transition-transform">
+            มีตัวอย่างคลิป
+          </button>
+</div>
+</section>
+<!-- PRODUCT CARDS PIPELINE (Affiliate Showcase) -->
+<section class="space-y-3 pt-1">
+<!-- CARD 1: Skincare Vitamin C Serum bottle -->
+<article class="p-3.5 rounded-2xl bg-surface-container border border-outline-variant/30 shadow-md flex flex-col gap-3 relative overflow-hidden transition-all hover:border-primary-container/40">
+<div class="flex gap-3">
+<!-- Product Image with Floating Commission Ribbon -->
+<div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container-high flex-shrink-0 border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="Commercial studio product photography of a premium Vitamin C facial skincare serum in an amber dropper bottle with fresh orange botanical elements, dramatic reflective glass surface, sleek neon cyan studio backlight, clean luxury advertising aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOaaXJ4FrH04H7K9n5BDtuUgFJ7OJ4ykfl8tcUgGVUF3mwbYqerRrrmnpdL9bHUQLdj0aOnRJJiGoQEPAV0Pe4b6i3R9D4NxP8vBxD7Efur2JUzmulXh1h8nLb4vsoe3Xwr9gZOCCrhFskqynInDel_X4ZiM1xrJil5h7Bi6eB1H0wScqMJfAjgQUcNNLerAbQf-kAVDduCfl8Q6E55xOoNIvJ-EnO9UWkZ_HpCiifm8yGJlZL8cX5dQ"/>
+<!-- Top Seller Badge -->
+<span class="absolute top-1 left-1 bg-secondary-container text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                อันดับ 1
+              </span>
+</div>
+<!-- Product Details -->
+<div class="flex-1 flex flex-col justify-between min-w-0">
+<div>
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed/15 text-secondary text-[11px] font-bold tracking-tight">
+                    คอมมิชชัน 20% (฿58.00/ชิ้น)
+                  </span>
+</div>
+<h2 class="text-title-sm font-title-sm text-on-surface mt-1 line-clamp-1 leading-snug">
+                  เซรั่มวิตซีหน้าใส บูสต์ผิวอิ่มฟู 30ml
+                </h2>
+</div>
+<!-- Price & Margin -->
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-numeric-metric font-numeric-metric text-primary">฿290</span>
+<span class="text-body-sm font-body-sm text-outline line-through">ปกติ ฿390</span>
+</div>
+</div>
+</div>
+<!-- Stock, Eligibility & Quick Action -->
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/25">
+<div class="flex items-center gap-1.5 text-label-sm font-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-tertiary-fixed-dim" data-icon="inventory_2">inventory_2</span>
+<span>สต็อก: 1,420 ชิ้น</span>
+<span class="text-outline-variant">•</span>
+<span class="text-tertiary-fixed-dim">สิทธิ์ตะกร้า: ปกติ</span>
+</div>
+<button class="h-8 px-3 rounded-lg bg-primary-container text-on-primary font-bold text-label-md font-label-md flex items-center gap-1 active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="videocam">videocam</span>
+<span>สร้างคอนเทนต์</span>
+</button>
+</div>
+</article>
+<!-- CARD 2: Wireless Microphone Set -->
+<article class="p-3.5 rounded-2xl bg-surface-container border border-outline-variant/30 shadow-md flex flex-col gap-3 relative overflow-hidden transition-all hover:border-primary-container/40">
+<div class="flex gap-3">
+<!-- Product Image -->
+<div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container-high flex-shrink-0 border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="Sleek dual wireless lavalier microphone receiver set in a magnetic charging case, high-tech electronic gadget aesthetic, illuminated with soft ambient cyan and charcoal blue studio lights, crystal clear product showcase." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnGijs4rabVJY5juwD548NUv6bF4FbtN8-9UTJo3yVE9IsFBX9LYT_rWlzRIw7YuOE6PJ99U64B5I7GpqYU0SFIVioGFReq0ku4DRcRtBjBuVS5tYlNmrkqM6McWf0aTYFOAgi7v6O_CJfNp4R6JX-TgR9_IvElODxT5UUYot0zpp2lm9Mshviw_mEzed8hfHX1UuOwBCX-s9g58M1wsxx0mMmceQWADgG8Wwqk85kWMLmrlgSnsGdGQ"/>
+</div>
+<!-- Product Details -->
+<div class="flex-1 flex flex-col justify-between min-w-0">
+<div>
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed/15 text-secondary text-[11px] font-bold tracking-tight">
+                    คอมมิชชัน 15% (฿127.50/ชิ้น)
+                  </span>
+</div>
+<h2 class="text-title-sm font-title-sm text-on-surface mt-1 line-clamp-1 leading-snug">
+                  ไมโครโฟนไร้สาย สำหรับ Live และอัดคลิป ตัดเสียงรบกวน
+                </h2>
+</div>
+<!-- Price & Margin -->
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-numeric-metric font-numeric-metric text-primary">฿850</span>
+</div>
+</div>
+</div>
+<!-- Stock, Eligibility & Quick Action -->
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/25">
+<div class="flex items-center gap-1.5 text-label-sm font-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-tertiary-fixed-dim" data-icon="inventory_2">inventory_2</span>
+<span>สต็อก: 340 ชิ้น</span>
+<span class="text-outline-variant">•</span>
+<span class="text-tertiary-fixed-dim">สิทธิ์ตะกร้า: ปกติ</span>
+</div>
+<button class="h-8 px-3 rounded-lg bg-primary-container text-on-primary font-bold text-label-md font-label-md flex items-center gap-1 active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="videocam">videocam</span>
+<span>สร้างคอนเทนต์</span>
+</button>
+</div>
+</article>
+<!-- CARD 3: Stainless Steel Tumbler -->
+<article class="p-3.5 rounded-2xl bg-surface-container border border-outline-variant/30 shadow-md flex flex-col gap-3 relative overflow-hidden transition-all hover:border-primary-container/40">
+<div class="flex gap-3">
+<!-- Product Image -->
+<div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container-high flex-shrink-0 border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="Matte textured pastel stainless steel insulated thermal tumbler cup 900ml with handle and straw, set in a clean minimalist lifestyle studio backdrop with crisp rim lighting and sharp reflections, modern commercial styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZXVRymsjkPLSWsxbU1_e7aru55_xZooWyfRxGfEE0H7AQnzv_RGO_mzdD3ck3sjYaTGLrIqsbiPe4Q7i0Zsy-BieeoA1Gvj8Y5BQk8aNrU-KV7GDc_1LcE65j9WiJpDUINTEJhJCjBc9zpO_mI0fECD2KvErz-890U9qj5qwgd7n-OuOvgtJ8oLY--NIF_u247GjR-oa-z_1VauAmrw2x3F2Ed4w2gSO4-n792sdk2R-BdfyhivFMqg"/>
+</div>
+<!-- Product Details -->
+<div class="flex-1 flex flex-col justify-between min-w-0">
+<div>
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed/15 text-secondary text-[11px] font-bold tracking-tight">
+                    คอมมิชชัน 12% (฿42.00/ชิ้น)
+                  </span>
+</div>
+<h2 class="text-title-sm font-title-sm text-on-surface mt-1 line-clamp-1 leading-snug">
+                  แก้วเก็บความเย็น 900ml สแตนเลส 316 แท้
+                </h2>
+</div>
+<!-- Price & Margin -->
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-numeric-metric font-numeric-metric text-primary">฿350</span>
+</div>
+</div>
+</div>
+<!-- Stock, Eligibility & Quick Action -->
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/25">
+<div class="flex items-center gap-1.5 text-label-sm font-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-tertiary-fixed-dim" data-icon="inventory_2">inventory_2</span>
+<span>สต็อก: 580 ชิ้น</span>
+<span class="text-outline-variant">•</span>
+<span class="text-tertiary-fixed-dim">สิทธิ์ตะกร้า: ปกติ</span>
+</div>
+<button class="h-8 px-3 rounded-lg bg-primary-container text-on-primary font-bold text-label-md font-label-md flex items-center gap-1 active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="videocam">videocam</span>
+<span>สร้างคอนเทนต์</span>
+</button>
+</div>
+</article>
+</section>
+<!-- Context Tip / Creator Booster Card -->
+<section class="p-3.5 rounded-2xl bg-surface-container-low border border-primary-container/20 flex items-start gap-3">
+<div class="w-8 h-8 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary-container flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]" data-icon="tips_and_updates">tips_and_updates</span>
+</div>
+<div class="flex-1">
+<p class="text-title-sm font-title-sm text-on-surface">เพิ่มสินค้าจาก TikTok Shop เข้า Showcase</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">ค้นหาและเพิ่มสินค้าคอมมิชชันสูงสุดเข้าตะกร้าได้ทันทีผ่าน TikTok Seller Center</p>
+</div>
+</section>
+</div>
+<!-- SHARED BOTTOM NAVIGATION BAR -->
+<!-- Destination count: 5 | Active item: สินค้า (Index 1) as requested -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-16 pb-safe max-w-[390px] mx-auto px-2 bg-surface-container-low/95 dark:bg-surface-container-low/95 backdrop-blur-lg border-t border-outline-variant/30 shadow-lg dark:shadow-none">
+<!-- 1. หน้าหลัก (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 w-16 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="home">home</span>
+<span class="text-label-sm font-label-sm mt-0.5">หน้าหลัก</span>
+</button>
+<!-- 2. สินค้า (ACTIVE - Style injected via JSON specification) -->
+<button class="flex flex-col items-center justify-center text-primary-container dark:text-primary-container font-bold hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 w-16 py-1 relative">
+<span class="material-symbols-outlined text-[22px]" data-icon="shopping_bag" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+<span class="text-label-sm font-label-sm mt-0.5">สินค้า</span>
+<!-- Active indicator dot -->
+<span class="w-1 h-1 rounded-full bg-primary-container mt-0.5"></span>
+</button>
+<!-- 3. สร้าง (Raised Center Action Button) -->
+<div class="relative -top-3 flex flex-col items-center">
+<button class="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-container to-tertiary-container text-on-primary flex items-center justify-center shadow-lg shadow-primary-container/25 hover:scale-105 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[28px]" data-icon="add_circle">add_circle</span>
+</button>
+<span class="text-label-sm font-label-sm text-on-surface-variant mt-0.5">สร้าง</span>
+</div>
+<!-- 4. คอนเทนต์ (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 w-16 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="video_library">video_library</span>
+<span class="text-label-sm font-label-sm mt-0.5">คอนเทนต์</span>
+</button>
+<!-- 5. โปรไฟล์ (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 w-16 py-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="account_circle">account_circle</span>
+<span class="text-label-sm font-label-sm mt-0.5">โปรไฟล์</span>
+</button>
+</nav>
+</main>
+<script>
+    // Lightweight micro-interaction for active filter pills
+    document.querySelectorAll('.overflow-x-auto button').forEach(button => {
+      button.addEventListener('click', function() {
+        document.querySelectorAll('.overflow-x-auto button').forEach(btn => {
+          btn.className = "flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container border border-outline-variant/50 text-on-surface-variant hover:text-on-surface text-label-md font-label-md active:scale-95 transition-transform";
+        });
+        this.className = "flex-shrink-0 px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary font-bold text-label-md font-label-md shadow-sm active:scale-95 transition-transform";
+      });
+    });
+  </script>
+</body></html>

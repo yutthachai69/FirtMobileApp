@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RelayContent Dashboard - Control Room</title>
+<!-- Google Fonts: Noto Sans Thai, Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-container": "#00452e",
+            "background": "#0f131b",
+            "surface-container-high": "#262a32",
+            "on-secondary-container": "#ffc2c4",
+            "secondary-container": "#b50036",
+            "outline": "#869397",
+            "error-container": "#93000a",
+            "on-secondary": "#67001b",
+            "surface-container": "#1c2027",
+            "inverse-primary": "#00687a",
+            "on-background": "#dfe2ed",
+            "on-surface": "#dfe2ed",
+            "tertiary": "#4edea3",
+            "on-primary-container": "#00424f",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed-dim": "#4edea3",
+            "outline-variant": "#3d494c",
+            "secondary": "#ffb2b7",
+            "on-tertiary": "#003824",
+            "surface-container-low": "#181c23",
+            "primary-container": "#06b6d4",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-fixed": "#ffdadb",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-secondary-fixed": "#40000d",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-tint": "#4cd7f6",
+            "on-primary": "#003640",
+            "secondary-fixed-dim": "#ffb2b7",
+            "on-secondary-fixed-variant": "#92002a",
+            "on-surface-variant": "#bcc9cd",
+            "surface-variant": "#31353d",
+            "on-error": "#690005",
+            "surface-container-lowest": "#0a0e15",
+            "on-primary-fixed": "#001f26",
+            "surface-dim": "#0f131b",
+            "primary-fixed-dim": "#4cd7f6",
+            "inverse-surface": "#dfe2ed",
+            "surface-bright": "#353941",
+            "primary": "#4cd7f6",
+            "inverse-on-surface": "#2d3038",
+            "on-error-container": "#ffdad6",
+            "surface": "#0f131b",
+            "primary-fixed": "#acedff",
+            "surface-container-highest": "#31353d",
+            "error": "#ffb4ab",
+            "tertiary-container": "#1bbd85"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter-card": "0.75rem",
+            "nav-height": "4.5rem",
+            "fab-elevate": "-1.25rem",
+            "stack-loose": "1.5rem",
+            "stack-base": "1rem",
+            "margin-screen": "1.25rem",
+            "nav-item-pad": "0.5rem",
+            "stack-tight": "0.5rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Noto Sans", "Noto Sans Thai"],
+            "body-md": ["Noto Sans", "Noto Sans Thai"],
+            "headline-lg": ["Noto Sans", "Noto Sans Thai"],
+            "body-sm": ["Noto Sans", "Noto Sans Thai"],
+            "label-telemetry": ["Inter", "sans-serif"],
+            "label-thai-nav": ["Noto Sans Thai", "Noto Sans"],
+            "headline-md": ["Noto Sans", "Noto Sans Thai"],
+            "label-numeric-md": ["Inter", "sans-serif"],
+            "body-lg": ["Noto Sans", "Noto Sans Thai"],
+            "label-numeric-lg": ["Inter", "sans-serif"]
+          },
+          "fontSize": {
+            "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-telemetry": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "label-thai-nav": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-numeric-md": ["15px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-numeric-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Smooth Pulse & Radar Animations for Control Room aesthetic */
+    @keyframes subtle-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.55; transform: scale(0.92); }
+    }
+    .pulse-indicator {
+      animation: subtle-pulse 2.2s infinite ease-in-out;
+    }
+    @keyframes progress-stripe {
+      0% { background-position: 0 0; }
+      100% { background-position: 24px 0; }
+    }
+    .progress-animated {
+      background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+      );
+      background-size: 16px 16px;
+      animation: progress-stripe 1.4s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#090D14] text-on-surface antialiased min-h-screen flex justify-center selection:bg-primary selection:text-background">
+<!-- Mobile Viewport Container: clamped to 390x844 mobile frame -->
+<div class="w-full max-w-[390px] min-h-[844px] bg-background relative flex flex-col shadow-2xl overflow-hidden border-x border-[#1E293B]/60">
+<!-- Top Safe Area Buffer (44px hardware notch space) -->
+<div class="h-11 w-full bg-background flex-shrink-0 flex items-center justify-between px-6 select-none z-40">
+<span class="font-label-numeric-md text-label-numeric-md text-on-surface font-semibold">09:41</span>
+<div class="flex items-center space-x-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[15px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[15px]">wifi</span>
+<span class="material-symbols-outlined text-[15px]">battery_full</span>
+</div>
+</div>
+<!-- SHARED COMPONENT: TopAppBar (docked full-width top, small) -->
+<header class="bg-surface/90 dark:bg-surface/90 backdrop-blur-md flex justify-between items-center w-full px-5 py-3 h-14 max-w-md mx-auto sticky top-0 z-40">
+<!-- Leading: Creator Studio Channel Sync Avatar -->
+<div class="flex items-center space-x-2.5">
+<div class="relative w-9 h-9 rounded-full overflow-hidden ring-1 ring-[#1E293B] flex-shrink-0 bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a modern Thai woman digital content creator smiling with professional soft studio neon lighting in a high-tech creative control studio, wearing sleek minimalist dark attire, sharp focus, serene and confident expression with subtle teal highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1D0uw1fpHSHDFFvyDXWxZR55luMvrx6KflDeeb56Uf7DpkURzGwlsV3aN4BeopbvFLdV0SEsaoSrQCh1_jM8P195G3PKzS-wWIlgiDNGuV7O7l-JO_A4q4wYbcwk2yPj1tXmxR6KuDNNDH0zVtp1hXUoxWVSfkLGRlQM8uWcKxw-1HR7pTUyULrSei8VvgJEUPLKL9x9VUYivRrDgMD2O3iCxCfUQn-QU0txpX0VBNQUCFKoGYyBf"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-tertiary rounded-full ring-2 ring-background pulse-indicator"></span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface leading-tight">RelayContent</span>
+<span class="font-label-telemetry text-label-telemetry text-outline text-[10px] tracking-normal">@ploy.creator</span>
+</div>
+</div>
+<!-- Center / Trailing Telemetry & Notification -->
+<div class="flex items-center space-x-2">
+<!-- Strictly 1 Micro Telemetry Badge per screen view -->
+<div class="px-2 py-0.5 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center space-x-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span>
+<span class="font-label-telemetry text-[10px] uppercase font-semibold text-primary">SYNC: LIVE</span>
+</div>
+<!-- Notification Bell with Unread Dot -->
+<button aria-label="Notifications" class="relative w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container-low border border-[#1E293B] hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary-container rounded-full ring-1.5 ring-background"></span>
+</button>
+</div>
+</header>
+<!-- Scrollable Main Canvas -->
+<main class="flex-1 px-5 pt-3 pb-28 space-y-4 overflow-y-auto">
+<!-- Action Alert Banner (High stakes pending video workflow) -->
+<section class="bg-gradient-to-r from-surface-container to-[#1c1822] border border-[#33222e] rounded-xl p-3.5 relative overflow-hidden shadow-sm">
+<div class="flex items-start justify-between space-x-3">
+<div class="flex items-start space-x-3">
+<div class="w-8 h-8 rounded-lg bg-secondary-container/20 border border-secondary-container/40 flex items-center justify-center text-secondary flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-body-md text-body-md font-semibold text-on-surface">มี 3 คลิปสร้างเสร็จแล้ว</span>
+<span class="px-1.5 py-0.2 bg-secondary-container/30 text-secondary font-label-telemetry text-[10px] rounded">PENDING</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5 text-[12px]">รอให้คุณตรวจอนุมัติก่อนเผยแพร่อัตโนมัติลง Showcase</p>
+</div>
+</div>
+</div>
+<div class="mt-2.5 pt-2 border-t border-[#33222e]/60 flex items-center justify-between">
+<span class="font-label-telemetry text-outline text-[11px]">AUTO_PUBLISH: PAUSED</span>
+<button class="px-3 py-1.5 rounded-lg bg-secondary-container text-white font-body-sm text-body-sm font-medium hover:opacity-90 active:scale-95 transition-all flex items-center space-x-1.5 shadow-[0px_4px_14px_rgba(181,0,54,0.3)]">
+<span>ตรวจคลิปทันที</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- Quick Stats Overview (Calm Control Room Telemetry Card) -->
+<section class="bg-[#0E1524] border border-[#1E293B] rounded-[14px] p-4">
+<div class="flex items-center justify-between pb-3 border-b border-[#1E293B]">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">ภาพรวมระบบ (Overview)</h2>
+</div>
+<span class="font-label-telemetry text-[11px] text-outline">AUTO_CADENCE: 6H</span>
+</div>
+<!-- 3-Way Grid Telemetry Metrics -->
+<div class="grid grid-cols-3 gap-2.5 pt-3.5">
+<!-- Metric 1 -->
+<div class="bg-surface-container-lowest/70 border border-[#1E293B]/70 rounded-lg p-2.5 flex flex-col justify-between">
+<span class="font-body-sm text-body-sm text-outline text-[11px] leading-tight">เผยแพร่สำเร็จ</span>
+<div class="my-1">
+<span class="font-label-numeric-lg text-label-numeric-lg font-semibold text-on-surface">24</span>
+<span class="font-body-sm text-outline text-[11px] ml-0.5">คลิป</span>
+</div>
+<div class="flex items-center space-x-1 text-tertiary">
+<span class="material-symbols-outlined text-[13px]">trending_up</span>
+<span class="font-label-numeric-md text-[11px] font-semibold">+18%</span>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-container-lowest/70 border border-[#1E293B]/70 rounded-lg p-2.5 flex flex-col justify-between">
+<span class="font-body-sm text-body-sm text-outline text-[11px] leading-tight">Showcase พร้อม</span>
+<div class="my-1">
+<span class="font-label-numeric-lg text-label-numeric-lg font-semibold text-primary">18</span>
+<span class="font-body-sm text-outline text-[11px] ml-0.5">SKU</span>
+</div>
+<div class="flex items-center space-x-1 text-outline">
+<span class="material-symbols-outlined text-[13px]">inventory</span>
+<span class="font-label-telemetry text-[10px]">SYNCED</span>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface-container-lowest/70 border border-secondary-container/40 rounded-lg p-2.5 flex flex-col justify-between bg-secondary-container/5">
+<span class="font-body-sm text-body-sm text-secondary text-[11px] leading-tight">รออนุมัติ</span>
+<div class="my-1">
+<span class="font-label-numeric-lg text-label-numeric-lg font-semibold text-secondary">3</span>
+<span class="font-body-sm text-outline text-[11px] ml-0.5">คลิป</span>
+</div>
+<div class="flex items-center space-x-1 text-secondary">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+<span class="font-label-telemetry text-[10px]">ACTION</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Relay Pipeline (งานประมวลผลวิดีโอปัจจุบัน) -->
+<section class="space-y-2.5">
+<div class="flex items-center justify-between px-0.5">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[18px]">motion_photos_on</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">ไปป์ไลน์ประมวลผล (Active Pipeline)</h2>
+</div>
+<span class="font-label-telemetry text-[11px] text-outline">QUEUE: 2 RUNNING</span>
+</div>
+<!-- Processing Card 1: Active Rendering -->
+<div class="bg-[#0E1524] border border-[#1E293B] rounded-[14px] p-3.5 space-y-3 shadow-sm hover:border-outline-variant transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-11 h-11 rounded-lg overflow-hidden bg-surface-container flex-shrink-0 border border-[#1E293B]">
+<img class="w-full h-full object-cover" data-alt="Minimalist dark green glass dropper bottle of Centella Asiatica serum displayed on a sleek slate pedestal with soft commercial lighting, subtle moisture drops, and calm organic atmosphere for Thai beauty e-commerce." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqyycpvWxeETDqOvBSzMnVA41PxsggPzOOqav9MwKwqn3ZCmkUV8u3HMlrCKGKfYMsG3bo_EywLN2pszQuiK-BUf4qjOebThLoByddUi8cDEBmKF3ZFr698QEL3Hol7GjhlD78s16YGPz_to_Ej8m65H8WBuiR07zJqssI7QT8o3wZt8Vc5kfIZ-bvxXBtofjBg5pibNvFTg8SfPYFgsgelQPdMCavEQneb0PdrX4yVJq5lBhu8oN7"/>
+</div>
+<div class="space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface line-clamp-1">เซรั่มใบบัวบก Centella 50ml</h3>
+</div>
+<p class="font-body-sm text-body-sm text-outline text-[12px]">SKU: CT-50ML-TH • Hook: แก้รอยสิวใน 7 วัน</p>
+</div>
+</div>
+<span class="font-label-numeric-md text-label-numeric-md font-semibold text-primary">78%</span>
+</div>
+<!-- Progress Bar & Status Readout -->
+<div class="space-y-1.5">
+<div class="w-full h-2 rounded-full bg-surface-container-lowest overflow-hidden">
+<div class="h-full bg-primary rounded-full progress-animated transition-all duration-500" style="width: 78%"></div>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-body-sm text-on-surface-variant flex items-center space-x-1">
+<span class="material-symbols-outlined text-[13px] text-primary animate-spin">sync</span>
+<span>กำลังเรนเดอร์เสียงบรรยาย AI (Thai Natural v2)</span>
+</span>
+<span class="font-label-telemetry text-outline">~45s เหลือ</span>
+</div>
+</div>
+</div>
+<!-- Processing Card 2: Tagging Stage -->
+<div class="bg-[#0E1524] border border-[#1E293B] rounded-[14px] p-3.5 space-y-2.5 shadow-sm hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-11 h-11 rounded-lg overflow-hidden bg-surface-container flex-shrink-0 border border-[#1E293B]">
+<img class="w-full h-full object-cover" data-alt="Velvet matte lip tint tube in an elegant deep crimson shade resting horizontally on a dark reflective stone surface, dramatic side studio lighting with subtle pink rim light, high-end cosmetics catalog aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCt4Fpur1MJOS6HnH6kOwX6Gz-dufWaeNs9m0sPy-shjzSsy4bMm9T_DtSw2vUbcUrJ6_D6LelGVNJAFoK6E-70pEwXM_BLoivCuxJ2vuED2RJg6IRTS2sEZofXDtHmYJL4f27VKO0GQ0SgWbK50QwoU7JUyO0DneLdhsCmy80lFcaIDYTXlL3-YpiW0bUnAf8UClF3qI7Cnc7kc9P-op1ukAv16EGtAXQrkbdxQog3vFR5j8OX3Ws"/>
+</div>
+<div class="space-y-0.5">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface line-clamp-1">ลิปทินท์ Velvet Matte 03</h3>
+<p class="font-body-sm text-body-sm text-outline text-[12px]">SKU: VM-LIP-03 • Auto-Affiliate Tagging</p>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-tertiary pulse-indicator"></span>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-[#1E293B]/60 text-[12px]">
+<span class="font-body-sm text-tertiary flex items-center space-x-1">
+<span class="material-symbols-outlined text-[15px]">shopping_cart_checkout</span>
+<span>เตรียมปักตะกร้าอัตโนมัติ</span>
+</span>
+<span class="font-label-telemetry text-outline text-[10px]">creator.video.write</span>
+</div>
+</div>
+</section>
+<!-- Quick Shortcut Grid (Command Actions) -->
+<section class="space-y-2 pt-1">
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface px-0.5">คำสั่งด่วน (Quick Actions)</h2>
+<div class="grid grid-cols-3 gap-2">
+<!-- Action 1: Create Video -->
+<button class="bg-surface-container-low hover:bg-surface-container border border-[#1E293B] active:border-primary/50 rounded-xl p-3 flex flex-col items-center justify-center space-y-2 active:scale-95 transition-all group">
+<div class="w-10 h-10 rounded-lg bg-primary-container/10 border border-primary-container/30 flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">video_call</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-medium text-center leading-tight">สร้างคลิปใหม่</span>
+</button>
+<!-- Action 2: Sync Showcase -->
+<button class="bg-surface-container-low hover:bg-surface-container border border-[#1E293B] active:border-primary/50 rounded-xl p-3 flex flex-col items-center justify-center space-y-2 active:scale-95 transition-all group">
+<div class="w-10 h-10 rounded-lg bg-tertiary-container/10 border border-tertiary-container/30 flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-background transition-colors">
+<span class="material-symbols-outlined text-[20px]">sync_alt</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-medium text-center leading-tight">ซิงก์ Showcase</span>
+</button>
+<!-- Action 3: Schedule Batch -->
+<button class="bg-surface-container-low hover:bg-surface-container border border-[#1E293B] active:border-primary/50 rounded-xl p-3 flex flex-col items-center justify-center space-y-2 active:scale-95 transition-all group">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-[#334155] flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">calendar_clock</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-medium text-center leading-tight">ตั้งเวลาทั้งหมด</span>
+</button>
+</div>
+</section>
+<!-- Sub-module: System Activity Telemetry Log -->
+<section class="bg-surface-container-lowest/60 border border-[#1E293B] rounded-xl p-3 flex items-center justify-between text-outline">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+<span class="font-body-sm text-body-sm text-[12px] text-on-surface-variant">ระบบเชื่อมต่อ API ร้านค้าเรียบร้อยแล้ว</span>
+</div>
+<span class="font-label-telemetry text-[10px] text-outline">LATENCY: 42ms</span>
+</section>
+</main>
+<!-- SHARED COMPONENT: BottomNavBar (5-tab navigation, docked full-width bottom-0) -->
+<!-- Active tab: หน้าหลัก (index 0) matched from primary Dashboard intent -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-end px-3 pb-6 pt-2 h-nav-height max-w-md mx-auto bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md shadow-2xl">
+<!-- Tab 1: หน้าหลัก (ACTIVE) -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary font-medium w-14 pb-1 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[22px]" data-icon="dashboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-label-thai-nav font-label-thai-nav text-[11px] mt-0.5">หน้าหลัก</span>
+<span class="w-1 h-1 rounded-full bg-primary mt-0.5"></span>
+</button>
+<!-- Tab 2: สินค้า (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-outline dark:text-outline hover:text-primary dark:hover:text-primary transition-colors duration-150 w-14 pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="inventory_2">inventory_2</span>
+<span class="text-label-thai-nav font-label-thai-nav text-[11px] mt-0.5">สินค้า</span>
+<span class="w-1 h-1 rounded-full bg-transparent mt-0.5"></span>
+</button>
+<!-- Tab 3: สร้าง (ELEVATED CENTER FAB / CREATE) -->
+<div class="flex flex-col items-center justify-center -mt-6">
+<button aria-label="สร้างคลิป" class="w-[52px] h-[52px] rounded-full bg-secondary-container text-white flex items-center justify-center shadow-[0px_6px_20px_rgba(244,63,94,0.35)] active:scale-90 transition-transform duration-150 border-2 border-background">
+<span class="material-symbols-outlined text-[26px] font-bold" data-icon="add">add</span>
+</button>
+<span class="text-label-thai-nav font-label-thai-nav text-[11px] text-on-surface font-medium mt-1">สร้าง</span>
+</div>
+<!-- Tab 4: คอนเทนต์ (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-outline dark:text-outline hover:text-primary dark:hover:text-primary transition-colors duration-150 w-14 pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="movie">movie</span>
+<span class="text-label-thai-nav font-label-thai-nav text-[11px] mt-0.5">คอนเทนต์</span>
+<span class="w-1 h-1 rounded-full bg-transparent mt-0.5"></span>
+</button>
+<!-- Tab 5: โปรไฟล์ (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-outline dark:text-outline hover:text-primary dark:hover:text-primary transition-colors duration-150 w-14 pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="person">person</span>
+<span class="text-label-thai-nav font-label-thai-nav text-[11px] mt-0.5">โปรไฟล์</span>
+<span class="w-1 h-1 rounded-full bg-transparent mt-0.5"></span>
+</button>
+</nav>
+<!-- Bottom Home Indicator Safe Buffer -->
+<div class="h-2 w-full fixed bottom-1 left-0 flex justify-center z-50 pointer-events-none">
+<div class="w-32 h-1 bg-outline-variant/40 rounded-full"></div>
+</div>
+</div>
+<!-- Inline Script for UI feedback interactions -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Simulate real-time progress update smoothly
+      const progressBar = document.querySelector('.progress-animated');
+      let progress = 78;
+      setInterval(() => {
+        if (progress < 96) {
+          progress += 1;
+          if (progressBar) {
+            progressBar.style.width = progress + '%';
+          }
+        }
+      }, 4000);
+    });
+  </script>
+</body></html>

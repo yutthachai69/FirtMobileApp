@@ -24,7 +24,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('ยินดีต้อนรับกลับ'), findsOneWidget);
+    expect(find.text('กลับมาส่งไอเดียต่อ'), findsOneWidget);
     await tester.enterText(find.byKey(const Key('email')), 'user@example.com');
     await tester.enterText(find.byKey(const Key('password')), 'password');
     await tester.ensureVisible(find.byKey(const Key('submit')));
@@ -53,7 +53,7 @@ void main() {
     expect(api.loginCount, 1);
     await tester.tap(find.byTooltip('ออกจากระบบ'));
     await tester.pumpAndSettle();
-    expect(find.text('ยินดีต้อนรับกลับ'), findsOneWidget);
+    expect(find.text('กลับมาส่งไอเดียต่อ'), findsOneWidget);
     expect(store.value, isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     restarted.dispose();

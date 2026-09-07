@@ -17,7 +17,9 @@ import 'package:relaycontent/features/create/presentation/create_page.dart';
 import 'package:relaycontent/features/home/data/home_api.dart';
 import 'package:relaycontent/features/home/domain/home_data.dart';
 import 'package:relaycontent/features/home/presentation/home_controller.dart';
+import 'package:relaycontent/features/home/presentation/content_library_page.dart';
 import 'package:relaycontent/features/home/presentation/home_page.dart';
+import 'package:relaycontent/features/showcase/presentation/showcase_page.dart';
 
 import 'support/fakes.dart';
 
@@ -41,8 +43,9 @@ void main() {
         RepaintBoundary(
           key: boundaryKey,
           child: MaterialApp(
+            key: ValueKey(name),
             debugShowCheckedModeBanner: false,
-            theme: appTheme(Brightness.light),
+            theme: appTheme(Brightness.dark),
             home: page,
           ),
         ),
@@ -85,6 +88,11 @@ void main() {
       connections: _StubConnectionsApi(),
     );
     await capture('create', CreatePage(controller: create));
+
+    // แท็บใหม่ของ bottom nav — สินค้า (mock) และ คอนเทนต์ (backend จริง)
+    await capture('showcase', const ShowcasePage());
+    final content = HomeController(auth, _SampleHomeApi(_busySample()));
+    await capture('content-library', ContentLibraryPage(controller: content));
 
     await tester.pumpWidget(const SizedBox.shrink());
     create.dispose();

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>RelayContent - Onboarding 3</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Noto Sans Thai & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#acedff",
+            "background": "#0c1322",
+            "on-secondary-container": "#ffc2c4",
+            "primary-container": "#06b6d4",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-low": "#141b2b",
+            "surface-container-lowest": "#070e1d",
+            "on-primary": "#003640",
+            "outline": "#869397",
+            "surface-container-high": "#232a3a",
+            "surface-tint": "#4cd7f6",
+            "on-secondary-fixed": "#40000d",
+            "on-background": "#dce2f7",
+            "error": "#ffb4ab",
+            "surface-variant": "#2e3545",
+            "on-primary-fixed": "#001f26",
+            "on-surface-variant": "#bcc9cd",
+            "on-secondary-fixed-variant": "#92002a",
+            "surface-bright": "#323949",
+            "secondary-fixed-dim": "#ffb2b7",
+            "secondary-container": "#b50036",
+            "on-secondary": "#67001b",
+            "surface": "#0c1322",
+            "secondary": "#ffb2b7",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-container": "#00452e",
+            "on-surface": "#dce2f7",
+            "surface-container": "#191f2f",
+            "on-primary-container": "#00424f",
+            "inverse-surface": "#dce2f7",
+            "outline-variant": "#3d494c",
+            "tertiary": "#4edea3",
+            "secondary-fixed": "#ffdadb",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-tertiary": "#003824",
+            "primary": "#4cd7f6",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#293040",
+            "on-error": "#690005",
+            "surface-container-highest": "#2e3545",
+            "on-error-container": "#ffdad6",
+            "inverse-primary": "#00687a",
+            "tertiary-container": "#1bbd85",
+            "surface-dim": "#0c1322"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "2rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-xs": "0.25rem",
+            "bottom-bar-height": "4.5rem",
+            "screen-margin": "1rem",
+            "space-lg": "1.25rem",
+            "space-base": "1rem",
+            "action-button-diameter": "3.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "code-telemetry": ["Inter"],
+            "label-md": ["Noto Sans Thai", "Noto Sans"],
+            "headline-md": ["Noto Sans Thai", "Noto Sans"],
+            "metric-display": ["Inter"],
+            "metric-md": ["Inter"],
+            "body-lg": ["Noto Sans Thai", "Noto Sans"],
+            "body-sm": ["Noto Sans Thai", "Noto Sans"],
+            "headline-lg": ["Noto Sans Thai", "Noto Sans"],
+            "label-sm": ["Noto Sans Thai", "Noto Sans"],
+            "headline-sm": ["Noto Sans Thai", "Noto Sans"],
+            "body-md": ["Noto Sans Thai", "Noto Sans"]
+          },
+          "fontSize": {
+            "code-telemetry": ["11px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+            "label-md": ["13px", {"lineHeight": "19px", "fontWeight": "500"}],
+            "headline-md": ["20px", {"lineHeight": "30px", "fontWeight": "600"}],
+            "metric-display": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "metric-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["24px", {"lineHeight": "36px", "fontWeight": "700"}],
+            "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "headline-sm": ["17px", {"lineHeight": "26px", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Ambient Glow Effects */
+    .glow-rose-cyan {
+      box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.4), 0 0 16px rgba(6, 182, 212, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased flex items-center justify-center min-h-screen p-0 sm:p-4 select-none">
+<!-- Exact Logical Viewport Canvas: 390x844 px -->
+<div class="w-[390px] h-[844px] max-w-[390px] max-h-[844px] bg-background text-on-surface relative overflow-hidden flex flex-col justify-between p-6 shadow-2xl border border-outline-variant/30 sm:rounded-[36px]">
+<!-- Atmospheric Ambient Background Light Gradients -->
+<div class="absolute -top-16 -right-16 w-56 h-56 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute top-1/2 -left-20 w-60 h-60 bg-secondary-container/15 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Top Utility Bar / Header -->
+<header class="w-full flex items-center justify-between z-10 pt-2">
+<!-- Telemetry Badge (Maximum 1 per screen rule) -->
+<div class="h-5 px-2 bg-primary/10 border border-primary/25 rounded flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-code-telemetry text-code-telemetry text-primary">TIKTOK SYNC: READY</span>
+</div>
+<!-- Skip Button -->
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface active:scale-95 transition-all py-1 px-2.5 rounded-lg hover:bg-surface-container-high/60">
+        ข้าม
+      </button>
+</header>
+<!-- Main Visual Hero Section: Streamlined Phone Mockup with TikTok Pin Card -->
+<div class="relative w-full flex-1 flex flex-col items-center justify-center my-3 z-10">
+<!-- Streamlined Phone Enclosure -->
+<div class="w-[260px] h-[376px] rounded-[28px] bg-surface-container-lowest p-2 border border-outline-variant/60 relative shadow-2xl shadow-black/80 flex flex-col">
+<!-- Screen Bezel & Dynamic Island / Camera Notch -->
+<div class="w-full h-full rounded-[20px] bg-surface-container-low overflow-hidden relative border border-white/[0.05] flex flex-col justify-between">
+<!-- Background Video Content Frame -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-85 brightness-95" data-alt="A professional vertical beauty and skincare lifestyle video creator demonstrating a premium glass bottle serum in a sleek, dimly lit luxury studio setting. Deep navy and charcoal background tones, cinematic studio rim lighting in cool cyan and delicate warm rose reflections highlighting the aesthetic skincare packaging. Clean, ultra-sharp social video composition tailored for mobile screen presentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-cM80bCPIS1OwOUxw37O0i0B2BnlrO4VmAToyo11IAChyNbAsVwQiSlwSM_C4piNKkXTiPrUNafIuxnNEizU-Lkv_S40JphZwWa0EWjnZ9_xrai64yurROl5Hmz8SIHuAiG5wzuo72TEJO5Pv34K7y2GBgCp00YLkzrkvWeZC4_mOOEe9CJBxDAsgoRLkkI_llsbfJNDyKHFYnITYzi3PsFJwmA6lPagDshhVpguqrRAX_97fTn7m"/>
+<!-- Dark Gradient Scrim to Ensure Card Legibility -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/40"></div>
+</div>
+<!-- Top Status Bar Simulation -->
+<div class="relative z-10 w-full px-4 pt-2.5 flex items-center justify-between">
+<div class="w-14 h-3 rounded-full bg-black/50 backdrop-blur-md mx-auto -mt-1 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-variant"></span>
+</div>
+</div>
+<!-- Right Action Rail (TikTok Interaction Icons Minimal Simulation) -->
+<div class="absolute right-2.5 bottom-16 z-10 flex flex-col items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-on-surface/90">
+<span class="material-symbols-outlined text-[17px]">favorite</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-on-surface/90">
+<span class="material-symbols-outlined text-[17px]">chat_bubble</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-on-surface/90">
+<span class="material-symbols-outlined text-[17px]">bookmark</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-on-surface/90">
+<span class="material-symbols-outlined text-[17px]">share</span>
+</div>
+</div>
+<!-- TikTok Yellow/Orange Shopping Bag Pinned Anchor Card -->
+<div class="relative z-20 mx-2.5 mb-3">
+<!-- Animated Ping Anchor Marker -->
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 mb-1.5 rounded-full bg-primary/20 border border-primary/40 backdrop-blur-sm shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+<span class="font-code-telemetry text-[10px] leading-[14px] text-primary font-medium tracking-wide">AUTO-PIN ACTIVE</span>
+</div>
+<!-- TikTok Shopping Bag Preview Card -->
+<div class="w-[88%] bg-[#111827]/95 backdrop-blur-md p-2 rounded-xl border border-white/10 shadow-lg shadow-black/60 flex items-center gap-2 transform transition hover:scale-102">
+<!-- Shopping Bag Icon Box -->
+<div class="w-8 h-8 rounded-lg bg-[#FE2C55]/15 border border-[#FE2C55]/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#FE2C55] text-[18px]" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+</div>
+<!-- Product Info & Commission Telemetry -->
+<div class="flex-1 min-w-0 pr-1">
+<p class="font-label-sm text-[11px] leading-[14px] text-on-surface font-semibold truncate">
+                  เซรั่มบำรุงผิว
+                </p>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-code-telemetry text-[10px] leading-[13px] text-tertiary font-medium">
+                    (45 ฿ คอมมิชชัน)
+                  </span>
+</div>
+</div>
+<!-- Mini TikTok Yellow Tag -->
+<div class="shrink-0 bg-[#FFD338] text-black px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center leading-none">
+                ซื้อ
+              </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Subtle Glow Arc behind device mockup -->
+<div class="absolute -bottom-4 w-44 h-8 bg-primary/20 blur-xl rounded-full pointer-events-none"></div>
+</div>
+<!-- Bottom Content Cluster: Typography, Step Indicator & Primary Action CTA -->
+<div class="w-full flex flex-col gap-5 z-10 pb-2">
+<!-- Headline & Strict <=2 Lines Body Copy -->
+<div class="text-left space-y-2">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-tight">
+          ปักตะกร้าอัตโนมัติเมื่อเผยแพร่
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed line-clamp-2">
+          เชื่อมต่อข้อมูลสินค้าเข้ากับคลิป พร้อมปักตะกร้าตามที่ TikTok อนุญาตให้เข้าถึง
+        </p>
+</div>
+<!-- Step Indicator: 3 Dots (Step 3 Active) -->
+<div aria-label="ขั้นตอนที่ 3 จาก 3" class="flex items-center gap-2 pt-1">
+<!-- Step 1 (Inactive) -->
+<span class="w-2 h-2 rounded-full bg-surface-variant transition-all duration-300"></span>
+<!-- Step 2 (Inactive) -->
+<span class="w-2 h-2 rounded-full bg-surface-variant transition-all duration-300"></span>
+<!-- Step 3 (Active: Expanded Capsule cyan pill) -->
+<span class="w-6 h-2 rounded-full bg-primary-container shadow-sm shadow-primary/50 transition-all duration-300"></span>
+</div>
+<!-- Action Button Group: Glowing CTA -->
+<div class="w-full pt-1">
+<button class="w-full h-12 rounded-xl bg-[#F43F5E] text-white font-headline-sm text-headline-sm flex items-center justify-center gap-2 glow-rose-cyan active:scale-[0.98] transition-transform duration-150 cursor-pointer" type="button">
+<span>เริ่มต้นใช้งาน</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

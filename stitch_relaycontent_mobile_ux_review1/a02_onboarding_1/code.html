@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>A02 Onboarding 1 - RelayContent</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#acedff",
+            "background": "#0c1322",
+            "on-secondary-container": "#ffc2c4",
+            "primary-container": "#06b6d4",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-low": "#141b2b",
+            "surface-container-lowest": "#070e1d",
+            "on-primary": "#003640",
+            "outline": "#869397",
+            "surface-container-high": "#232a3a",
+            "surface-tint": "#4cd7f6",
+            "on-secondary-fixed": "#40000d",
+            "on-background": "#dce2f7",
+            "error": "#ffb4ab",
+            "surface-variant": "#2e3545",
+            "on-primary-fixed": "#001f26",
+            "on-surface-variant": "#bcc9cd",
+            "on-secondary-fixed-variant": "#92002a",
+            "surface-bright": "#323949",
+            "secondary-fixed-dim": "#ffb2b7",
+            "secondary-container": "#b50036",
+            "on-secondary": "#67001b",
+            "surface": "#0c1322",
+            "secondary": "#ffb2b7",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-container": "#00452e",
+            "on-surface": "#dce2f7",
+            "surface-container": "#191f2f",
+            "on-primary-container": "#00424f",
+            "inverse-surface": "#dce2f7",
+            "outline-variant": "#3d494c",
+            "tertiary": "#4edea3",
+            "secondary-fixed": "#ffdadb",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-tertiary": "#003824",
+            "primary": "#4cd7f6",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#293040",
+            "on-error": "#690005",
+            "surface-container-highest": "#2e3545",
+            "on-error-container": "#ffdad6",
+            "inverse-primary": "#00687a",
+            "tertiary-container": "#1bbd85",
+            "surface-dim": "#0c1322"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "2rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-xs": "0.25rem",
+            "bottom-bar-height": "4.5rem",
+            "screen-margin": "1rem",
+            "space-lg": "1.25rem",
+            "space-base": "1rem",
+            "action-button-diameter": "3.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "code-telemetry": ["Inter", "sans-serif"],
+            "label-md": ["Noto Sans Thai", "sans-serif"],
+            "headline-md": ["Noto Sans Thai", "sans-serif"],
+            "metric-display": ["Inter", "sans-serif"],
+            "metric-md": ["Inter", "sans-serif"],
+            "body-lg": ["Noto Sans Thai", "sans-serif"],
+            "body-sm": ["Noto Sans Thai", "sans-serif"],
+            "headline-lg": ["Noto Sans Thai", "sans-serif"],
+            "label-sm": ["Noto Sans Thai", "sans-serif"],
+            "headline-sm": ["Noto Sans Thai", "sans-serif"],
+            "body-md": ["Noto Sans Thai", "sans-serif"]
+          },
+          "fontSize": {
+            "code-telemetry": ["11px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+            "label-md": ["13px", {"lineHeight": "19px", "fontWeight": "500"}],
+            "headline-md": ["20px", {"lineHeight": "30px", "fontWeight": "600"}],
+            "metric-display": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "metric-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["24px", {"lineHeight": "36px", "fontWeight": "700"}],
+            "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "headline-sm": ["17px", {"lineHeight": "26px", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface flex items-center justify-center min-h-screen p-0 m-0 antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Viewport Canvas (Strict 390x844 Dimensions) -->
+<main class="w-[390px] h-[844px] max-w-[390px] mx-auto overflow-hidden relative flex flex-col justify-between p-6 bg-surface border border-outline-variant/30 shadow-2xl">
+<!-- Atmospheric subtle ambient glow in backdrop -->
+<div class="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
+<div class="absolute top-1/2 -right-28 w-80 h-80 rounded-full bg-secondary-container/10 blur-3xl pointer-events-none"></div>
+<!-- Top Navigation Utility Row -->
+<header class="relative z-10 flex items-center justify-between pt-2">
+<!-- Micro-Telemetry System Status Indicator (Max 1 per screen) -->
+<div class="inline-flex items-center gap-1.5 h-5 px-1.5 rounded bg-primary-container/10 border border-primary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-code-telemetry text-code-telemetry text-primary">SYSTEM : READY</span>
+</div>
+<!-- Secondary Skip Action -->
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors duration-150 active:scale-95 py-1 px-2" type="button">
+        ข้าม
+      </button>
+</header>
+<!-- Center Section: Single Focused Visual Card + Typography Content -->
+<section class="relative z-10 flex flex-col items-center my-auto w-full">
+<!-- Primary Focused Visual Card: Product Catalog Live Telemetry -->
+<div class="w-full bg-surface-container rounded-xl p-card-padding border border-outline-variant/40 shadow-lg relative mb-7">
+<!-- Status Indicator Pill -->
+<div class="flex items-center justify-between pb-3 mb-3 border-b border-outline-variant/30">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="inventory_2">inventory_2</span>
+<span class="font-code-telemetry text-code-telemetry text-on-surface-variant tracking-wider">SKU #4892</span>
+</div>
+<div class="flex items-center gap-1 text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="font-body-sm text-body-sm text-tertiary font-medium">พร้อมจำหน่าย</span>
+</div>
+</div>
+<!-- Product Details Main Layout -->
+<div class="flex items-center gap-3.5 mb-4">
+<!-- Thumbnail Container -->
+<div class="relative w-16 h-16 rounded-lg bg-surface-container-high border border-outline-variant/50 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist studio photograph of a premium luxury hydrating hyaluronic acid facial serum bottle in a deep frosted blue glass container against a dark sleek charcoal tabletop. Soft cinematic side lighting highlights the elegant dropper design with subtle cyan reflections. The overall aesthetic is disciplined, dark-mode modern corporate and high-tech e-commerce." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCe-_ogoghnEGO5-ejw5ehXyjhl9yBVq_GjjI8dKY6-wrj1qdt1XB5g8aWru_m-fYfHfurOVsYOFwEU3WeH-GlIYWoW6_HZZwcNsceRuTePox6YWGDaC7T2zJBrgZI41ImbHoRx-oyj9IdkSm4hoqyipUZ1CVWx5hRFLOiJyEGGZLirbkfABX5JSLkdcx81l4_VgNMVI6wwZCJaeMmpbVX4AbNknYzjSjGkF2KhuANHH7ceneXaKNvV"/>
+</div>
+<!-- Product Identifiers -->
+<div class="flex flex-col justify-center overflow-hidden">
+<h3 class="font-headline-sm text-headline-sm text-on-surface truncate leading-tight">
+              เซรั่มบำรุงผิวไฮยา 50ml
+            </h3>
+<span class="font-code-telemetry text-code-telemetry text-on-surface-variant mt-0.5">
+              ความชุ่มชื้นเข้มข้น • สกินแคร์
+            </span>
+</div>
+</div>
+<!-- Telemetry Data Sub-Card: Commission & Real Stock -->
+<div class="grid grid-cols-2 gap-2 p-2.5 bg-surface-container-low rounded-lg border border-outline-variant/30">
+<!-- Commission Stat -->
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">คอมมิชชัน</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-metric-md text-metric-md text-primary">18%</span>
+<span class="font-metric-md text-metric-md text-on-surface font-semibold">(45 ฿)</span>
+</div>
+</div>
+<!-- Stock Timestamp Stat -->
+<div class="flex flex-col justify-end border-l border-outline-variant/30 pl-2.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">สต็อก</span>
+<span class="font-body-sm text-body-sm text-on-surface font-normal mt-0.5 truncate">
+              อัปเดตล่าสุด 2 นาทีที่แล้ว
+            </span>
+</div>
+</div>
+</div>
+<!-- Text Cluster: Single Headline & Max 2-line Subtitle -->
+<div class="w-full text-center px-1">
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-2">
+          เลือกสินค้าที่ต้องการทำคอนเทนต์
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-[1.5] max-w-[320px] mx-auto">
+          ดึงสินค้าจากร้านค้าที่คุณดูแล ตรวจสอบค่าคอมมิชชันและข้อมูลสต็อกอัปเดตล่าสุด
+        </p>
+</div>
+</section>
+<!-- Bottom Actions Cluster: Step Dots Indicator & Primary CTA -->
+<footer class="relative z-10 flex flex-col items-center gap-6 pb-2 w-full">
+<!-- 3-Dot Step Indicator (Step 1 Active with Cyan Glow) -->
+<nav aria-label="Onboarding Progress" class="flex items-center gap-2">
+<!-- Active Dot: Step 1 -->
+<div class="w-6 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(76,215,246,0.8)] transition-all duration-300"></div>
+<!-- Inactive Dot: Step 2 -->
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant/70"></div>
+<!-- Inactive Dot: Step 3 -->
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant/70"></div>
+</nav>
+<!-- Primary Action CTA Button (Min Touch Target 48px) -->
+<button class="w-full h-12 rounded-xl bg-gradient-to-r from-secondary-container via-secondary-container to-secondary-container hover:brightness-110 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(181,0,54,0.3)] text-on-primary-fixed font-headline-sm text-headline-sm font-semibold tracking-wide" style="background-color: #F43F5E; color: #FFFFFF;" type="button">
+<span>ถัดไป</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</footer>
+</main>
+</body></html>

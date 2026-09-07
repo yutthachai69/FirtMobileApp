@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>A05 รีเซ็ตรหัสผ่าน - RelayContent</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#acedff",
+            "background": "#0c1322",
+            "on-secondary-container": "#ffc2c4",
+            "primary-container": "#06b6d4",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-low": "#141b2b",
+            "surface-container-lowest": "#070e1d",
+            "on-primary": "#003640",
+            "outline": "#869397",
+            "surface-container-high": "#232a3a",
+            "surface-tint": "#4cd7f6",
+            "on-secondary-fixed": "#40000d",
+            "on-background": "#dce2f7",
+            "error": "#ffb4ab",
+            "surface-variant": "#2e3545",
+            "on-primary-fixed": "#001f26",
+            "on-surface-variant": "#bcc9cd",
+            "on-secondary-fixed-variant": "#92002a",
+            "surface-bright": "#323949",
+            "secondary-fixed-dim": "#ffb2b7",
+            "secondary-container": "#b50036",
+            "on-secondary": "#67001b",
+            "surface": "#0c1322",
+            "secondary": "#ffb2b7",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-container": "#00452e",
+            "on-surface": "#dce2f7",
+            "surface-container": "#191f2f",
+            "on-primary-container": "#00424f",
+            "inverse-surface": "#dce2f7",
+            "outline-variant": "#3d494c",
+            "tertiary": "#4edea3",
+            "secondary-fixed": "#ffdadb",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-tertiary": "#003824",
+            "primary": "#4cd7f6",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#293040",
+            "on-error": "#690005",
+            "surface-container-highest": "#2e3545",
+            "on-error-container": "#ffdad6",
+            "inverse-primary": "#00687a",
+            "tertiary-container": "#1bbd85",
+            "surface-dim": "#0c1322"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "2rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-xs": "0.25rem",
+            "bottom-bar-height": "4.5rem",
+            "screen-margin": "1rem",
+            "space-lg": "1.25rem",
+            "space-base": "1rem",
+            "action-button-diameter": "3.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "code-telemetry": ["Inter", "monospace"],
+            "label-md": ["Noto Sans Thai", "Noto Sans", "sans-serif"],
+            "headline-md": ["Noto Sans Thai", "Noto Sans", "sans-serif"],
+            "metric-display": ["Inter", "sans-serif"],
+            "metric-md": ["Inter", "sans-serif"],
+            "body-lg": ["Noto Sans Thai", "Noto Sans", "sans-serif"],
+            "body-sm": ["Noto Sans Thai", "Noto Sans", "sans-serif"],
+            "headline-lg": ["Noto Sans Thai", "Noto Sans", "sans-serif"],
+            "label-sm": ["Noto Sans Thai", "Noto Sans", "sans-serif"],
+            "headline-sm": ["Noto Sans Thai", "Noto Sans", "sans-serif"],
+            "body-md": ["Noto Sans Thai", "Noto Sans", "sans-serif"]
+          },
+          "fontSize": {
+            "code-telemetry": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "19px", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "metric-display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "metric-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "36px", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-sm": ["17px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    body {
+      background-color: #070e1d;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface flex items-center justify-center min-h-screen">
+<!-- Exact Logical Viewport: 390x844 px (h-[844px] max-w-[390px]) -->
+<main class="w-[390px] h-[844px] max-w-[390px] bg-background relative px-6 py-6 flex flex-col justify-between overflow-hidden shadow-2xl border border-outline-variant/30 rounded-xl select-none">
+<!-- Top Bar & Ambient Header -->
+<div>
+<!-- Status & Top Navigation -->
+<div class="flex items-center justify-between pt-2 pb-6">
+<button aria-label="กลับไปหน้าก่อนหน้า" class="w-10 h-10 -ml-2 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors active:scale-95 duration-150" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<!-- Precision Telemetry Indicator: Max 1 per screen -->
+<div class="h-5 px-2 bg-primary-container/10 border border-primary/30 rounded flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-code-telemetry text-code-telemetry text-primary tracking-wider">AUTH: RECOVERY_V2</span>
+</div>
+</div>
+<!-- Main Headline & Subtitle Section -->
+<div class="mt-4 space-y-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary mb-5 shadow-inner">
+<span class="material-symbols-outlined text-[26px]">lock_reset</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">
+          รีเซ็ตรหัสผ่าน
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          กรอกอีเมลที่ใช้สมัครบัญชี RelayContent เราจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปยังกล่องข้อความของคุณ
+        </p>
+</div>
+<!-- Form Section -->
+<form class="mt-8 space-y-6" id="recovery-form" onsubmit="event.preventDefault();">
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface font-medium" for="recovery-email">
+              อีเมลที่ใช้สมัคร RelayContent
+            </label>
+<span class="font-code-telemetry text-code-telemetry text-outline">VERIFIED ID</span>
+</div>
+<div class="relative flex items-center">
+<input autocomplete="email" class="w-full h-12 bg-surface-container-low text-on-surface placeholder:text-outline/70 border border-outline-variant rounded-lg px-3.5 pl-11 font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150" id="recovery-email" inputmode="email" name="email" placeholder="name@example.com" required="" type="email"/>
+<span class="material-symbols-outlined text-outline absolute left-3.5 text-[20px] pointer-events-none">mail</span>
+</div>
+<p class="font-label-sm text-label-sm text-outline px-0.5">
+            ระบบจะส่งลิงก์ยืนยันความปลอดภัยที่ใช้งานได้ภายใน 15 นาที
+          </p>
+</div>
+<!-- System Security Micro-Card (Bento Element) -->
+<div class="p-3.5 bg-surface-container-low/70 rounded-lg border border-outline-variant/50 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">verified_user</span>
+<div class="space-y-0.5">
+<p class="font-label-sm text-label-sm text-on-surface font-semibold">การรักษาความปลอดภัยสองชั้น</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">หากไม่พบอีเมลในกล่องจดหมายหลัก กรุณาตรวจสอบโฟลเดอร์จดหมายขยะหรือโปรโมชัน</p>
+</div>
+</div>
+<!-- Primary Action Button -->
+<button class="w-full h-12 bg-[#F43F5E] hover:bg-[#e13251] active:scale-[0.98] text-white font-label-md text-label-md font-semibold rounded-lg flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(244,63,94,0.30)] transition-all duration-150 mt-2" id="submit-btn" type="submit">
+<span>ส่งลิงก์รีเซ็ตรหัสผ่าน</span>
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</form>
+</div>
+<!-- Bottom Navigation Link Section -->
+<div class="pt-4 pb-4 border-t border-outline-variant/40 flex flex-col items-center justify-center gap-3">
+<a class="inline-flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors py-2 px-3 rounded active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span>กลับไปหน้าเข้าสู่ระบบ</span>
+</a>
+<div class="flex items-center justify-center gap-2">
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-code-telemetry text-code-telemetry text-outline/80">RELAYCONTENT SYSTEM SECURE</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+</div>
+</div>
+</main>
+<script>
+    const form = document.getElementById('recovery-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const emailInput = document.getElementById('recovery-email');
+
+    form.addEventListener('submit', () => {
+      if (emailInput.value) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+          <span>กำลังส่งลิงก์...</span>
+        `;
+        setTimeout(() => {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('bg-[#F43F5E]');
+          submitBtn.classList.add('bg-tertiary-container', 'text-on-tertiary-container');
+          submitBtn.innerHTML = `
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>ส่งลิงก์เรียบร้อยแล้ว</span>
+          `;
+        }, 1200);
+      }
+    });
+  </script>
+</body></html>

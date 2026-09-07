@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>A02b Onboarding 2 - RelayContent</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#acedff",
+            "background": "#0c1322",
+            "on-secondary-container": "#ffc2c4",
+            "primary-container": "#06b6d4",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-low": "#141b2b",
+            "surface-container-lowest": "#070e1d",
+            "on-primary": "#003640",
+            "outline": "#869397",
+            "surface-container-high": "#232a3a",
+            "surface-tint": "#4cd7f6",
+            "on-secondary-fixed": "#40000d",
+            "on-background": "#dce2f7",
+            "error": "#ffb4ab",
+            "surface-variant": "#2e3545",
+            "on-primary-fixed": "#001f26",
+            "on-surface-variant": "#bcc9cd",
+            "on-secondary-fixed-variant": "#92002a",
+            "surface-bright": "#323949",
+            "secondary-fixed-dim": "#ffb2b7",
+            "secondary-container": "#b50036",
+            "on-secondary": "#67001b",
+            "surface": "#0c1322",
+            "secondary": "#ffb2b7",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-container": "#00452e",
+            "on-surface": "#dce2f7",
+            "surface-container": "#191f2f",
+            "on-primary-container": "#00424f",
+            "inverse-surface": "#dce2f7",
+            "outline-variant": "#3d494c",
+            "tertiary": "#4edea3",
+            "secondary-fixed": "#ffdadb",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-tertiary": "#003824",
+            "primary": "#4cd7f6",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#293040",
+            "on-error": "#690005",
+            "surface-container-highest": "#2e3545",
+            "on-error-container": "#ffdad6",
+            "inverse-primary": "#00687a",
+            "tertiary-container": "#1bbd85",
+            "surface-dim": "#0c1322"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "2rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-xs": "0.25rem",
+            "bottom-bar-height": "4.5rem",
+            "screen-margin": "1rem",
+            "space-lg": "1.25rem",
+            "space-base": "1rem",
+            "action-button-diameter": "3.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "code-telemetry": ["Inter"],
+            "label-md": ["Noto Sans Thai", "Noto Sans"],
+            "headline-md": ["Noto Sans Thai", "Noto Sans"],
+            "metric-display": ["Inter"],
+            "metric-md": ["Inter"],
+            "body-lg": ["Noto Sans Thai", "Noto Sans"],
+            "body-sm": ["Noto Sans Thai", "Noto Sans"],
+            "headline-lg": ["Noto Sans Thai", "Noto Sans"],
+            "label-sm": ["Noto Sans Thai", "Noto Sans"],
+            "headline-sm": ["Noto Sans Thai", "Noto Sans"],
+            "body-md": ["Noto Sans Thai", "Noto Sans"]
+          },
+          "fontSize": {
+            "code-telemetry": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "19px", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "metric-display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "metric-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "36px", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-sm": ["17px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased flex items-center justify-center min-h-screen p-0 m-0">
+<!-- Mobile Screen Container: 390px x 844px -->
+<main class="w-[390px] h-[844px] max-w-[390px] mx-auto overflow-hidden relative flex flex-col justify-between p-6 bg-surface shadow-2xl border border-outline-variant/30 select-none">
+<!-- Subtle Ambient Backdrop Glow -->
+<div class="absolute -top-16 -right-16 w-56 h-56 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-32 -left-20 w-64 h-64 bg-secondary-container/15 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Top Bar: Step context & Skip action -->
+<header class="relative z-10 flex items-center justify-between pt-2">
+<!-- Telemetry Brand Anchor / Screen Indicator -->
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="hub">hub</span>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight text-on-surface">RelayContent</span>
+<span class="h-5 px-1.5 rounded bg-primary/10 border border-primary/25 text-primary font-code-telemetry text-code-telemetry flex items-center">STAGE: 02</span>
+</div>
+<!-- Skip CTA -->
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface active:scale-95 transition-all duration-150 py-1 px-2.5 rounded-lg hover:bg-surface-container">
+        ข้าม
+      </button>
+</header>
+<!-- Main Content Canvas -->
+<section class="relative z-10 flex flex-col items-center justify-center my-auto w-full">
+<!-- Video Preview Mockup Card (9:16 vertical ratio) -->
+<div class="w-[218px] h-[330px] rounded-xl bg-surface-container border border-outline-variant/60 shadow-lg relative overflow-hidden flex flex-col justify-between p-3.5 group">
+<!-- Background Simulated Content Layer -->
+<div class="absolute inset-0 bg-surface-container-high/90">
+<img class="w-full h-full object-cover opacity-35 filter contrast-125" data-alt="A vertical cinematic studio video frame showing aesthetic modern skincare cosmetic bottles resting on polished dark stone with delicate water drops and moody teal rim lighting. The composition strictly adheres to a vertical smartphone 9:16 aspect ratio in high contrast dark mode styling, radiating professional quiet luxury commercial production quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzcoMkHXELE7dCvYVyov9qlelrC7VflhsMvnktGSdTrV9jjC61UhopCaWH8GV7frKSdPgeAXAwcbbeeESSORHXuegJ2CGxwV77VVOAKPVuWCNX0aGV9fSZwG9V5EqdRpF6Qtpc1h4k_Jhb-4WazkDwIN-DmTLpBzjkSs2ZLS0IwEN0hlcc_PeHvlsiSbWawmSHuCuzjpDWmTrLbB60IkO9A4QuNvGCK5wWfthwYMt1Jd_X10PuQlx7"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent"></div>
+</div>
+<!-- Top Card Telemetry & Status Badge -->
+<div class="relative z-10 flex items-center justify-between w-full">
+<!-- Pending Review Soft Badge (Mint/Amber soft badge) -->
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 backdrop-blur-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+<span class="font-label-sm text-label-sm font-medium">รอตรวจสอบ</span>
+</div>
+<!-- Video Duration & Format Metric -->
+<span class="font-code-telemetry text-code-telemetry text-on-surface-variant bg-surface-container-lowest/80 px-1.5 py-0.5 rounded backdrop-blur-sm border border-outline-variant/30">
+            00:32
+          </span>
+</div>
+<!-- Central Play / Review Trigger Watermark -->
+<div class="relative z-10 self-center my-auto flex items-center justify-center">
+<div class="w-12 h-12 rounded-full bg-surface/80 border border-outline/30 backdrop-blur-md flex items-center justify-center text-primary shadow-md">
+<span class="material-symbols-outlined text-[26px] ml-0.5" data-icon="play_arrow">play_arrow</span>
+</div>
+</div>
+<!-- Bottom Review & Approval Card Overlay -->
+<div class="relative z-10 flex flex-col gap-2 bg-surface-container-low/95 p-2.5 rounded-lg border border-outline-variant/40 backdrop-blur-md">
+<!-- Script Preview Snippet -->
+<div class="flex items-start gap-1.5">
+<span class="material-symbols-outlined text-primary text-[15px] shrink-0 mt-0.5" data-icon="auto_awesome">auto_awesome</span>
+<p class="font-body-sm text-[11px] leading-[15px] text-on-surface-variant line-clamp-1">
+              "รีวิวเซรั่มสูตรใหม่ ล็อคความชุ่มชื้น..."
+            </p>
+</div>
+<!-- Toggle: Content Approval ('อนุมัติเนื้อหา') -->
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/30">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-medium">อนุมัติเนื้อหา</span>
+<span class="font-code-telemetry text-[10px] text-tertiary">READY_TO_POST</span>
+</div>
+<!-- Interactive Switch UI Component -->
+<button aria-checked="true" class="w-10 h-5 bg-tertiary-container rounded-full relative transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-primary" id="approveToggle" role="switch">
+<span class="w-4 h-4 rounded-full bg-on-tertiary-fixed shadow-sm absolute top-0.5 right-0.5 transition-transform duration-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-[11px] text-tertiary-container font-bold" data-icon="check">check</span>
+</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Headline & Supporting Body Text -->
+<div class="text-center mt-6 px-2">
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight mb-2">
+          ตรวจสอบและอนุมัติคลิปก่อนโพสต์
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[320px] mx-auto leading-relaxed">
+          ระบบสร้างวิดีโอร่างพร้อมสคริปต์ ให้คุณตรวจความถูกต้องและปรับแต่งก่อนตั้งเวลาเผยแพร่จริง
+        </p>
+</div>
+</section>
+<!-- Footer Controls: Indicator & CTA Navigation -->
+<footer class="relative z-10 flex flex-col items-center gap-5 pb-2">
+<!-- Step Indicator: 3 Dots (Step 2 Active) -->
+<div aria-label="ขั้นตอนที่ 2 จาก 3" class="flex items-center space-x-2">
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant/60 transition-all"></div>
+<div class="w-6 h-1.5 rounded-full bg-primary transition-all duration-300"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant/60 transition-all"></div>
+</div>
+<!-- Primary Action CTA Button -->
+<button class="w-full h-12 bg-primary-container text-on-primary-container hover:bg-primary transition-all active:scale-[0.98] rounded-xl font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary-container/20">
+<span>ถัดไป</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<!-- Home Indicator Safe Area Spacer -->
+<div class="w-32 h-1 bg-outline-variant/40 rounded-full mx-auto"></div>
+</footer>
+</main>
+</body></html>

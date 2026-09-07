@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>B03 Eligibility &amp; Scopes - RelayContent</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#acedff",
+            "background": "#0c1322",
+            "on-secondary-container": "#ffc2c4",
+            "primary-container": "#06b6d4",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-low": "#141b2b",
+            "surface-container-lowest": "#070e1d",
+            "on-primary": "#003640",
+            "outline": "#869397",
+            "surface-container-high": "#232a3a",
+            "surface-tint": "#4cd7f6",
+            "on-secondary-fixed": "#40000d",
+            "on-background": "#dce2f7",
+            "error": "#ffb4ab",
+            "surface-variant": "#2e3545",
+            "on-primary-fixed": "#001f26",
+            "on-surface-variant": "#bcc9cd",
+            "on-secondary-fixed-variant": "#92002a",
+            "surface-bright": "#323949",
+            "secondary-fixed-dim": "#ffb2b7",
+            "secondary-container": "#b50036",
+            "on-secondary": "#67001b",
+            "surface": "#0c1322",
+            "secondary": "#ffb2b7",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-container": "#00452e",
+            "on-surface": "#dce2f7",
+            "surface-container": "#191f2f",
+            "on-primary-container": "#00424f",
+            "inverse-surface": "#dce2f7",
+            "outline-variant": "#3d494c",
+            "tertiary": "#4edea3",
+            "secondary-fixed": "#ffdadb",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-tertiary": "#003824",
+            "primary": "#4cd7f6",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#293040",
+            "on-error": "#690005",
+            "surface-container-highest": "#2e3545",
+            "on-error-container": "#ffdad6",
+            "inverse-primary": "#00687a",
+            "tertiary-container": "#1bbd85",
+            "surface-dim": "#0c1322"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "2rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-xs": "0.25rem",
+            "bottom-bar-height": "4.5rem",
+            "screen-margin": "1rem",
+            "space-lg": "1.25rem",
+            "space-base": "1rem",
+            "action-button-diameter": "3.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "code-telemetry": ["Inter"],
+            "label-md": ["Noto Sans"],
+            "headline-md": ["Noto Sans"],
+            "metric-display": ["Inter"],
+            "metric-md": ["Inter"],
+            "body-lg": ["Noto Sans"],
+            "body-sm": ["Noto Sans"],
+            "headline-lg": ["Noto Sans"],
+            "label-sm": ["Noto Sans"],
+            "headline-sm": ["Noto Sans"],
+            "body-md": ["Noto Sans"]
+          },
+          "fontSize": {
+            "code-telemetry": [
+              "11px",
+              { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }
+            ],
+            "label-md": [
+              "13px",
+              { "lineHeight": "19px", "fontWeight": "500" }
+            ],
+            "headline-md": [
+              "20px",
+              { "lineHeight": "30px", "fontWeight": "600" }
+            ],
+            "metric-display": [
+              "28px",
+              { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }
+            ],
+            "metric-md": [
+              "18px",
+              { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }
+            ],
+            "body-lg": [
+              "16px",
+              { "lineHeight": "24px", "fontWeight": "400" }
+            ],
+            "body-sm": [
+              "12px",
+              { "lineHeight": "18px", "fontWeight": "400" }
+            ],
+            "headline-lg": [
+              "24px",
+              { "lineHeight": "36px", "fontWeight": "700" }
+            ],
+            "label-sm": [
+              "11px",
+              { "lineHeight": "16px", "fontWeight": "500" }
+            ],
+            "headline-sm": [
+              "17px",
+              { "lineHeight": "26px", "fontWeight": "600" }
+            ],
+            "body-md": [
+              "14px",
+              { "lineHeight": "22px", "fontWeight": "400" }
+            ]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container flex items-center justify-center min-h-screen p-0 sm:p-4">
+<!-- Mobile Viewport Container: 390x844 strict bounds -->
+<main class="w-[390px] h-[844px] max-w-[390px] max-h-[844px] bg-surface flex flex-col justify-between overflow-hidden relative shadow-2xl sm:rounded-xl border border-outline-variant/30">
+<!-- Top System & Status Header -->
+<header class="px-5 pt-4 pb-2 shrink-0">
+<!-- Status bar visual placeholder -->
+<div class="flex justify-between items-center text-on-surface-variant mb-3 px-1">
+<span class="font-code-telemetry text-code-telemetry font-semibold">09:41</span>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[15px]">wifi</span>
+<span class="material-symbols-outlined text-[17px]">battery_full</span>
+</div>
+</div>
+<!-- App Bar & Precision Telemetry Micro-tag (Only one per screen rule) -->
+<div class="flex items-center justify-between border-b border-outline-variant/40 pb-3">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high border border-outline-variant/60 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold tracking-tight text-on-surface leading-none">RelayContent</h1>
+<p class="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-none">Control Room Auth</p>
+</div>
+</div>
+<!-- Single Telemetry Micro-tag -->
+<div class="h-5 px-1.5 rounded bg-primary/10 border border-primary/30 flex items-center">
+<span class="font-code-telemetry text-code-telemetry text-primary font-medium tracking-wide">SYNC: LIVE OAUTH</span>
+</div>
+</div>
+</header>
+<!-- Scrollable Content Canvas (No Nav Shell: Linear/Task Authorization Intent) -->
+<div class="flex-1 overflow-y-auto px-5 py-3 space-y-4">
+<!-- Primary Context Headline (No Truncation) -->
+<section class="space-y-1">
+<div class="inline-flex items-center gap-1.5 text-primary text-xs font-medium">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="font-label-sm text-label-sm">TikTok Shop Creator Connection</span>
+</div>
+<h2 class="font-headline-md text-headline-md font-semibold text-on-surface leading-tight">
+          ตรวจสอบคุณสมบัติและสิทธิ์การเชื่อมต่อ
+        </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          ยินยอมให้ระบบ RelayContent ประมวลผลข้อมูลและจัดการคอนเทนต์คอมเมิร์ซผ่านสิทธิ์บัญชีทางการของคุณ
+        </p>
+</section>
+<!-- Eligibility Status Checks Card -->
+<section class="bg-surface-container-low border border-outline-variant/50 rounded-xl p-3.5 space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold">สถานะคุณสมบัติระบบ</span>
+<span class="font-code-telemetry text-code-telemetry text-tertiary">READY_TO_ATTACH</span>
+</div>
+<div class="space-y-2.5 pt-1">
+<!-- Check 1: Account Status -->
+<div class="flex items-center justify-between p-2.5 bg-surface-container rounded-lg border border-outline-variant/30">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-tertiary/15 border border-tertiary/40 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface">บัญชี TikTok Creator</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold px-2 py-0.5 bg-tertiary/10 rounded border border-tertiary/30">ผ่านเกณฑ์</span>
+</div>
+<!-- Check 2: Showcase Status -->
+<div class="flex items-center justify-between p-2.5 bg-surface-container rounded-lg border border-outline-variant/30">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-tertiary/15 border border-tertiary/40 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface">สิทธิ์การใช้งาน TikTok Shop Showcase</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold px-2 py-0.5 bg-tertiary/10 rounded border border-tertiary/30">พร้อมเชื่อมต่อ</span>
+</div>
+</div>
+</section>
+<!-- Scope Breakdown Section -->
+<section class="space-y-2.5">
+<div class="flex items-center justify-between">
+<h3 class="font-label-md text-label-md text-on-surface-variant font-medium">สิทธิ์ที่ร้องขอ (Scope Authorization)</h3>
+<span class="font-code-telemetry text-code-telemetry text-on-surface-variant">2 SCOPES</span>
+</div>
+<!-- Scope 1: Video Publish with Yellow Cart -->
+<article class="p-3 bg-surface-container rounded-xl border border-outline-variant/50 space-y-2">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary mt-0.5 shrink-0">
+<span class="material-symbols-outlined text-[18px]">movie</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="font-headline-sm text-[15px] font-semibold text-on-surface">เผยแพร่วิดีโอพร้อมตะกร้า</h4>
+<span class="font-code-telemetry text-[10px] text-tertiary">REQUIRED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                อนุญาตให้ระบบกำหนดลิงก์ตะกร้าสินค้าสีเหลืองและเผยแพร่คอนเทนต์อัตโนมัติตามกำหนดการ
+              </p>
+<div class="mt-2 flex items-center gap-1.5 text-outline">
+<span class="font-code-telemetry text-code-telemetry text-primary/80 bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant/30">
+                  creator.video.write
+                </span>
+</div>
+</div>
+</div>
+</article>
+<!-- Scope 2: Showcase Product Read -->
+<article class="p-3 bg-surface-container rounded-xl border border-outline-variant/50 space-y-2">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary mt-0.5 shrink-0">
+<span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="font-headline-sm text-[15px] font-semibold text-on-surface">อ่านสินค้าใน Showcase</h4>
+<span class="font-code-telemetry text-[10px] text-tertiary">REQUIRED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                ดึงข้อมูลรายการสินค้า ค่าคอมมิชชัน และสต็อกคงเหลือเพื่อการเลือกปักตะกร้าที่แม่นยำ
+              </p>
+<div class="mt-2 flex items-center gap-1.5 text-outline">
+<span class="font-code-telemetry text-code-telemetry text-primary/80 bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant/30">
+                  creator.showcase.read
+                </span>
+</div>
+</div>
+</div>
+</article>
+<!-- Technical Details Accordion (Inline Vanilla JS) -->
+<div class="border border-outline-variant/30 rounded-xl bg-surface-container-low/80 overflow-hidden">
+<button class="w-full px-3.5 py-2.5 flex items-center justify-between text-left hover:bg-surface-container-high/40 transition-colors duration-150" id="accordion-trigger" onclick="toggleAccordion()" type="button">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-outline">terminal</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">รายละเอียดทางเทคนิค (Raw API Scopes)</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200" id="accordion-icon">expand_more</span>
+</button>
+<div class="hidden px-3.5 pb-3 pt-1 border-t border-outline-variant/30 space-y-2" id="accordion-content">
+<div class="p-2 bg-surface-container-lowest rounded border border-outline-variant/40 font-code-telemetry text-code-telemetry text-on-surface-variant space-y-1">
+<div class="flex justify-between">
+<span class="text-outline">AUTH_PROTOCOL:</span>
+<span class="text-on-surface font-semibold">OAuth 2.0 PKCE</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline">TOKEN_SCOPE_1:</span>
+<span class="text-primary font-semibold">creator.video.write</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline">TOKEN_SCOPE_2:</span>
+<span class="text-primary font-semibold">creator.showcase.read</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline">TTL:</span>
+<span>86400s (Auto-refresh)</span>
+</div>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant leading-tight">
+              การเชื่อมต่อนี้ใช้ API ทางการจาก TikTok for Business โดยไม่มีการบันทึกรหัสผ่านของคุณ
+            </p>
+</div>
+</div>
+</section>
+<!-- Trust & Data Policy Footnote -->
+<div class="flex items-start gap-2 pt-1 pb-2">
+<span class="material-symbols-outlined text-[14px] text-outline mt-0.5 shrink-0">lock</span>
+<p class="font-body-sm text-[11px] text-outline leading-tight">
+          คุณสามารถเพิกถอนสิทธิ์การเข้าถึงได้ตลอดเวลาผ่านศูนย์ควบคุมบัญชี TikTok Creator Studio หรือเมนูตั้งค่าใน RelayContent
+        </p>
+</div>
+</div>
+<!-- Persistent Bottom Action Area (Exact Safe Spacing) -->
+<footer class="p-5 pt-3 pb-6 bg-surface/95 backdrop-blur-md border-t border-outline-variant/30 shrink-0 space-y-2">
+<!-- Primary Action CTA -->
+<button class="w-full h-12 bg-secondary-container hover:bg-secondary-container/90 active:scale-[0.98] text-white font-label-md text-body-md font-semibold rounded-lg flex items-center justify-center gap-2 transition-all duration-150 shadow-[0_8px_20px_rgba(244,63,94,0.25)]" type="button">
+<span>ยืนยันและอนุญาตสิทธิ์</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<!-- Secondary Neutral Action -->
+<button class="w-full h-9 bg-transparent hover:bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-medium rounded-lg transition-colors duration-150 flex items-center justify-center" type="button">
+        ยกเลิก
+      </button>
+</footer>
+</main>
+<script>
+    function toggleAccordion() {
+      const content = document.getElementById('accordion-content');
+      const icon = document.getElementById('accordion-icon');
+      const isHidden = content.classList.contains('hidden');
+      
+      if (isHidden) {
+        content.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        content.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+      }
+    }
+  </script>
+</body></html>

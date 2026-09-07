@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>การแจ้งเตือน - RelayContent</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#67001c",
+            "on-tertiary-fixed-variant": "#005234",
+            "secondary-fixed-dim": "#ffb2b7",
+            "error": "#ffb4ab",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "inverse-primary": "#00696f",
+            "tertiary-fixed-dim": "#26e19a",
+            "outline-variant": "#3a494b",
+            "on-primary": "#00373a",
+            "surface": "#051424",
+            "on-primary-fixed": "#002022",
+            "primary-fixed": "#6ff6ff",
+            "on-primary-fixed-variant": "#004f53",
+            "secondary-fixed": "#ffdadb",
+            "inverse-on-surface": "#233143",
+            "on-secondary-fixed-variant": "#91002b",
+            "tertiary-fixed": "#53feb4",
+            "primary-container": "#00f2fe",
+            "surface-container-highest": "#273647",
+            "primary": "#e0fdff",
+            "surface-dim": "#051424",
+            "error-container": "#93000a",
+            "on-tertiary-container": "#006e48",
+            "primary-fixed-dim": "#00dce6",
+            "surface-variant": "#273647",
+            "on-surface-variant": "#b9cacb",
+            "on-surface": "#d4e4fa",
+            "surface-tint": "#00dce6",
+            "on-tertiary": "#003823",
+            "on-primary-container": "#006a70",
+            "on-secondary-container": "#ffc7c9",
+            "surface-container-low": "#0d1c2d",
+            "inverse-surface": "#d4e4fa",
+            "outline": "#849495",
+            "tertiary": "#e1ffeb",
+            "surface-container-high": "#1c2b3c",
+            "on-secondary-fixed": "#40000e",
+            "surface-container": "#122131",
+            "on-background": "#d4e4fa",
+            "surface-bright": "#2c3a4c",
+            "surface-container-lowest": "#010f1f",
+            "secondary-container": "#b90039",
+            "on-tertiary-fixed": "#002112",
+            "background": "#051424",
+            "secondary": "#ffb2b7",
+            "tertiary-container": "#4af7ad"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.25rem",
+            "touch-min": "2.75rem",
+            "space-2xl": "2rem",
+            "space-xxs": "0.25rem",
+            "space-sm": "0.75rem",
+            "screen-edge": "1rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "numeric-metric": ["Plus Jakarta Sans"],
+            "body-md": ["Noto Sans"],
+            "label-md": ["Noto Sans"],
+            "body-sm": ["Noto Sans"],
+            "title-sm": ["Noto Sans"],
+            "title-md": ["Noto Sans"],
+            "label-sm": ["Noto Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Noto Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Noto Sans"]
+          },
+          "fontSize": {
+            "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "numeric-metric": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "21px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "title-sm": ["15px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "18px", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex justify-center items-center py-0 sm:py-6">
+<!-- Mobile Frame Container (Target 390x844) -->
+<main class="w-[390px] h-[844px] max-h-[844px] bg-background relative flex flex-col overflow-hidden shadow-2xl sm:rounded-[36px] border border-outline-variant/20">
+<!-- Top App Bar (Task-Focused / Notifications View - Navigation Shell is Suppressed) -->
+<header class="sticky top-0 z-40 bg-surface/90 backdrop-blur-md px-screen-edge pt-3 pb-2 flex flex-col gap-space-xs shrink-0 shadow-sm dark:shadow-none">
+<!-- Status & Actions Row -->
+<div class="flex items-center justify-between h-12">
+<!-- Back Navigation Trigger -->
+<button aria-label="ย้อนกลับ" class="w-11 h-11 flex items-center justify-center -ml-2 rounded-full text-on-surface hover:bg-surface-container active:scale-95 transition-transform duration-150 focus:outline-none" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<!-- Center Headline -->
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">
+          การแจ้งเตือน
+        </h1>
+<!-- Secondary Action: Mark All Read -->
+<button class="h-11 px-space-xs flex items-center justify-center font-label-md text-label-md text-primary-container hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 focus:outline-none" type="button">
+          อ่านทั้งหมด
+        </button>
+</div>
+<!-- Filter Chips Row (High Ergonomics for One-Thumb Swiping) -->
+<nav aria-label="หมวดหมู่การแจ้งเตือน" class="flex items-center gap-space-xs overflow-x-auto py-1 no-scrollbar -mx-screen-edge px-screen-edge">
+<!-- Active Filter -->
+<button class="h-9 px-space-md rounded-full bg-primary-container text-on-primary-container font-label-md text-label-md flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform whitespace-nowrap" type="button">
+<span>ทั้งหมด</span>
+<span class="w-4 h-4 rounded-full bg-on-primary-container/20 text-on-primary-container text-[10px] font-bold flex items-center justify-center">5</span>
+</button>
+<!-- Inactive Filter: ต้องดำเนินการ -->
+<button class="h-9 px-space-md rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md flex items-center gap-1.5 active:scale-95 transition-transform whitespace-nowrap" type="button">
+<span class="w-2 h-2 rounded-full bg-secondary-container"></span>
+<span>ต้องดำเนินการ</span>
+</button>
+<!-- Inactive Filter: สถานะคลิป -->
+<button class="h-9 px-space-md rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md flex items-center active:scale-95 transition-transform whitespace-nowrap" type="button">
+<span>สถานะคลิป</span>
+</button>
+<!-- Inactive Filter: สินค้า -->
+<button class="h-9 px-space-md rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md flex items-center active:scale-95 transition-transform whitespace-nowrap" type="button">
+<span>สินค้า</span>
+</button>
+</nav>
+</header>
+<!-- Notification Feed Container (Scrollable Area with Bottom Clearance) -->
+<div class="flex-1 overflow-y-auto px-screen-edge pt-space-xs pb-10 flex flex-col gap-space-sm">
+<!-- ITEM 1: Urgent Reconnect Required -->
+<article class="relative bg-surface-container-low rounded-xl p-card-padding border border-secondary-container/40 shadow-sm overflow-hidden flex flex-col gap-space-xs">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container"></div>
+<div class="flex items-start gap-space-sm pl-1">
+<!-- Coral Alert Icon -->
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 text-secondary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined fill text-[22px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<!-- Header & Badge -->
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<span class="font-label-sm text-label-sm text-secondary tracking-wider font-bold">เตือนด่วน</span>
+<span class="font-body-sm text-label-sm text-on-surface-variant/70">10 นาทีที่แล้ว</span>
+</div>
+<h2 class="font-title-sm text-title-sm text-on-surface font-bold mt-0.5 leading-snug">
+              บัญชี TikTok หลุดการเชื่อมต่อ
+            </h2>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-1 leading-relaxed">
+          กรุณายืนยันตัวตนใหม่เพื่อดำเนินการตั้งเวลาและโพสต์คลิปต่อ คิวโพสต์ของคุณยังปลอดภัย
+        </p>
+<div class="pl-1 pt-1 flex justify-end">
+<button class="min-h-[44px] px-space-lg rounded-lg bg-secondary-container text-on-secondary-container font-label-md text-label-md flex items-center justify-center gap-1.5 active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+<span>เชื่อมต่อใหม่</span>
+</button>
+</div>
+</article>
+<!-- ITEM 2: AI Ready (Cyan Glassmorphism Glow) -->
+<article class="relative bg-surface-container rounded-xl p-card-padding border border-primary-container/30 shadow-[0_4px_16px_rgba(0,242,254,0.08)] overflow-hidden flex flex-col gap-space-xs">
+<div class="flex items-start gap-space-sm">
+<!-- Sparkle / Cyan AI Icon -->
+<div class="w-10 h-10 rounded-full bg-primary-container/15 text-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined fill text-[22px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary-container/20 text-primary-container font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span>วิดีโอพร้อมแล้ว</span>
+</div>
+<span class="font-body-sm text-label-sm text-on-surface-variant/70">42 นาทีที่แล้ว</span>
+</div>
+<h2 class="font-title-sm text-title-sm text-on-surface font-bold mt-1 leading-snug">
+              สคริปต์และวิดีโอตัวอย่างพร้อมตรวจสอบแล้ว
+            </h2>
+</div>
+</div>
+<div class="bg-surface-container-high/80 rounded-lg p-space-xs flex items-center gap-space-xs border border-outline-variant/30">
+<span class="material-symbols-outlined text-primary-container text-[18px]">shopping_bag</span>
+<p class="font-body-sm text-body-sm text-on-surface truncate flex-1">
+            ไมโครโฟนไร้สาย K9 <span class="text-tertiary-fixed font-bold">(คอม 20%)</span>
+</p>
+</div>
+<div class="pt-1 flex justify-end">
+<button class="min-h-[44px] px-space-lg rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+<span>ดูตัวอย่างและตรวจตะกร้า</span>
+</button>
+</div>
+</article>
+<!-- ITEM 3: Product Unavailable (Warm Alert / Orange Accent) -->
+<article class="relative bg-surface-container-low rounded-xl p-card-padding border border-outline-variant/30 flex flex-col gap-space-xs">
+<div class="flex items-start gap-space-sm">
+<!-- Orange/Coral Alert Icon -->
+<div class="w-10 h-10 rounded-full bg-secondary-fixed/15 text-secondary-fixed-dim flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined fill text-[22px]" style="font-variation-settings: 'FILL' 1;">remove_shopping_cart</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim font-bold">แจ้งเตือนสินค้า</span>
+<span class="font-body-sm text-label-sm text-on-surface-variant/70">2 ชม. ที่แล้ว</span>
+</div>
+<h2 class="font-title-sm text-title-sm text-on-surface font-bold mt-0.5 leading-snug">
+              สินค้าในคลิปหมดสต็อกชั่วคราว
+            </h2>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          เซรั่มวิตซีเข้มข้น ในคลิปรอโพสต์หมดสต็อก กรุณาเลือกสินค้าสำรองเพื่อไม่ให้เสียโอกาสสร้างรายได้
+        </p>
+<div class="pt-1 flex justify-end">
+<button class="min-h-[44px] px-space-lg rounded-lg bg-surface-container-high border border-outline-variant/40 text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 hover:bg-surface-bright active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">swap_horiz</span>
+<span>เปลี่ยนสินค้าในคลิป</span>
+</button>
+</div>
+</article>
+<!-- ITEM 4: Publish Success (Mint Affirmation Card) -->
+<article class="relative bg-surface-container-low rounded-xl p-card-padding border border-tertiary-container/30 flex flex-col gap-space-xs">
+<div class="flex items-start gap-space-sm">
+<!-- Green Check Circle -->
+<div class="w-10 h-10 rounded-full bg-tertiary-container/15 text-tertiary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined fill text-[22px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<span class="font-label-sm text-label-sm text-tertiary-container font-bold">เผยแพร่สำเร็จ</span>
+<span class="font-body-sm text-label-sm text-on-surface-variant/70">4 ชม. ที่แล้ว</span>
+</div>
+<h2 class="font-title-sm text-title-sm text-on-surface font-bold mt-0.5 leading-snug">
+              โพสต์คลิปลง TikTok สำเร็จแล้ว
+            </h2>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          คลิป ‘รีวิวแก้วเก็บความเย็น’ ติดตะกร้าเรียบร้อยแล้ว กำลังเริ่มสะสมยอดวิว
+        </p>
+<!-- Informational Metric Indicator -->
+<div class="pt-1 flex items-center justify-between text-on-surface-variant border-t border-outline-variant/20 mt-1">
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-tertiary">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>กำลังรวบรวมข้อมูลสถิติ</span>
+</div>
+<button class="min-h-[44px] text-primary-container font-label-md text-label-md flex items-center gap-1 active:scale-95 transition-transform" type="button">
+<span>ดูใน TikTok</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+</div>
+</article>
+<!-- ITEM 5: Publish Failure (Error State Card) -->
+<article class="relative bg-surface-container-low rounded-xl p-card-padding border border-error-container/40 flex flex-col gap-space-xs">
+<div class="flex items-start gap-space-sm">
+<!-- Red Error Icon -->
+<div class="w-10 h-10 rounded-full bg-error-container/30 text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined fill text-[22px]" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<span class="font-label-sm text-label-sm text-error font-bold">โพสต์ไม่สำเร็จ</span>
+<span class="font-body-sm text-label-sm text-on-surface-variant/70">เมื่อวานนี้</span>
+</div>
+<h2 class="font-title-sm text-title-sm text-on-surface font-bold mt-0.5 leading-snug">
+              ไม่สามารถเผยแพร่คลิปได้
+            </h2>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          เซสชัน TikTok หมดอายุระหว่างการอัปโหลด กดเพื่อส่งคลิปใหม่อีกครั้ง
+        </p>
+<div class="pt-1 flex justify-end">
+<button class="min-h-[44px] px-space-lg rounded-lg bg-surface-container-highest text-error font-label-md text-label-md flex items-center justify-center gap-1.5 border border-error/30 active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">replay</span>
+<span>ลองใหม่อีกครั้ง</span>
+</button>
+</div>
+</article>
+</div>
+<!-- Bottom Indicator / Canvas Anchor (Standard Safe Space) -->
+<footer class="h-6 w-full flex justify-center items-center pb-2 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none">
+<div class="w-32 h-1 bg-outline-variant/40 rounded-full"></div>
+</footer>
+</main>
+<script>
+    // Lightweight interactive chip toggle logic
+    document.querySelectorAll('nav[aria-label="หมวดหมู่การแจ้งเตือน"] button').forEach(button => {
+      button.addEventListener('click', () => {
+        // Reset styles for all chips
+        document.querySelectorAll('nav[aria-label="หมวดหมู่การแจ้งเตือน"] button').forEach(b => {
+          b.className = 'h-9 px-space-md rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md flex items-center gap-1.5 active:scale-95 transition-transform whitespace-nowrap';
+        });
+        // Set active style
+        button.className = 'h-9 px-space-md rounded-full bg-primary-container text-on-primary-container font-label-md text-label-md flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform whitespace-nowrap';
+      });
+    });
+  </script>
+</body></html>

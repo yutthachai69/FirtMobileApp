@@ -67,6 +67,40 @@ AuthGate
 
 ---
 
+## 3.1 🔀 Pivot V1 — IA ใหม่ (2026-09-07)
+
+หน้าจอเดิมข้างบน (Screen Inventory เดิม) ยังใช้ได้ทั้งหมด — Composer, Upload, Auth
+ไม่ถูกรื้อ แต่ **แอปเปลี่ยนจาก single-flow เป็น 5-tab app** ตาม
+`docs/product-ux-brief-v1.md` และดีไซน์ที่อนุมัติแล้วใน `stitch_relaycontent_mobile_ux_review3/`
+
+### Bottom Navigation (แทนที่ FAB เดี่ยวของ V0.1)
+
+| ตำแหน่ง | แท็บ | หน้าจอที่ผูก | สถานะ backend |
+|---|---|---|---|
+| 1 | หน้าหลัก | Home (C01/C02/C03 ตาม state) | ✅ พร้อม (`/v1/publish-jobs`, `/v1/contents`) |
+| 2 | สินค้า | D01 My Showcase, D02 Product Detail, D03 Unavailable, D04 Empty | ❌ รอ `products` API |
+| 3 | สร้าง (FAB กลาง) | Create/Upload เดิม + เลือกสินค้าก่อนอัป | ⚠️ ต้องเพิ่มขั้นเลือกสินค้า |
+| 4 | คอนเทนต์ | Content Library (ยังไม่มีดีไซน์ Batch 3) | ✅ ใช้ `/v1/contents` เดิมได้เลย |
+| 5 | โปรไฟล์ | เดิม (`/connections`) + B05 Connection Problem | ✅ พร้อม |
+
+### หน้าใหม่ที่อนุมัติแล้ว (10 หน้า ใน review3)
+
+| ID | หน้าจอ | ต้องมี backend ก่อนไหม |
+|---|---|---|
+| A01 | Splash (ปรับ branding "TikTok Shop Affiliate") | ไม่ต้อง — แก้ copy อย่างเดียว |
+| B05 | Connection Problem | ไม่ต้อง — ใช้ `connection.status` เดิม |
+| C01–C03 | Home 3 states (new/active/all-clear) | ไม่ต้อง — ต่อยอดจาก `HomeData` เดิม |
+| C04 | Notifications | ไม่ต้อง — มี `/v1/notifications` แล้ว |
+| D01–D04 | Showcase/Product | **ต้องมี** `products` table + sync — รอ Partner Center |
+
+### กติกาสร้างช่วงที่ยังไม่มี Partner Center
+
+- แท็บ **สินค้า** สร้าง UI ตามดีไซน์ได้เลยด้วย mock/stub data ในเครื่อง
+  (ห้ามต่อ API ปลอมที่ดูเหมือนใช้งานได้จริง — ต้องมี banner บอกชัดว่า "ตัวอย่าง")
+- แท็บ **หน้าหลัก / คอนเทนต์ / โปรไฟล์** ต่อ backend จริงได้ทันที ไม่ต้องรอ
+
+---
+
 ## 4. หน้าหลัก (Home) — หัวใจของ Control Center
 
 ```

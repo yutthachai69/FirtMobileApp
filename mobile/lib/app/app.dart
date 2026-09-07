@@ -9,7 +9,9 @@ import '../features/composer/presentation/composer_controller.dart';
 import '../features/composer/presentation/tiktok_composer_page.dart';
 import '../features/connections/presentation/connections_page.dart';
 import '../features/create/presentation/create_page.dart';
+import '../features/home/presentation/content_library_page.dart';
 import '../features/home/presentation/home_page.dart';
+import '../features/showcase/presentation/showcase_page.dart';
 import 'providers.dart';
 import 'theme/app_theme.dart';
 
@@ -36,8 +38,7 @@ class _RelayAppState extends ConsumerState<RelayApp> {
         // ทำให้เปิดหน้าอื่นไม่ได้เลย
         return switch (auth.phase) {
           SessionPhase.starting ||
-          SessionPhase.unavailable =>
-            path == '/session' ? null : '/session',
+          SessionPhase.unavailable => path == '/session' ? null : '/session',
           SessionPhase.signedOut => path == '/login' ? null : '/login',
           SessionPhase.signedIn =>
             (path == '/login' || path == '/session') ? '/' : null,
@@ -65,6 +66,15 @@ class _RelayAppState extends ConsumerState<RelayApp> {
         GoRoute(
           path: '/create',
           builder: (_, _) => CreatePage(controller: ref.read(createProvider)),
+        ),
+        GoRoute(
+          path: '/showcase',
+          builder: (_, _) => const ShowcasePage(),
+        ),
+        GoRoute(
+          path: '/content',
+          builder: (_, _) =>
+              ContentLibraryPage(controller: ref.read(homeProvider)),
         ),
         GoRoute(
           path: '/composer',
@@ -103,6 +113,7 @@ class _RelayAppState extends ConsumerState<RelayApp> {
     debugShowCheckedModeBanner: false,
     theme: appTheme(Brightness.light),
     darkTheme: appTheme(Brightness.dark),
+    themeMode: ThemeMode.dark,
     routerConfig: router,
   );
 }

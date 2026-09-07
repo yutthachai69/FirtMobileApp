@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RelayContent - C02 Home — Active</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans & Noto Sans Thai -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with custom theme -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#67001c",
+            "on-tertiary-fixed-variant": "#005234",
+            "secondary-fixed-dim": "#ffb2b7",
+            "error": "#ffb4ab",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "inverse-primary": "#00696f",
+            "tertiary-fixed-dim": "#26e19a",
+            "outline-variant": "#3a494b",
+            "on-primary": "#00373a",
+            "surface": "#051424",
+            "on-primary-fixed": "#002022",
+            "primary-fixed": "#6ff6ff",
+            "on-primary-fixed-variant": "#004f53",
+            "secondary-fixed": "#ffdadb",
+            "inverse-on-surface": "#233143",
+            "on-secondary-fixed-variant": "#91002b",
+            "tertiary-fixed": "#53feb4",
+            "primary-container": "#00f2fe",
+            "surface-container-highest": "#273647",
+            "primary": "#e0fdff",
+            "surface-dim": "#051424",
+            "error-container": "#93000a",
+            "on-tertiary-container": "#006e48",
+            "primary-fixed-dim": "#00dce6",
+            "surface-variant": "#273647",
+            "on-surface-variant": "#b9cacb",
+            "on-surface": "#d4e4fa",
+            "surface-tint": "#00dce6",
+            "on-tertiary": "#003823",
+            "on-primary-container": "#006a70",
+            "on-secondary-container": "#ffc7c9",
+            "surface-container-low": "#0d1c2d",
+            "inverse-surface": "#d4e4fa",
+            "outline": "#849495",
+            "tertiary": "#e1ffeb",
+            "surface-container-high": "#1c2b3c",
+            "on-secondary-fixed": "#40000e",
+            "surface-container": "#122131",
+            "on-background": "#d4e4fa",
+            "surface-bright": "#2c3a4c",
+            "surface-container-lowest": "#010f1f",
+            "secondary-container": "#b90039",
+            "on-tertiary-fixed": "#002112",
+            "background": "#051424",
+            "secondary": "#ffb2b7",
+            "tertiary-container": "#4af7ad"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.25rem",
+            "touch-min": "2.75rem",
+            "space-2xl": "2rem",
+            "space-xxs": "0.25rem",
+            "space-sm": "0.75rem",
+            "screen-edge": "1rem",
+            "card-padding": "0.875rem",
+            "space-xl": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "numeric-metric": ["Plus Jakarta Sans"],
+            "body-md": ["Noto Sans"],
+            "label-md": ["Noto Sans"],
+            "body-sm": ["Noto Sans"],
+            "title-sm": ["Noto Sans"],
+            "title-md": ["Noto Sans"],
+            "label-sm": ["Noto Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Noto Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Noto Sans"]
+          },
+          "fontSize": {
+            "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "numeric-metric": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "21px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "title-sm": ["15px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "18px", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    /* Custom Scrollbar suppression for clean mobile experience */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .glow-cyan {
+      box-shadow: 0 4px 20px rgba(0, 242, 254, 0.25);
+    }
+    .glass-card {
+      background: rgba(30, 34, 48, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container flex justify-center items-center min-h-screen">
+<!-- Mobile Frame Container (Strict 390x844 px) -->
+<div class="relative w-[390px] h-[844px] bg-surface flex flex-col overflow-hidden shadow-2xl rounded-[40px] border border-outline-variant/30">
+<!-- Top App Bar (Shared Component Anchored) -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-screen-edge h-14 max-w-[390px] mx-auto bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-space-sm">
+<!-- Creator Avatar with active story halo -->
+<div class="relative cursor-pointer active:scale-95 transition-transform duration-150">
+<div class="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-primary-container to-tertiary-container">
+<img class="w-full h-full object-cover rounded-full bg-surface-container" data-alt="Close up profile portrait of a confident young Thai female digital creator named Ploy smiling naturally, with soft ring light glow reflection in her eyes and studio neon backlight. Shot in high quality realistic digital portraiture with vibrant mint and deep slate atmospheric accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCjWt3wPmXOxvF6z87hI08gJGC0IJ2WigcFpEGg-CPptABAcVNx14KQPOhDwrXrGuMUcJyLvOpB4rFjPeVvXnUojlhxzSk_pOFuWqqiXfLFg-oKFs-chPRTVpZm_7YvHOzH9sKpBP1JxpstmoNM10Y5WFitCGrx0wPCd17ChohVK-J06PSglBPWkL0mIn00Buk1Bt9UeUtpGt5-t1BoOaGcqwH1QFjeVOSZOY-9DnTM82scJrIrVetbQ"/>
+</div>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-fixed-dim rounded-full ring-2 ring-surface"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xxs">
+<span class="text-title-sm font-title-sm font-bold text-on-surface">@ploy_creator_th</span>
+<span class="material-symbols-outlined text-primary-container text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-label-sm font-label-sm text-tertiary-container bg-tertiary-container/10 px-1.5 py-0.5 rounded">ระดับ 3 ครีเอเตอร์ดาวรุ่ง</span>
+</div>
+</div>
+</div>
+<!-- Trailing Action: Notification Bell with Unread Ping -->
+<div class="flex items-center">
+<button class="relative w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-2 right-2 w-2.5 h-2.5 bg-secondary-container rounded-full ring-2 ring-surface animate-pulse"></span>
+</button>
+</div>
+</header>
+<!-- Main Scrollable Content Area -->
+<main class="flex-1 overflow-y-auto no-scrollbar pt-16 pb-24 px-screen-edge space-y-space-md">
+<!-- Urgent Alert Strip (Design Guide Pattern) -->
+<div class="rounded-xl p-space-sm bg-primary-container/10 border-l-[3px] border-primary-container flex items-start gap-space-xs mt-2">
+<span class="material-symbols-outlined text-primary-container text-[20px] shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<div class="flex-1">
+<p class="text-body-sm font-body-sm text-on-surface">
+            สินค้า <span class="font-bold text-primary-container">"เซรั่มใบบัวบก"</span> ยอดขายพุ่งใน TikTok วันนี้ +142% มีคำสั่งซื้อรอสร้างคลิปเสริมด่วน
+          </p>
+<button class="text-label-sm font-label-sm text-primary-container font-bold mt-1 flex items-center gap-0.5 hover:underline">
+            หยิบใส่ตะกร้าทันที <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Quick Stats Bar (Bento Tonal Elevation) -->
+<section class="bg-surface-container-high/80 backdrop-blur-md rounded-2xl p-space-md border border-white/5 shadow-md">
+<div class="flex items-center justify-between">
+<!-- Stat 1: Daily Revenue -->
+<div class="flex-1 pr-3">
+<div class="flex items-center gap-1 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container" style="font-variation-settings: 'FILL' 1;">monetization_on</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">ค่าคอมมิชชันวันนี้</span>
+</div>
+<div class="flex items-baseline gap-1.5">
+<span class="text-numeric-metric font-numeric-metric text-on-surface">฿1,420</span>
+<span class="text-label-sm font-label-sm text-tertiary-container font-bold">+28%</span>
+</div>
+</div>
+<!-- Vertical Divider -->
+<div class="w-[1px] h-10 bg-outline-variant/40"></div>
+<!-- Stat 2: Showcase Click Rate -->
+<div class="flex-1 pl-4">
+<div class="flex items-center gap-1 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[16px] text-primary-container" style="font-variation-settings: 'FILL' 1;">shopping_cart_checkout</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">อัตราคลิกตะกร้า</span>
+</div>
+<div class="flex items-baseline gap-1.5">
+<span class="text-numeric-metric font-numeric-metric text-primary-container">18.5%</span>
+<span class="text-label-sm font-label-sm text-tertiary-container font-bold">สูงมาก</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section Title & Live Workflow Filter Pills -->
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<h2 class="text-title-md font-title-md text-on-surface font-bold flex items-center gap-1.5">
+<span>คลังคอนเทนต์และสถานะ</span>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-surface-container-highest text-primary-container font-bold">5 รายการ</span>
+</h2>
+<span class="text-label-sm font-label-sm text-on-surface-variant cursor-pointer hover:text-primary-container">ดูทั้งหมด</span>
+</div>
+<!-- Horizontal Scrollable Status Category Filter -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+<button class="px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary font-bold text-label-sm font-label-sm shrink-0 active:scale-95 transition-all shadow-sm">
+            ทั้งหมด (5)
+          </button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-secondary font-label-sm font-label-sm shrink-0 border border-secondary/30 flex items-center gap-1 active:scale-95 transition-all">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            ต้องทำ (1)
+          </button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm font-label-sm shrink-0 border border-outline-variant/30 flex items-center gap-1 active:scale-95 transition-all">
+            กำลังสร้าง (1)
+          </button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm font-label-sm shrink-0 border border-outline-variant/30 flex items-center gap-1 active:scale-95 transition-all">
+            รอตรวจ (1)
+          </button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm font-label-sm shrink-0 border border-outline-variant/30 flex items-center gap-1 active:scale-95 transition-all">
+            ตั้งเวลา (1)
+          </button>
+</div>
+</div>
+<!-- WORKFLOW CARDS PIPELINE (5 Required Groups) -->
+<div class="space-y-space-md">
+<!-- 1. ต้องทำ (Action Required) -->
+<div class="glass-card rounded-2xl p-space-md border border-secondary/40 relative overflow-hidden">
+<div class="flex items-center justify-between mb-2.5">
+<!-- Pipeline Badge -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary-container/20 text-secondary text-label-sm font-label-sm font-bold">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span>ต้องทำ (Action Required)</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary font-bold">ด่วนที่สุด</span>
+</div>
+<p class="text-title-sm font-title-sm text-on-surface font-semibold mb-3">
+            คลิปรีวิวหูฟังบลูทูธ: ยืนยันตะกร้าก่อนตั้งเวลาโพสต์
+          </p>
+<!-- Showcase Attached Product Card Mini-Bento -->
+<div class="flex items-center gap-3 p-2.5 bg-surface-container/90 rounded-xl border border-outline-variant/30 mb-3">
+<div class="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="Modern matte black wireless noise cancelling earbuds in an open charging case displayed on a sleek minimalist tech desk with futuristic glowing cyan ambient desk lighting. Commercial e-commerce product photograph for TikTok shop affiliate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYpVn4WFL3GzhRasUsafD-7sxbI1HpkllkC6HRimGBmKkbvecXgeaA8zz26dVsPQebSlCmAurDhgHcDij-pob__C6WFxRsTwtJL71tK5t3MjJ7q4LSkgU-ca8YwCGumCp6XPovxqRMO-HW23QokvEfk6NotPVukh3sFMJEBiA1_StbMiE2pzz8nIaf36qm9eJJuQ2r5TafUAfh1WqzYJqpri5I2KYZJRpOaqoFdGcYHgvAexv7UdE71Q"/>
+<span class="absolute bottom-0.5 right-0.5 bg-surface-container-lowest/90 px-1 py-0.2 text-[9px] font-bold text-primary-container rounded">TikTok</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-on-surface-variant truncate">สินค้าติดตะกร้า</span>
+<span class="text-label-sm font-label-sm text-secondary font-bold">คอม 20%</span>
+</div>
+<h4 class="text-body-sm font-body-sm text-on-surface font-semibold truncate">หูฟัง TWS Pro 5 (Bass Boost)</h4>
+<p class="text-label-sm font-label-sm text-tertiary-container font-bold">฿499 <span class="text-on-surface-variant font-normal">| รับ ฿99.80/ชิ้น</span></p>
+</div>
+</div>
+<!-- Primary CTA Button (44px touch ergonomics) -->
+<button class="w-full h-11 rounded-xl bg-gradient-to-r from-secondary-container to-secondary text-surface font-label-lg font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-md">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+<span>ตรวจสอบตะกร้า</span>
+</button>
+</div>
+<!-- 2. กำลังสร้าง (In Progress) -->
+<div class="glass-card rounded-2xl p-space-md border border-white/5 relative">
+<div class="flex items-center justify-between mb-2">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-highest text-primary-container text-label-sm font-label-sm font-bold">
+<span class="material-symbols-outlined text-[15px] animate-spin">sync</span>
+<span>กำลังสร้าง (In Progress)</span>
+</div>
+<span class="text-label-sm font-label-sm text-primary-container">AI วิเคราะห์ 85%</span>
+</div>
+<p class="text-title-sm font-title-sm text-on-surface font-semibold mb-3">
+            คลิปป้ายยาหม้อทอดไร้น้ำมัน <span class="text-on-surface-variant font-normal text-body-sm font-body-sm">(AI กำลังประมวลผลคำบรรยาย)</span>
+</p>
+<!-- Attached Product Card -->
+<div class="flex items-center gap-3 p-2.5 bg-surface-container/70 rounded-xl border border-outline-variant/30 mb-3">
+<div class="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="A modern matte forest green air fryer appliance with digital touch screen and rose gold metallic knob placed on a clean kitchen marble counter with natural daylight and subtle neon ambient backlighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBr8Eqs7J4Gr9fiIYg7trqN9Uuy5kpwQE1H_ipovfnqJugBnU0BN-29V1aNCyUTxaE2kZ5_sliWNKTPb81gQ56DO6Wt9oEteeqGmfVJp3f-HwLyAxnddg5R7rodOiYP3N3u5GFqhCvqrS_rwh4qx25KMadlEjbar7sklwuyqHuvF1Z5RPZvl8ZtDHmfYstK0V3C75R9YCiVWRN3kNp8vGxTuI0V2-K9Bv2PShQ3dV0WsT3UrOgjsq1kqA"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-on-surface-variant">สินค้าในตะกร้า</span>
+<span class="text-label-sm font-label-sm text-tertiary-container font-bold">คอม 15%</span>
+</div>
+<h4 class="text-body-sm font-body-sm text-on-surface font-semibold truncate">หม้อทอดไร้น้ำมัน Smart Glass 4.5L</h4>
+<p class="text-label-sm font-label-sm text-tertiary-container font-bold">฿1,290 <span class="text-on-surface-variant font-normal">| รับ ฿193.50/ชิ้น</span></p>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full transition-all duration-500" style="width: 85%"></div>
+</div>
+</div>
+<!-- 3. รอตรวจ (Pending Review) with TikTok Policy Warning -->
+<div class="glass-card rounded-2xl p-space-md border border-outline-variant/40 relative">
+<div class="flex items-center justify-between mb-2">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-high text-outline text-label-sm font-label-sm font-bold">
+<span class="material-symbols-outlined text-[15px]">fact_check</span>
+<span>รอตรวจ (Pending Review)</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">รอนุมัติระบบ</span>
+</div>
+<p class="text-title-sm font-title-sm text-on-surface font-semibold mb-2">
+            เซรั่มวิตซี: ตรวจความปลอดภัยคำเคลมและข้อความ
+          </p>
+<!-- Compliance Warning Banner -->
+<div class="rounded-xl p-2.5 bg-secondary-container/15 border border-secondary/30 flex items-start gap-2 mb-3">
+<span class="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">error</span>
+<p class="text-label-md font-label-md text-secondary leading-snug">
+              พบคำเคลมผลลัพธ์ใน 7 วัน กรุณาปรับแก้ข้อความให้สอดคล้องนโยบาย TikTok
+            </p>
+</div>
+<!-- Attached Product Card -->
+<div class="flex items-center gap-3 p-2.5 bg-surface-container/70 rounded-xl border border-outline-variant/30">
+<div class="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="Minimalist amber dropper bottle of brightening Vitamin C face serum with water droplets on the glass surface and fresh citrus slices beside it on a dark slate surface with premium aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOgnDekYNc0qfYHCafRnIGQDvkUgIfV3FjjqnniQ6UqwuueSrjnOu0iAW3ZsBVM5QnKOkJxQ82HNsD67TzQQv9G_LE-g3_-rWoA0qw0Kj19WA2504OEDcx-CzX_eSx0riADjDBbQ_t7H5ZmeUpWZ55c5337xpfWecIBglJFYiQoXJ77s0Bbv7TuBdD05AeBH-n2OEHl1EcYPZphPL4WH1RgICHU5t-kRTwTuGi7mfTjthNzcyL5huFCw"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-on-surface-variant">สินค้าในตะกร้า</span>
+<span class="text-label-sm font-label-sm text-tertiary-container font-bold">คอม 25%</span>
+</div>
+<h4 class="text-body-sm font-body-sm text-on-surface font-semibold truncate">เซรั่มเข้มข้น วิตามินซีไฮยา 30ml</h4>
+<p class="text-label-sm font-label-sm text-tertiary-container font-bold">฿350 <span class="text-on-surface-variant font-normal">| รับ ฿87.50/ชิ้น</span></p>
+</div>
+</div>
+</div>
+<!-- 4. ตั้งเวลาไว้ (Scheduled) -->
+<div class="glass-card rounded-2xl p-space-md border border-white/5 relative">
+<div class="flex items-center justify-between mb-2">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-highest text-primary-fixed-dim text-label-sm font-label-sm font-bold">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">schedule</span>
+<span>ตั้งเวลาไว้ (Scheduled)</span>
+</div>
+<div class="flex items-center gap-1 text-primary-container text-label-sm font-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>พร้อมปล่อยคลิป</span>
+</div>
+</div>
+<p class="text-title-sm font-title-sm text-on-surface font-semibold mb-3">
+            ลิปกลอสฉ่ำวาว: นัดหมายโพสต์วันนี้ 19:30 น. <span class="text-tertiary-container font-normal text-body-sm font-body-sm">(ติดตะกร้าสินค้าเรียบร้อย)</span>
+</p>
+<!-- Attached Product Card -->
+<div class="flex items-center gap-3 p-2.5 bg-surface-container/70 rounded-xl border border-outline-variant/30">
+<div class="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="A transparent glossy pink lip tint container with applicator wand surrounded by soft neon pink and cyan light reflections on wet reflective reflective dark studio surface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwZOYFKeXTVy771uMusk7U8fqi3YvmEWq9yzs1-8rPBBqyFEAWVzBwXdHkqtq5w4SkiyNv4K3jP-k3aGa7f-Ow8IfEHTsWD_q33vj5v7hqPMrGffMjf3LI8BqGW5p-0Dt_yP07-uXvcgVzN2x2OZJTAlQUeHrnMBq81tIxz5NgexzDjq8s0oyIpqi3gAyh38UGDpyGt5O58VEvM7Z_tWuJuT5q0UQbw_M_po51BRYqzDhbo_TaEv1ALQ"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-on-surface-variant">สินค้าในตะกร้า</span>
+<span class="text-label-sm font-label-sm text-tertiary-container font-bold">คอม 18%</span>
+</div>
+<h4 class="text-body-sm font-body-sm text-on-surface font-semibold truncate">ลิปกลอสฉ่ำวาว Glassy Tint #04</h4>
+<p class="text-label-sm font-label-sm text-tertiary-container font-bold">฿199 <span class="text-on-surface-variant font-normal">| รับ ฿35.82/ชิ้น</span></p>
+</div>
+</div>
+</div>
+<!-- 5. โพสต์แล้ววันนี้ (Posted Today) -->
+<div class="glass-card rounded-2xl p-space-md border border-white/5 relative">
+<div class="flex items-center justify-between mb-2">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-tertiary-container/15 text-tertiary-container text-label-sm font-label-sm font-bold">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span>โพสต์แล้ววันนี้ (Posted Today)</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[14px]">visibility</span>
+<span class="text-on-surface font-bold">3.4k วิว</span>
+</div>
+</div>
+<p class="text-title-sm font-title-sm text-on-surface font-semibold mb-3">
+            ขาตั้งกล้องเซลฟี่: เผยแพร่แล้วเมื่อ 14:15 น.
+          </p>
+<!-- Attached Product Card -->
+<div class="flex items-center gap-3 p-2.5 bg-surface-container/70 rounded-xl border border-outline-variant/30">
+<div class="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="Aluminum extendable smartphone tripod with bluetooth wireless remote control button setup vertically with ring light mount in a modern creative studio backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCopCpwrdlQ-zQjYzz58NTqgc0-nBLAoHUsmJW1WraSoOiYWdT_aEYmWW7ZbnjRnw00bsMS__MwVRfEtYFKaK3VGPlRvZ3sQELjGA7BX30nhoWOBfDajLtb4D3O_tL0yhKv1mWVWY70Qu0az537Vdp41k_XMp9jRqzGgFVYUPS8GcHOhyHN2U-gV3Crd9aLAqEy1WxZOPF3AbjBncpEg9FxFtq-f8sr5TI1kZm4epmcr7v8suuvgS8acg"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-on-surface-variant">สินค้าในตะกร้า</span>
+<span class="text-label-sm font-label-sm text-tertiary-container font-bold">คอม 12%</span>
+</div>
+<h4 class="text-body-sm font-body-sm text-on-surface font-semibold truncate">ขาตั้งกล้องเซลฟี่ Bluetooth 1.7m</h4>
+<p class="text-label-sm font-label-sm text-tertiary-container font-bold">฿389 <span class="text-on-surface-variant font-normal">| รับ ฿46.68/ชิ้น</span></p>
+</div>
+<!-- Live play link icon -->
+<button class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-container active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[20px]">open_in_new</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Tips for Thai Creators -->
+<div class="p-space-md rounded-2xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[24px]">lightbulb</span>
+</div>
+<div>
+<h5 class="text-label-lg font-label-lg text-on-surface font-bold">แนวทางคลิปขายดีช่วงเย็น</h5>
+<p class="text-body-sm font-body-sm text-on-surface-variant">ช่วงเวลา 19:00 - 21:00 น. ยอดสั่งซื้อสูงสุด</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">arrow_forward</span>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Shared Component JSON Compliance) -->
+<!-- Screen: C02 Home — Active -> Matches tab "หน้าหลัก" perfectly -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-16 pb-safe max-w-[390px] mx-auto px-2 bg-surface-container-low/95 backdrop-blur-lg border-t border-outline-variant/30 shadow-lg dark:shadow-none">
+<!-- 1. หน้าหลัก (ACTIVE Destination) -->
+<button class="flex flex-col items-center justify-center text-primary-container font-bold active:scale-95 transition-transform duration-150 w-16 py-1">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-label-sm font-label-sm mt-0.5">หน้าหลัก</span>
+<!-- Active indicator dot -->
+<span class="w-1 h-1 rounded-full bg-primary-container mt-0.5"></span>
+</button>
+<!-- 2. สินค้า -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 w-16 py-1">
+<span class="material-symbols-outlined text-[24px]">shopping_bag</span>
+<span class="text-label-sm font-label-sm mt-0.5">สินค้า</span>
+<span class="w-1 h-1 opacity-0 mt-0.5"></span>
+</button>
+<!-- 3. สร้าง (Elevated Floating Center Action) -->
+<div class="relative -top-3 flex flex-col items-center">
+<button class="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-container to-tertiary-container flex items-center justify-center text-surface-container-lowest shadow-lg glow-cyan active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[28px] font-bold" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+<span class="text-label-sm font-label-sm text-on-surface-variant mt-1">สร้าง</span>
+</div>
+<!-- 4. คอนเทนต์ -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 w-16 py-1">
+<div class="relative">
+<span class="material-symbols-outlined text-[24px]">video_library</span>
+<span class="absolute -top-1 -right-1.5 px-1 py-0.2 text-[9px] bg-secondary-container text-on-secondary-container font-bold rounded-full">5</span>
+</div>
+<span class="text-label-sm font-label-sm mt-0.5">คอนเทนต์</span>
+<span class="w-1 h-1 opacity-0 mt-0.5"></span>
+</button>
+<!-- 5. โปรไฟล์ -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim active:scale-95 transition-transform duration-150 w-16 py-1">
+<span class="material-symbols-outlined text-[24px]">account_circle</span>
+<span class="text-label-sm font-label-sm mt-0.5">โปรไฟล์</span>
+<span class="w-1 h-1 opacity-0 mt-0.5"></span>
+</button>
+</nav>
+</div>
+</body></html>

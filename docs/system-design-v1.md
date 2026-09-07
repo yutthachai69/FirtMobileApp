@@ -54,6 +54,53 @@ Workflow Engine จะฉลาดแค่ไหนก็ไร้ค่าถ�
 
 ---
 
+## 0.1 🔀 Pivot V1 — TikTok Shop Affiliate Creator (2026-09-07, ตัดสินใจร่วมกันแล้ว)
+
+**V0.1 (เส้นทางในเอกสารนี้) ยังสร้างเสร็จและใช้งานได้ปกติ — เส้นนี้ไม่ถูกทิ้ง**
+แต่ทิศทางของโปรดักต์ตั้งแต่ตอนนี้เปลี่ยนจาก *"เครื่องมือตั้งเวลาโพสต์ TikTok ทั่วไป"*
+เป็น **"แอปสำหรับ TikTok Shop Affiliate Creator ในไทย"** — ผูกสินค้าจาก Showcase
+เข้ากับทุกคลิปที่โพสต์ ดูรายละเอียดโปรดักต์เต็มที่ `docs/product-ux-brief-v1.md`
+และดีไซน์ 10 หน้าจอที่อนุมัติแล้วใน `stitch_relaycontent_mobile_ux_review3/`
+
+### สิ่งที่ยังใช้ต่อจาก V0.1 ทั้งหมด (ไม่รื้อ)
+
+- `users` · `devices` · `platform_connections` · `notifications` · `idempotency_keys`
+- Auth service, token vault (AES-256-GCM), refresh rotation
+- Media upload (presigned PUT ตรงขึ้น R2)
+- TikTok OAuth + Content Posting API (`video.publish`) — ยังใช้โพสต์คลิปเหมือนเดิม
+- Scheduler/worker (`FOR UPDATE SKIP LOCKED`, retry backoff, poller)
+- Design token, Riverpod/ChangeNotifier pattern, go_router
+
+### สิ่งที่เพิ่มใหม่ (ของานหลัก)
+
+| ส่วน | เพิ่มอะไร |
+|---|---|
+| **TikTok Shop Partner Center** | สมัครแยกจาก TikTok for Developers app เดิม ต้องมีเอกสารธุรกิจ (ทะเบียนบริษัท/ID/บัญชีธนาคาร) — **critical path ใหม่ รอ approve** |
+| **Affiliate Creator API** | scope ใหม่ (อ่าน Showcase, สร้าง promotion link, โพสต์ shoppable video) — ยังไม่ยืนยัน scope name ที่แน่นอนจนกว่าจะสมัคร Partner Center สำเร็จ |
+| `products` (ตารางใหม่) | sync จาก Showcase: id, title, price, commission, stock, images, ราคาที่ sync ล่าสุด |
+| `contents.product_id` | ผูกสินค้า 1 รายการต่อวิดีโอ 1 คลิป (ตาม brief ข้อ 3) |
+| `publish_jobs` เพิ่ม `product_anchor` | ส่งไปพร้อม `product_link_info` ตอนโพสต์ shoppable video |
+| AI generation module | Idea/Hook/Script/Voice/Scene — **ถูกเลื่อนไว้หลัง product/showcase เสร็จ** ไม่ใช่ของด่านแรก |
+| Bottom nav 5 แท็บ | หน้าหลัก, สินค้า (Showcase), สร้าง, คอนเทนต์, โปรไฟล์ — แทนที่ IA เดิมของ V0.1 |
+
+### สิ่งที่ยังไม่ยืนยัน (ต้องเช็คก่อนลุยหนัก)
+
+1. **Affiliate Creator API scope ที่แท้จริง** — เอกสารสาธารณะไม่บอกชื่อ scope/endpoint ละเอียด ต้องดูจาก Partner Center จริงหลังสมัคร
+2. เวลาอนุมัติ Partner Center เทียบกับ TikTok Developer app (ปกติ 2–4 สัปดาห์) — ยังไม่รู้
+3. Rate limit ของการ sync product จาก Showcase
+
+### ลำดับสร้างที่แก้ไข
+
+```
+1. สมัคร TikTok Shop Partner Center (ผู้ใช้ทำเอง — critical path)
+2. ระหว่างรอ: backend เพิ่มตาราง products + product sync module (mock data ก่อนได้)
+3. Flutter: ต่อ bottom nav ให้ครบ 5 แท็บ ด้วย UI ตาม stitch design (ข้อมูลจริงรอ API)
+4. พอ Partner Center อนุมัติ → ต่อ product sync จริง → ทดสอบโพสต์ shoppable video จริง
+5. AI generation module (Idea/Script/Voice) — เริ่มทีหลังสุด
+```
+
+---
+
 ## 1. UC-01 — Golden Path (เส้นเดียวที่ V0.1 ต้องทำได้)
 
 **Actor:** เจ้าของร้านค้าออนไลน์
