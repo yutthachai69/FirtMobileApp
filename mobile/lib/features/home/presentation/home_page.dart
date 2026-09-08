@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../app/widgets/skeleton.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../domain/home_data.dart';
 import 'content_artwork.dart';
@@ -64,7 +65,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _body(BuildContext context, HomeController c, HomeData? data) {
     if (!c.loaded && c.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList();
     }
     if (c.error != null && !c.loaded) {
       return _ErrorView(message: c.error!, onRetry: c.load);

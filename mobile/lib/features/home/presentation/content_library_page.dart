@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../app/widgets/skeleton.dart';
 import '../domain/home_data.dart';
 import 'content_detail_page.dart';
 import 'home_controller.dart';
@@ -67,7 +68,7 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
           child: RefreshIndicator(
             onRefresh: c.load,
             child: !c.loaded && c.loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const SkeletonList()
                 : data == null
                 ? _errorBody(c)
                 : _list(context, data),

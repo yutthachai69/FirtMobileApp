@@ -4,11 +4,11 @@ Updated: 8 September 2026
 
 This tracker measures the Flutter UI and local/mock interactions only. TikTok API availability is intentionally excluded.
 
-## Current overall status: 86%
+## Current overall status: 87%
 
 | Area | Status | Implemented now | Main gap |
 |---|---:|---|---|
-| Visual system | 78% | Dark palette, Thai font, surfaces, buttons, chips, navigation styling, generated product photography and reusable product artwork with Hero continuity | Shared media thumbnails, skeletons and broader motion language |
+| Visual system | 82% | Dark palette, Thai font, surfaces, buttons, chips, navigation styling, generated product photography, reusable product artwork with Hero continuity and shimmer skeleton loaders (Home, Content) that honour reduced-motion | Shared media thumbnails and broader motion language |
 | Entry and auth | 82% | Session restore, login/register UI, password guidance, validation, local forgot-password recovery and three-step post-registration onboarding | Real recovery email endpoint, onboarding persistence and account verification |
 | Main navigation | 80% | Persistent five-tab shell for Home, Showcase, Create, Content, Profile | Preserve tab stacks and deep-link state |
 | Home | 88% | New-user state, active groups, all-clear summary, actionable errors, notification deep links, visual job cards and direct job-detail navigation | Trend insights and personalized recommendations |
@@ -29,7 +29,8 @@ This tracker measures the Flutter UI and local/mock interactions only. TikTok AP
 - Guided filming interactions simulate takes until real camera permissions and recording are implemented.
 - Generation uses a convincing local preview; it does not render real media yet.
 - Few controls demonstrate useful local interactions beyond validation and navigation.
-- Empty, loading, success, and recovery states are uneven across features.
+- Loading states now use shimmer skeletons on Home and Content; other lists still fall back to a plain spinner.
+- Empty, success, and recovery states are uneven across features.
 
 ## Mock-first implementation order
 
