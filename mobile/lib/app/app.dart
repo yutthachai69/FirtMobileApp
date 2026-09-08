@@ -125,7 +125,10 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                         }
                         return product == null
                             ? const ShowcasePage()
-                            : ProductDetailPage(product: product);
+                            : ProductDetailPage(
+                                product: product,
+                                store: contentStore,
+                              );
                       },
                     ),
                   ],

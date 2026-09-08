@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../home/domain/content_store.dart';
+import '../../home/domain/home_data.dart';
 import '../domain/showcase_product.dart';
 import 'product_artwork.dart';
 import 'saved_products_controller.dart';
@@ -11,9 +13,13 @@ class ProductDetailPage extends StatefulWidget {
     super.key,
     required this.product,
     this.savedProducts,
+    this.store,
   });
   final ShowcaseProduct product;
   final SavedProductsController? savedProducts;
+
+  /// ใช้แสดงคลิปที่เคยทำให้สินค้านี้และรายได้โดยประมาณ
+  final ContentStore? store;
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -88,6 +94,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             Text(p.shopName, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: Spacing.md),
             _EarningCard(product: p),
+            const SizedBox(height: Spacing.lg),
+            _ProductContent(product: p, store: widget.store),
             const SizedBox(height: Spacing.lg),
             Text(
               'จุดเด่นที่ใช้ทำคอนเทนต์',
@@ -278,6 +286,148 @@ class _StockBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+/// จำนวนออเดอร์จำลองต่อคลิปที่โพสต์แล้ว — คงที่ต่อ id เดียวกัน
+/// (มาแทนด้วยเลขจริงจาก TikTok เมื่อต่อ backend)
+int mockOrdersFor(PublishJob job) => job.status == JobStatus.published
+    ? (job.id.hashCode.abs() % 34) + 12
+    : 0;
+
+class _ProductContent extends StatelessWidget {
+  const _ProductContent({required this.product, required this.store});
+  final ShowcaseProduct product;
+  final ContentStore? store;
+
+  @override
+  Widget build(BuildContext context) {
+    final jobs = store?.byProduct(product.id) ?? const [];
+    final posted = jobs.where((j) => j.status == JobStatus.published).toList();
+    final revenue = posted.fold<int>(
+      0,
+      (sum, j) => sum + mockOrdersFor(j) * product.commissionBaht,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: context.t.surfaceContainer,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(color: context.t.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.video_library_outlined,
+                size: 18,
+                color: context.t.primary,
+              ),
+              const SizedBox(width: Spacing.sm),
+              Expanded(
+                child: Text(
+                  'คลิปของสินค้านี้',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              Text(
+                '${jobs.length} คลิป',
+                style: TextStyle(color: context.t.textSecondary, fontSize: 12),
+              ),
+            ],
+          ),
+          if (jobs.isEmpty) ...[
+            const SizedBox(height: Spacing.sm),
+            Text(
+              'ยังไม่เคยทำคลิปให้สินค้านี้ — เริ่มชิ้นแรกได้จากปุ่มด้านล่าง',
+              style: TextStyle(color: context.t.textSecondary, fontSize: 12),
+            ),
+          ] else ...[
+            if (posted.isNotEmpty) ...[
+              const SizedBox(height: Spacing.sm),
+              Text(
+                'รายได้รวมโดยประมาณ ฿$revenue',
+                style: TextStyle(
+                  color: context.t.success,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                'จาก ${posted.length} คลิปที่โพสต์แล้ว',
+                style: TextStyle(color: context.t.textSecondary, fontSize: 11),
+              ),
+            ],
+            const SizedBox(height: Spacing.sm),
+            for (final job in jobs)
+              _ClipRow(
+                job: job,
+                orders: mockOrdersFor(job),
+                onTap: () => context.go('/content/${job.id}'),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ClipRow extends StatelessWidget {
+  const _ClipRow({
+    required this.job,
+    required this.orders,
+    required this.onTap,
+  });
+  final PublishJob job;
+  final int orders;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(Radii.sm),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(
+            Icons.play_circle_outline_rounded,
+            size: 18,
+            color: context.t.textSecondary,
+          ),
+          const SizedBox(width: Spacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  job.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13),
+                ),
+                Text(
+                  orders > 0
+                      ? '${job.status.label} · $orders ออเดอร์'
+                      : job.status.label,
+                  style: TextStyle(
+                    color: context.t.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: context.t.textSecondary,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _EarningCard extends StatelessWidget {
