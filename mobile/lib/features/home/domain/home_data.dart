@@ -2,6 +2,7 @@ import '../../connections/domain/connection.dart';
 
 /// สถานะงานโพสต์ ตรงกับ publish_jobs.status ฝั่ง backend
 enum JobStatus {
+  draft,
   scheduled,
   queued,
   uploading,
@@ -12,32 +13,34 @@ enum JobStatus {
   unknown;
 
   static JobStatus parse(String? raw) => switch (raw) {
-        'scheduled' => JobStatus.scheduled,
-        'queued' => JobStatus.queued,
-        'uploading' => JobStatus.uploading,
-        'processing' => JobStatus.processing,
-        'published' => JobStatus.published,
-        'failed' => JobStatus.failed,
-        'cancelled' => JobStatus.cancelled,
-        _ => JobStatus.unknown,
-      };
+    'draft' => JobStatus.draft,
+    'scheduled' => JobStatus.scheduled,
+    'queued' => JobStatus.queued,
+    'uploading' => JobStatus.uploading,
+    'processing' => JobStatus.processing,
+    'published' => JobStatus.published,
+    'failed' => JobStatus.failed,
+    'cancelled' => JobStatus.cancelled,
+    _ => JobStatus.unknown,
+  };
 
   /// กำลังทำงานอยู่ = ระบบกำลังจัดการให้ ผู้ใช้ไม่ต้องทำอะไร
   bool get isWorking => switch (this) {
-        JobStatus.queued || JobStatus.uploading || JobStatus.processing => true,
-        _ => false,
-      };
+    JobStatus.queued || JobStatus.uploading || JobStatus.processing => true,
+    _ => false,
+  };
 
   String get label => switch (this) {
-        JobStatus.scheduled => 'รอถึงเวลา',
-        JobStatus.queued => 'เข้าคิวแล้ว',
-        JobStatus.uploading => 'กำลังส่งขึ้น TikTok',
-        JobStatus.processing => 'TikTok กำลังประมวลผล',
-        JobStatus.published => 'โพสต์แล้ว',
-        JobStatus.failed => 'ไม่สำเร็จ',
-        JobStatus.cancelled => 'ยกเลิกแล้ว',
-        JobStatus.unknown => 'ไม่ทราบสถานะ',
-      };
+    JobStatus.draft => 'ฉบับร่าง',
+    JobStatus.scheduled => 'รอถึงเวลา',
+    JobStatus.queued => 'เข้าคิวแล้ว',
+    JobStatus.uploading => 'กำลังส่งขึ้น TikTok',
+    JobStatus.processing => 'TikTok กำลังประมวลผล',
+    JobStatus.published => 'โพสต์แล้ว',
+    JobStatus.failed => 'ไม่สำเร็จ',
+    JobStatus.cancelled => 'ยกเลิกแล้ว',
+    JobStatus.unknown => 'ไม่ทราบสถานะ',
+  };
 }
 
 class PublishJob {
@@ -69,33 +72,35 @@ class PublishJob {
     final t = caption.trim();
     if (t.isEmpty) return 'ไม่มีคำบรรยาย';
     final firstLine = t.split('\n').first;
-    return firstLine.length <= 60 ? firstLine : '${firstLine.substring(0, 60)}…';
+    return firstLine.length <= 60
+        ? firstLine
+        : '${firstLine.substring(0, 60)}…';
   }
 
   PublishJob withCaption(String c) => PublishJob(
-        id: id,
-        contentId: contentId,
-        platform: platform,
-        status: status,
-        scheduledAt: scheduledAt,
-        permalink: permalink,
-        errorMessage: errorMessage,
-        caption: c,
-      );
+    id: id,
+    contentId: contentId,
+    platform: platform,
+    status: status,
+    scheduledAt: scheduledAt,
+    permalink: permalink,
+    errorMessage: errorMessage,
+    caption: c,
+  );
 
   factory PublishJob.fromJson(Map<String, dynamic> json) => PublishJob(
-        id: json['id'] as String,
-        contentId: json['content_id'] as String? ?? '',
-        platform: json['platform'] as String? ?? '',
-        status: JobStatus.parse(json['status'] as String?),
-        scheduledAt:
-            DateTime.tryParse(json['scheduled_at'] as String? ?? '')?.toLocal() ??
-                DateTime.now(),
-        permalink: json['permalink'] as String? ?? '',
-        errorMessage: json['last_error'] is Map
-            ? ((json['last_error'] as Map)['message'] as String? ?? '')
-            : '',
-      );
+    id: json['id'] as String,
+    contentId: json['content_id'] as String? ?? '',
+    platform: json['platform'] as String? ?? '',
+    status: JobStatus.parse(json['status'] as String?),
+    scheduledAt:
+        DateTime.tryParse(json['scheduled_at'] as String? ?? '')?.toLocal() ??
+        DateTime.now(),
+    permalink: json['permalink'] as String? ?? '',
+    errorMessage: json['last_error'] is Map
+        ? ((json['last_error'] as Map)['message'] as String? ?? '')
+        : '',
+  );
 }
 
 /// สิ่งที่ต้องให้ผู้ใช้ลงมือทำ — ขึ้นบนสุดของหน้าหลักเสมอ
@@ -156,13 +161,15 @@ class HomeData {
     // บัญชีที่หลุดการเชื่อมต่อขึ้นก่อน เพราะมันบล็อกงานทั้งหมดของบัญชีนั้น
     for (final c in connections) {
       if (!c.status.isUsable) {
-        actions.add(ActionItem(
-          kind: ActionKind.needsReauth,
-          title: '${_platformName(c.provider)} หลุดการเชื่อมต่อ',
-          detail: 'โพสต์ที่ตั้งเวลาไว้จะยังไม่ถูกส่งจนกว่าจะเชื่อมใหม่',
-          actionLabel: 'เชื่อมใหม่',
-          connectionId: c.id,
-        ));
+        actions.add(
+          ActionItem(
+            kind: ActionKind.needsReauth,
+            title: '${_platformName(c.provider)} หลุดการเชื่อมต่อ',
+            detail: 'โพสต์ที่ตั้งเวลาไว้จะยังไม่ถูกส่งจนกว่าจะเชื่อมใหม่',
+            actionLabel: 'เชื่อมใหม่',
+            connectionId: c.id,
+          ),
+        );
       }
     }
 
@@ -173,18 +180,20 @@ class HomeData {
     for (final j in jobs) {
       switch (j.status) {
         case JobStatus.failed:
-          actions.add(ActionItem(
-            kind: ActionKind.jobFailed,
-            title: 'โพสต์ไม่สำเร็จ',
-            detail: j.errorMessage.isEmpty ? j.title : j.errorMessage,
-            actionLabel: 'ดูสาเหตุ',
-            jobId: j.id,
-          ));
+          actions.add(
+            ActionItem(
+              kind: ActionKind.jobFailed,
+              title: 'โพสต์ไม่สำเร็จ',
+              detail: j.errorMessage.isEmpty ? j.title : j.errorMessage,
+              actionLabel: 'ดูสาเหตุ',
+              jobId: j.id,
+            ),
+          );
         case JobStatus.published:
           if (_isSameDay(j.scheduledAt, today)) published.add(j);
         case JobStatus.scheduled:
           scheduled.add(j);
-        case JobStatus.cancelled || JobStatus.unknown:
+        case JobStatus.draft || JobStatus.cancelled || JobStatus.unknown:
           break;
         default:
           if (j.status.isWorking) working.add(j);
@@ -207,10 +216,10 @@ class HomeData {
       a.year == b.year && a.month == b.month && a.day == b.day;
 
   static String _platformName(String provider) => switch (provider) {
-        'tiktok' => 'TikTok',
-        'facebook' => 'Facebook',
-        'instagram' => 'Instagram',
-        'youtube' => 'YouTube',
-        _ => provider,
-      };
+    'tiktok' => 'TikTok',
+    'facebook' => 'Facebook',
+    'instagram' => 'Instagram',
+    'youtube' => 'YouTube',
+    _ => provider,
+  };
 }

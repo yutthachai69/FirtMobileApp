@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../domain/home_data.dart';
+import 'content_detail_page.dart';
 import 'home_controller.dart';
 import 'home_page.dart' show JobCard;
 
@@ -30,66 +32,83 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
     if (!widget.controller.loaded) widget.controller.load();
   }
 
-  List<PublishJob> _jobsFor(HomeData data) => switch (_filter) {
-        _Filter.all => [
-            ...data.working,
-            ...data.scheduled,
-            ...data.publishedToday,
-          ],
-        _Filter.needAction => const [], // action item ไม่ใช่ PublishJob โดยตรง
-        _Filter.working => data.working,
-        _Filter.scheduled => data.scheduled,
-        _Filter.published => data.publishedToday,
-      };
+  List<PublishJob> _sourceJobs(HomeData data) {
+    final real = [...data.working, ...data.scheduled, ...data.publishedToday];
+    return real.isEmpty && data.needAction.isEmpty ? demoContentJobs : real;
+  }
+
+  List<PublishJob> _jobsFor(HomeData data) {
+    final jobs = _sourceJobs(data);
+    return switch (_filter) {
+      _Filter.all => jobs,
+      _Filter.needAction =>
+        jobs.where((j) => j.status == JobStatus.failed).toList(),
+      _Filter.working =>
+        jobs
+            .where((j) => j.status.isWorking || j.status == JobStatus.draft)
+            .toList(),
+      _Filter.scheduled =>
+        jobs.where((j) => j.status == JobStatus.scheduled).toList(),
+      _Filter.published =>
+        jobs.where((j) => j.status == JobStatus.published).toList(),
+    };
+  }
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-        listenable: widget.controller,
-        builder: (context, _) {
-          final c = widget.controller;
-          final data = c.data;
+    listenable: widget.controller,
+    builder: (context, _) {
+      final c = widget.controller;
+      final data = c.data;
 
-          return Scaffold(
-            appBar: AppBar(title: const Text('คอนเทนต์')),
-            body: SafeArea(
-              child: RefreshIndicator(
-                onRefresh: c.load,
-                child: !c.loaded && c.loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : data == null
-                        ? _errorBody(c)
-                        : _list(context, data),
-              ),
-            ),
-          );
-        },
+      return Scaffold(
+        appBar: AppBar(title: const Text('คอนเทนต์')),
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: c.load,
+            child: !c.loaded && c.loading
+                ? const Center(child: CircularProgressIndicator())
+                : data == null
+                ? _errorBody(c)
+                : _list(context, data),
+          ),
+        ),
       );
+    },
+  );
 
   Widget _errorBody(HomeController c) => ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const SizedBox(height: 120),
-          Center(
-            child: Column(
-              children: [
-                Text(c.error ?? 'โหลดข้อมูลไม่ได้'),
-                const SizedBox(height: Spacing.md),
-                FilledButton(onPressed: c.load, child: const Text('ลองใหม่')),
-              ],
-            ),
-          ),
-        ],
-      );
+    physics: const AlwaysScrollableScrollPhysics(),
+    children: [
+      const SizedBox(height: 120),
+      Center(
+        child: Column(
+          children: [
+            Text(c.error ?? 'โหลดข้อมูลไม่ได้'),
+            const SizedBox(height: Spacing.md),
+            FilledButton(onPressed: c.load, child: const Text('ลองใหม่')),
+          ],
+        ),
+      ),
+    ],
+  );
 
   Widget _list(BuildContext context, HomeData data) {
+    final source = _sourceJobs(data);
     final counts = <_Filter, int>{
-      _Filter.all: data.working.length +
-          data.scheduled.length +
-          data.publishedToday.length,
-      _Filter.needAction: data.needAction.length,
-      _Filter.working: data.working.length,
-      _Filter.scheduled: data.scheduled.length,
-      _Filter.published: data.publishedToday.length,
+      _Filter.all: source.length,
+      _Filter.needAction: source
+          .where((j) => j.status == JobStatus.failed)
+          .length,
+      _Filter.working: source
+          .where((j) => j.status.isWorking || j.status == JobStatus.draft)
+          .length,
+      _Filter.scheduled: source
+          .where((j) => j.status == JobStatus.scheduled)
+          .length,
+      _Filter.published: source
+          .where((j) => j.status == JobStatus.published)
+          .length,
     };
     final jobs = _jobsFor(data);
 
@@ -113,12 +132,11 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
           ),
         ),
         const SizedBox(height: Spacing.lg),
-        if (_filter == _Filter.needAction)
-          Text(
-            'ดูรายการที่ต้องทำได้ที่หน้าหลัก',
-            style: TextStyle(color: context.t.textSecondary),
-          )
-        else if (jobs.isEmpty)
+        if (source == demoContentJobs) ...[
+          _PreviewBanner(),
+          const SizedBox(height: Spacing.md),
+        ],
+        if (jobs.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 40),
             child: Center(
@@ -129,16 +147,44 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
             ),
           )
         else
-          for (final job in jobs) JobCard(job: job),
+          for (final job in jobs)
+            JobCard(
+              job: job,
+              onTap: () => context.go('/content/${job.id}', extra: job),
+            ),
       ],
     );
   }
 
   String _label(_Filter f) => switch (f) {
-        _Filter.all => 'ทั้งหมด',
-        _Filter.needAction => 'ต้องทำ',
-        _Filter.working => 'กำลังสร้าง',
-        _Filter.scheduled => 'ตั้งเวลาไว้',
-        _Filter.published => 'โพสต์แล้ว',
-      };
+    _Filter.all => 'ทั้งหมด',
+    _Filter.needAction => 'ต้องทำ',
+    _Filter.working => 'กำลังสร้าง',
+    _Filter.scheduled => 'ตั้งเวลาไว้',
+    _Filter.published => 'โพสต์แล้ว',
+  };
+}
+
+class _PreviewBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: BoxDecoration(
+      color: context.t.primary.withValues(alpha: .07),
+      borderRadius: BorderRadius.circular(Radii.md),
+      border: Border.all(color: context.t.primary.withValues(alpha: .2)),
+    ),
+    child: const Row(
+      children: [
+        Icon(Icons.science_outlined, size: 18),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'ข้อมูลตัวอย่างสำหรับทดสอบสถานะและการแก้ปัญหา',
+            style: TextStyle(fontSize: 12),
+          ),
+        ),
+      ],
+    ),
+  );
 }

@@ -4,14 +4,27 @@ import 'package:go_router/go_router.dart';
 
 import '../core/auth/auth_controller.dart';
 import '../features/auth/presentation/auth_page.dart';
+import '../features/auth/presentation/onboarding_page.dart';
 import '../features/composer/data/composer_api.dart';
 import '../features/composer/presentation/composer_controller.dart';
 import '../features/composer/presentation/tiktok_composer_page.dart';
 import '../features/connections/presentation/connections_page.dart';
+import '../features/create/presentation/ai_create_page.dart';
+import '../features/create/presentation/ai_sources_page.dart';
+import '../features/create/presentation/create_hub_page.dart';
 import '../features/create/presentation/create_page.dart';
+import '../features/create/presentation/guided_film_page.dart';
+import '../features/create/presentation/publish_review_page.dart';
+import '../features/home/domain/home_data.dart' as home;
+import '../features/home/presentation/content_detail_page.dart';
 import '../features/home/presentation/content_library_page.dart';
 import '../features/home/presentation/home_page.dart';
+import '../features/home/presentation/notifications_page.dart';
+import '../features/profile/presentation/profile_page.dart';
+import '../features/showcase/domain/showcase_product.dart';
+import '../features/showcase/presentation/product_detail_page.dart';
 import '../features/showcase/presentation/showcase_page.dart';
+import 'main_shell.dart';
 import 'providers.dart';
 import 'theme/app_theme.dart';
 
@@ -24,6 +37,8 @@ class RelayApp extends ConsumerStatefulWidget {
 class _RelayAppState extends ConsumerState<RelayApp> {
   late final AuthController auth;
   late final GoRouter router;
+  ThemeMode themeMode = ThemeMode.dark;
+  bool reducedMotion = false;
   @override
   void initState() {
     super.initState();
@@ -41,7 +56,11 @@ class _RelayAppState extends ConsumerState<RelayApp> {
           SessionPhase.unavailable => path == '/session' ? null : '/session',
           SessionPhase.signedOut => path == '/login' ? null : '/login',
           SessionPhase.signedIn =>
-            (path == '/login' || path == '/session') ? '/' : null,
+            auth.justRegistered
+                ? (path == '/onboarding' ? null : '/onboarding')
+                : (path == '/login' || path == '/session')
+                ? '/'
+                : null,
         };
       },
       routes: [
@@ -54,27 +73,151 @@ class _RelayAppState extends ConsumerState<RelayApp> {
           builder: (_, _) => AuthPage(auth: auth),
         ),
         GoRoute(
-          path: '/',
-          builder: (_, _) =>
-              HomePage(auth: auth, controller: ref.read(homeProvider)),
+          path: '/onboarding',
+          builder: (_, _) => OnboardingPage(auth: auth),
         ),
-        GoRoute(
-          path: '/connections',
-          builder: (_, _) =>
-              ConnectionsPage(controller: ref.read(connectionsProvider)),
-        ),
-        GoRoute(
-          path: '/create',
-          builder: (_, _) => CreatePage(controller: ref.read(createProvider)),
-        ),
-        GoRoute(
-          path: '/showcase',
-          builder: (_, _) => const ShowcasePage(),
-        ),
-        GoRoute(
-          path: '/content',
-          builder: (_, _) =>
-              ContentLibraryPage(controller: ref.read(homeProvider)),
+        ShellRoute(
+          builder: (_, state, child) =>
+              MainShell(location: state.uri.path, child: child),
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (_, _) =>
+                  HomePage(auth: auth, controller: ref.read(homeProvider)),
+            ),
+            GoRoute(
+              path: '/showcase',
+              builder: (_, _) => const ShowcasePage(),
+              routes: [
+                GoRoute(
+                  path: 'import-ai',
+                  builder: (_, state) => AiSourcesPage(
+                    product: state.extra is ShowcaseProduct
+                        ? state.extra! as ShowcaseProduct
+                        : null,
+                  ),
+                ),
+                GoRoute(
+                  path: ':productId',
+                  builder: (_, state) {
+                    ShowcaseProduct? product;
+                    for (final item in ShowcaseProduct.mock) {
+                      if (item.id == state.pathParameters['productId']) {
+                        product = item;
+                        break;
+                      }
+                    }
+                    return product == null
+                        ? const ShowcasePage()
+                        : ProductDetailPage(product: product);
+                  },
+                ),
+              ],
+            ),
+            GoRoute(
+              path: '/create',
+              builder: (_, state) => CreateHubPage(
+                selectedProduct: state.extra is ShowcaseProduct
+                    ? state.extra! as ShowcaseProduct
+                    : null,
+              ),
+              routes: [
+                GoRoute(
+                  path: 'ai',
+                  builder: (_, state) => AiCreatePage(
+                    product: state.extra is ShowcaseProduct
+                        ? state.extra! as ShowcaseProduct
+                        : ShowcaseProduct.mock.first,
+                  ),
+                ),
+                GoRoute(
+                  path: 'upload',
+                  builder: (_, state) => CreatePage(
+                    controller: ref.read(createProvider),
+                    selectedProduct: state.extra is ShowcaseProduct
+                        ? state.extra! as ShowcaseProduct
+                        : null,
+                  ),
+                ),
+                GoRoute(
+                  path: 'guided',
+                  builder: (_, state) => GuidedFilmPage(
+                    product: state.extra is ShowcaseProduct
+                        ? state.extra! as ShowcaseProduct
+                        : ShowcaseProduct.mock.first,
+                  ),
+                ),
+                GoRoute(
+                  path: 'publish',
+                  builder: (_, state) {
+                    final extra = state.extra;
+                    if (extra is PublishReviewArgs) {
+                      return PublishReviewPage(
+                        product: extra.product,
+                        initialCaption: extra.caption,
+                        mediaName: extra.mediaName,
+                        durationSec: extra.durationSec,
+                        sourceLabel: extra.sourceLabel,
+                      );
+                    }
+                    return PublishReviewPage(
+                      product: extra is ShowcaseProduct
+                          ? extra
+                          : ShowcaseProduct.mock.first,
+                    );
+                  },
+                ),
+              ],
+            ),
+            GoRoute(
+              path: '/content',
+              builder: (_, _) =>
+                  ContentLibraryPage(controller: ref.read(homeProvider)),
+              routes: [
+                GoRoute(
+                  path: ':jobId',
+                  builder: (_, state) {
+                    final extra = state.extra;
+                    home.PublishJob? job = extra is home.PublishJob
+                        ? extra
+                        : null;
+                    if (job == null) {
+                      for (final item in demoContentJobs) {
+                        if (item.id == state.pathParameters['jobId']) {
+                          job = item;
+                          break;
+                        }
+                      }
+                    }
+                    return job == null
+                        ? ContentLibraryPage(controller: ref.read(homeProvider))
+                        : ContentDetailPage(job: job);
+                  },
+                ),
+              ],
+            ),
+            GoRoute(
+              path: '/connections',
+              builder: (_, _) =>
+                  ConnectionsPage(controller: ref.read(connectionsProvider)),
+            ),
+            GoRoute(
+              path: '/profile',
+              builder: (_, _) => ProfilePage(
+                auth: auth,
+                themeMode: themeMode,
+                reducedMotion: reducedMotion,
+                onThemeModeChanged: (value) =>
+                    setState(() => themeMode = value),
+                onReducedMotionChanged: (value) =>
+                    setState(() => reducedMotion = value),
+              ),
+            ),
+            GoRoute(
+              path: '/notifications',
+              builder: (_, _) => const NotificationsPage(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/composer',
@@ -113,9 +256,49 @@ class _RelayAppState extends ConsumerState<RelayApp> {
     debugShowCheckedModeBanner: false,
     theme: appTheme(Brightness.light),
     darkTheme: appTheme(Brightness.dark),
-    themeMode: ThemeMode.dark,
+    themeMode: themeMode,
+    builder: (context, child) =>
+        _ResponsiveAppViewport(reducedMotion: reducedMotion, child: child),
     routerConfig: router,
   );
+}
+
+/// Keeps the web preview at a real mobile width without browser device
+/// emulation. Edge/Chrome device emulation can briefly report a negative
+/// visual viewport while dismissing its virtual keyboard, which crashes the
+/// Flutter web engine in debug mode. Real phones are left untouched.
+class _ResponsiveAppViewport extends StatelessWidget {
+  const _ResponsiveAppViewport({
+    required this.child,
+    required this.reducedMotion,
+  });
+
+  final Widget? child;
+  final bool reducedMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = MediaQuery(
+      data: MediaQuery.of(context).copyWith(disableAnimations: reducedMotion),
+      child: child ?? const SizedBox.shrink(),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) return content;
+        return ColoredBox(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: 430,
+              height: constraints.maxHeight,
+              child: content,
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class SessionPage extends StatelessWidget {

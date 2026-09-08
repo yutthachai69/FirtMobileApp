@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../domain/home_data.dart';
+import 'content_artwork.dart';
 import 'home_controller.dart';
 
 class HomePage extends StatefulWidget {
@@ -37,9 +38,9 @@ class _HomePageState extends State<HomePage> {
           title: _CreatorTitle(name: name),
           actions: [
             IconButton.filledTonal(
-              onPressed: () => context.push('/connections'),
+              onPressed: () => context.push('/notifications'),
               icon: const Icon(Icons.notifications_none_rounded),
-              tooltip: 'การเชื่อมต่อและการแจ้งเตือน',
+              tooltip: 'การแจ้งเตือน',
             ),
             const SizedBox(width: Spacing.sm),
             IconButton(
@@ -50,7 +51,6 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: Spacing.sm),
           ],
         ),
-        bottomNavigationBar: _BottomNav(onCreate: () => _create(context)),
         body: SafeArea(
           top: false,
           child: RefreshIndicator(
@@ -437,62 +437,121 @@ class _ActionCard extends StatelessWidget {
 }
 
 class JobCard extends StatelessWidget {
-  const JobCard({super.key, required this.job});
+  const JobCard({super.key, required this.job, this.onTap});
   final PublishJob job;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (job.status) {
-      JobStatus.published => context.t.success,
-      JobStatus.failed => context.t.error,
-      _ when job.status.isWorking => context.t.primary,
-      _ => context.t.warning,
-    };
+    final color = contentStatusColor(context, job.status);
     return Card(
       margin: const EdgeInsets.only(bottom: Spacing.sm),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: .10),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withValues(alpha: .24)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap ?? () => context.go('/content/${job.id}', extra: job),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              ContentArtwork(
+                job: job,
+                status: job.status,
+                width: 66,
+                height: 82,
+                compact: true,
               ),
-              child: Icon(Icons.play_circle_outline_rounded, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(job.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${_when(job.scheduledAt)} · ${job.status.label}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: color, fontSize: 12),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      job.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${_when(job.scheduledAt)} · ${job.status.label}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: color, fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (job.status.isWorking) ...[
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: color),
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: 'จัดการคอนเทนต์',
+                onPressed: () => showJobActions(context, job),
+                icon: const Icon(Icons.more_vert_rounded),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+void showJobActions(BuildContext context, PublishJob job) {
+  final actions = switch (job.status) {
+    JobStatus.draft => const [
+      (Icons.edit_outlined, 'ทำฉบับร่างต่อ'),
+      (Icons.copy_rounded, 'สร้างสำเนา'),
+    ],
+    JobStatus.scheduled => const [
+      (Icons.edit_calendar_outlined, 'เปลี่ยนเวลาเผยแพร่'),
+      (Icons.pause_circle_outline_rounded, 'พักการเผยแพร่'),
+    ],
+    JobStatus.published => const [
+      (Icons.open_in_new_rounded, 'เปิดผลงาน'),
+      (Icons.copy_rounded, 'สร้างคอนเทนต์คล้ายกัน'),
+    ],
+    JobStatus.failed => const [
+      (Icons.build_outlined, 'ดูสาเหตุและแก้ไข'),
+      (Icons.refresh_rounded, 'ลองส่งใหม่'),
+    ],
+    _ => const [
+      (Icons.notifications_outlined, 'แจ้งเตือนเมื่อเสร็จ'),
+      (Icons.visibility_outlined, 'ดูความคืบหน้า'),
+    ],
+  };
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: Text(
+              job.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(job.status.label),
+          ),
+          for (final action in actions)
+            ListTile(
+              leading: Icon(action.$1),
+              title: Text(action.$2),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                if (action == actions.first) {
+                  context.go('/content/${job.id}', extra: job);
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('${action.$2}แล้ว')));
+                }
+              },
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
 }
 
 class _EmptyState extends StatelessWidget {
@@ -631,52 +690,6 @@ class _GuideStep extends StatelessWidget {
         ),
       ],
     ),
-  );
-}
-
-class _BottomNav extends StatelessWidget {
-  const _BottomNav({required this.onCreate});
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) => NavigationBar(
-    selectedIndex: 0,
-    onDestinationSelected: (index) {
-      switch (index) {
-        case 0:
-          return;
-        case 1:
-          context.push('/showcase');
-        case 2:
-          onCreate();
-        case 3:
-          context.push('/content');
-        case 4:
-          context.push('/connections');
-      }
-    },
-    destinations: const [
-      NavigationDestination(
-        icon: Icon(Icons.grid_view_rounded),
-        label: 'หน้าหลัก',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.shopping_bag_outlined),
-        label: 'สินค้า',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.add_circle_rounded),
-        label: 'สร้าง',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.video_library_outlined),
-        label: 'คอนเทนต์',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.person_outline_rounded),
-        label: 'โปรไฟล์',
-      ),
-    ],
   );
 }
 

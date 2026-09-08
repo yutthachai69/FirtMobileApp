@@ -126,11 +126,14 @@ class _AuthPageState extends State<AuthPage>
                               children: [
                                 const _Brand(),
                                 const SizedBox(height: Spacing.lg),
-                                _RelayJourney(
-                                  progress: _journeyProgress(auth.busy),
-                                  busy: auth.busy,
-                                ),
-                                const SizedBox(height: Spacing.lg),
+                                if (MediaQuery.sizeOf(context).height >
+                                    700) ...[
+                                  _RelayJourney(
+                                    progress: _journeyProgress(auth.busy),
+                                    busy: auth.busy,
+                                  ),
+                                  const SizedBox(height: Spacing.lg),
+                                ],
                                 AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 240),
                                   child: Column(
@@ -173,6 +176,7 @@ class _AuthPageState extends State<AuthPage>
                                             bottom: Spacing.md,
                                           ),
                                           child: TextFormField(
+                                            key: const Key('display-name'),
                                             controller: _name,
                                             enabled: !auth.busy,
                                             decoration: const InputDecoration(
@@ -273,6 +277,19 @@ class _AuthPageState extends State<AuthPage>
                                     return null;
                                   },
                                 ),
+                                if (_register)
+                                  _PasswordChecks(value: _password.text)
+                                else
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      key: const Key('forgot-password'),
+                                      onPressed: auth.busy
+                                          ? null
+                                          : _showForgotPassword,
+                                      child: const Text('ลืมรหัสผ่าน?'),
+                                    ),
+                                  ),
                                 AnimatedSize(
                                   duration: const Duration(milliseconds: 220),
                                   child: auth.error == null
@@ -357,6 +374,166 @@ class _AuthPageState extends State<AuthPage>
         ),
       );
     },
+  );
+
+  Future<void> _showForgotPassword() => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => _ForgotPasswordSheet(initialEmail: _email.text),
+  );
+}
+
+class _PasswordChecks extends StatelessWidget {
+  const _PasswordChecks({required this.value});
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final longEnough = utf8.encode(value).length >= 8;
+    final hasNumber = RegExp(r'\d').hasMatch(value);
+    return Padding(
+      padding: const EdgeInsets.only(top: 9),
+      child: Row(
+        children: [
+          _Check(text: 'อย่างน้อย 8 ตัว', passed: longEnough),
+          const SizedBox(width: 12),
+          _Check(text: 'มีตัวเลข', passed: hasNumber),
+        ],
+      ),
+    );
+  }
+}
+
+class _Check extends StatelessWidget {
+  const _Check({required this.text, required this.passed});
+  final String text;
+  final bool passed;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(
+        passed ? Icons.check_circle_rounded : Icons.circle_outlined,
+        size: 15,
+        color: passed ? context.t.success : context.t.textSecondary,
+      ),
+      const SizedBox(width: 4),
+      Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          color: passed ? context.t.success : context.t.textSecondary,
+        ),
+      ),
+    ],
+  );
+}
+
+class _ForgotPasswordSheet extends StatefulWidget {
+  const _ForgotPasswordSheet({required this.initialEmail});
+  final String initialEmail;
+
+  @override
+  State<_ForgotPasswordSheet> createState() => _ForgotPasswordSheetState();
+}
+
+class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
+  late final TextEditingController email = TextEditingController(
+    text: widget.initialEmail,
+  );
+  String? error;
+  bool sent = false;
+
+  @override
+  void dispose() {
+    email.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(
+      Spacing.lg,
+      0,
+      Spacing.lg,
+      MediaQuery.viewInsetsOf(context).bottom + Spacing.lg,
+    ),
+    child: sent
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.mark_email_read_outlined,
+                size: 54,
+                color: context.t.success,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'ส่งลิงก์เรียบร้อย',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'ตรวจกล่องข้อความของ ${email.text.trim()}',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: Spacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('กลับไปเข้าสู่ระบบ'),
+                ),
+              ),
+            ],
+          )
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'ตั้งรหัสผ่านใหม่',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                'เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ไปยังอีเมลของคุณ',
+                style: TextStyle(color: context.t.textSecondary),
+              ),
+              const SizedBox(height: Spacing.lg),
+              TextField(
+                key: const Key('reset-email'),
+                controller: email,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'อีเมล',
+                  errorText: error,
+                  prefixIcon: const Icon(Icons.mail_outline_rounded),
+                ),
+              ),
+              const SizedBox(height: Spacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const Key('send-reset'),
+                  onPressed: () {
+                    final valid = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                        .hasMatch(email.text.trim());
+                    if (!valid) {
+                      setState(() => error = 'กรุณากรอกอีเมลให้ถูกต้อง');
+                    } else {
+                      FocusScope.of(context).unfocus();
+                      setState(() => sent = true);
+                    }
+                  },
+                  child: const Text('ส่งลิงก์ตั้งรหัสผ่าน'),
+                ),
+              ),
+            ],
+          ),
   );
 }
 

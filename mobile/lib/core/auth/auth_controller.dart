@@ -14,6 +14,7 @@ class AuthController extends ChangeNotifier {
   Account? account;
   String? error;
   bool busy = false;
+  bool justRegistered = false;
   SessionTokens? _tokens;
   Future<void>? _refreshing;
 
@@ -66,6 +67,7 @@ class AuthController extends ChangeNotifier {
       await store.write(result.tokens);
       _tokens = result.tokens;
       account = result.account;
+      justRegistered = name != null;
       phase = SessionPhase.signedIn;
     } on AuthFailure catch (failure) {
       error = failure.message;
@@ -124,6 +126,22 @@ class AuthController extends ChangeNotifier {
 
   Future<Account> currentAccount() => authorized(api.me);
 
+  void completeOnboarding() {
+    justRegistered = false;
+  }
+
+  void updateLocalProfile({String? name, String? timezone}) {
+    final current = account;
+    if (current == null) return;
+    account = Account(
+      id: current.id,
+      email: current.email,
+      name: name?.trim().isNotEmpty == true ? name!.trim() : current.name,
+      timezone: timezone ?? current.timezone,
+    );
+    notifyListeners();
+  }
+
   Future<void> signOut() async {
     if (busy) return;
     busy = true;
@@ -157,6 +175,7 @@ class AuthController extends ChangeNotifier {
     await store.clear();
     _tokens = null;
     account = null;
+    justRegistered = false;
     phase = SessionPhase.signedOut;
   }
 }
