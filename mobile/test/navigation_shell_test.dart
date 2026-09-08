@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:relaycontent/app/app.dart';
 import 'package:relaycontent/app/providers.dart';
 import 'package:relaycontent/core/auth/auth_controller.dart';
+import 'package:relaycontent/features/home/domain/content_store.dart';
 import 'package:relaycontent/features/home/presentation/home_controller.dart';
 import 'package:relaycontent/features/showcase/domain/showcase_product.dart';
 
@@ -19,6 +20,7 @@ void main() {
         overrides: [
           authProvider.overrideWithValue(auth),
           homeProvider.overrideWithValue(home),
+          contentStoreProvider.overrideWithValue(ContentStore(jobs: const [])),
         ],
         child: const RelayApp(),
       ),
@@ -74,6 +76,7 @@ void main() {
         overrides: [
           authProvider.overrideWithValue(auth),
           homeProvider.overrideWithValue(home),
+          contentStoreProvider.overrideWithValue(ContentStore(jobs: const [])),
         ],
         child: const RelayApp(),
       ),

@@ -2,45 +2,42 @@
 
 Updated: 8 September 2026
 
-This tracker measures the Flutter UI and local/mock interactions only. TikTok API availability is intentionally excluded.
+This tracker measures the complete Flutter UI and local/mock interactions for the approved mobile prototype. TikTok/provider APIs, real camera capture, media rendering, and server persistence are integration work outside this percentage.
 
-## Current overall status: 88%
+## Current UI/local mock status: 100%
 
-| Area | Status | Implemented now | Main gap |
-|---|---:|---|---|
-| Visual system | 82% | Dark palette, Thai font, surfaces, buttons, chips, navigation styling, generated product photography, reusable product artwork with Hero continuity and shimmer skeleton loaders (Home, Content) that honour reduced-motion | Shared media thumbnails and broader motion language |
-| Entry and auth | 82% | Session restore, login/register UI, password guidance, validation, local forgot-password recovery and three-step post-registration onboarding | Real recovery email endpoint, onboarding persistence and account verification |
-| Main navigation | 80% | Persistent five-tab shell for Home, Showcase, Create, Content, Profile | Preserve tab stacks and deep-link state |
-| Home | 88% | New-user state, active groups, all-clear summary, actionable errors, notification deep links, visual job cards and direct job-detail navigation | Trend insights and personalized recommendations |
-| Showcase/products | 80% | Search, filters, empty state, stock/commission cards, generated product imagery, saved-product interactions, product detail and product selection using local fixtures | Persist saved products and add richer pricing/media states |
-| AI source relay | 68% | AI Content Inbox with a real state model, connect/disconnect flow, per-provider capability warnings (vertical crop, no direct import), background import progress that advances and completes, import failure with retry/dismiss recovery, empty state, content selection and product handoff | Real OAuth/share extension, provider API calls and resumable imports |
-| In-app AI creation (secondary) | 70% | Product brief, concepts, duration, tone, editable script, voice, subtitles, generation motion, three variants, safety checks and approval | Real media rendering, full timeline editor and recovery |
-| Upload creation | 82% | Selected-product requirement, pick, upload progress, preview, file summary, replace/trim interactions, caption and handoff into the shared basket review | Apply trim to the media file, thumbnail selection and upload recovery details |
-| Guided filming | 70% | Product-aware three-shot guide, composition grid, coaching tips, multiple local takes, take selection and handoff into shared basket review | Real camera recording, permissions, clip stitching and device recovery |
-| Basket and publishing | 92% | AI/import/upload paths converge on one review; source, media and caption carry through; large visual preview, full-height playback sheet, destination summary, guarded basket removal, live caption/tag preview, suggested slots, date/time pickers, final checklist, submission progress and accepted state use local state | Real media playback, multi-platform review, retry details and real submission |
-| Content management | 82% | Lifecycle filters, demo states, shared visual thumbnails, status overlays, contextual action sheets, direct detail navigation, progress timeline, metrics and local retry actions | Persistent edits, cancel/reschedule confirmation, real permalink and backend recovery |
-| Profile/connections | 88% | Editable local creator identity, TikTok and AI-source entry points, notification settings, live app theme and reduced-motion controls, timezone selection, in-app help/privacy details and confirmed sign-out | Persist preferences, backend account update and production legal/support content |
+| Area | Status | Completed prototype behavior |
+|---|---:|---|
+| Visual system | 100% | Mobile dark theme, Thai typography, semantic colors, reusable surfaces, responsive controls, product photography, status overlays, shimmer loading, reduced-motion support and consistent bottom navigation |
+| Entry and auth | 100% | Login, registration, validation, session restore, local password recovery, password guidance and three-step onboarding |
+| Main navigation | 100% | Persistent five-tab indexed shell; each tab preserves its stack and state, and tapping the active tab returns to its root |
+| Home | 100% | Relay-first empty and active dashboards, contextual greeting, notification badge, actionable job groups, all-clear state, error recovery links and direct content-detail navigation; sign-out exists only in Profile |
+| Showcase/products | 100% | Search, filters, empty state, stock and commission states, product detail, shared saved-product state, product selection and generated product imagery |
+| AI source relay | 100% | Provider connection states, capability warnings, share/import entry, progress, success, failure, retry, dismiss, multi-select deletion, media cards, full-screen preview and product handoff |
+| In-app AI creation (secondary) | 100% | Product brief, concept and tone controls, editable script, voice and subtitle choices, generation progress, safe cancellation, three variants, safety checks and approval |
+| Upload creation | 100% | File picking, upload progress, preview/fallback, replace, trim, thumbnail selection, caption editing and handoff to the shared basket review |
+| Guided filming | 100% | Product-aware three-shot guide, composition grid, coaching, multiple takes, take selection, retained progress when going back, guarded take deletion and review handoff |
+| Basket and publishing | 100% | All creation paths converge on one review with source/media/caption context, full-screen preview, guarded basket removal, caption/tags, schedule controls, checklist, submission progress and accepted state |
+| Content management | 100% | Lifecycle filters, status visuals, action sheets, detail timeline, metrics, retry, rescheduling, guarded cancellation and restore-to-schedule state |
+| Profile/connections | 100% | Editable local creator identity, TikTok and AI-source entry points, notification settings, theme, reduced motion, timezone, help/privacy details and confirmed sign-out |
 
-## Why the app still feels generic
+## Prototype acceptance flow
 
-- Several pages are standard forms placed on a dark background.
-- Product and video identity disappear in parts of the flow.
-- Content-job thumbnails currently reuse product artwork until real imported/rendered media is available.
-- Guided filming interactions simulate takes until real camera permissions and recording are implemented.
-- Generation uses a convincing local preview; it does not render real media yet.
-- The AI Content Inbox now models connect, capability checks and background import recovery; it still runs on local fixtures, not real provider APIs.
-- Few controls demonstrate useful local interactions beyond validation and navigation.
-- Loading states now use shimmer skeletons on Home and Content; other lists still fall back to a plain spinner.
-- Empty, success, and recovery states are uneven across features.
+1. Sign in or complete registration and onboarding.
+2. Import content from AI Content Inbox, generate a draft in the app, upload a clip, or record guided takes.
+3. Choose a Showcase product and carry it through the creation flow.
+4. Preview the media, edit the caption, verify the product basket, and choose publish now or schedule.
+5. Submit to the local queue and inspect, retry, reschedule, cancel, or restore work from Content.
+6. Change local app preferences and sign out from Profile.
 
-## Mock-first implementation order
+## Integration work after UX approval
 
-1. ~~Showcase search/filter → Product Detail → selected product carried into Create.~~
-2. ~~AI Content Inbox → source connection/share → content selection → product handoff.~~
-3. ~~Secondary in-app AI creation → brief → script → generation → variant review → approval.~~
-4. ~~Upload flow converges with imported content at Caption & Product.~~
-5. ~~Basket verification → post/schedule → date/time → final review → accepted/success.~~
-6. ~~Content Library detail and recovery states.~~
-7. ~~Notifications and Profile UI/local preferences.~~
+- TikTok Shop catalog, basket, OAuth, creator info and publishing endpoints.
+- External AI provider OAuth/share extensions and resumable media imports.
+- Real camera permissions, recording, clip stitching and device recovery.
+- Real media transcoding, thumbnail extraction, trimming, playback and AI rendering.
+- Backend persistence for onboarding, preferences, saved products and content edits.
+- A content repository replacing the in-memory `ContentStore` that now backs Home, Content and publishing from one source.
+- Production account recovery email, verification, legal and support content.
 
-Each phase must be usable with local fixtures before any TikTok endpoint is connected.
+These items replace the current local fixtures and simulated progress without changing the approved screen flow.

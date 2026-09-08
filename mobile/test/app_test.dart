@@ -5,9 +5,15 @@ import 'package:relaycontent/app/app.dart';
 import 'package:relaycontent/app/providers.dart';
 import 'package:relaycontent/core/auth/auth_controller.dart';
 import 'package:relaycontent/features/auth/domain/session.dart';
+import 'package:relaycontent/features/home/domain/content_store.dart';
 import 'package:relaycontent/features/home/presentation/home_controller.dart';
 
 import 'support/fakes.dart';
+
+/// หน้าหลักเริ่มเปล่าในเทสนี้ เพื่อตรวจ empty state และเส้นทาง auth
+final _emptyStore = contentStoreProvider.overrideWithValue(
+  ContentStore(jobs: const []),
+);
 
 void main() {
   testWidgets('login, home, restart and logout', (tester) async {
@@ -19,6 +25,7 @@ void main() {
         overrides: [
           authProvider.overrideWithValue(auth),
           homeProvider.overrideWithValue(HomeController(auth, FakeHomeApi())),
+          _emptyStore,
         ],
         child: const RelayApp(),
       ),
@@ -46,6 +53,7 @@ void main() {
           homeProvider.overrideWithValue(
             HomeController(restarted, FakeHomeApi()),
           ),
+          _emptyStore,
         ],
         child: const RelayApp(),
       ),
@@ -83,7 +91,7 @@ void main() {
     final auth = AuthController(api, MemoryTokenStore());
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authProvider.overrideWithValue(auth)],
+        overrides: [authProvider.overrideWithValue(auth), _emptyStore],
         child: const RelayApp(),
       ),
     );

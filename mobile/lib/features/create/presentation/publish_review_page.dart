@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../home/domain/content_store.dart';
+import '../../home/domain/home_data.dart';
 import '../../showcase/domain/showcase_product.dart';
 import '../../showcase/presentation/product_artwork.dart';
 
@@ -31,12 +33,17 @@ class PublishReviewPage extends StatefulWidget {
     this.mediaName,
     this.durationSec = 30,
     this.sourceLabel = 'AI Content Inbox',
+    this.store,
   });
   final ShowcaseProduct product;
   final String? initialCaption;
   final String? mediaName;
   final int durationSec;
   final String sourceLabel;
+
+  /// เมื่อส่งเข้ามา การกดยืนยันจะเพิ่มงานเข้าแหล่งข้อมูลกลาง
+  /// งานจึงไปโผล่ในแท็บคอนเทนต์และหน้าหลักจริง
+  final ContentStore? store;
 
   @override
   State<PublishReviewPage> createState() => _PublishReviewPageState();
@@ -277,12 +284,26 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
   Future<void> _submit() async {
     setState(() => submitting = true);
     await Future<void>.delayed(const Duration(milliseconds: 650));
-    if (mounted) {
-      setState(() {
-        submitting = false;
-        submitted = true;
-      });
-    }
+    if (!mounted) return;
+    final now = DateTime.now();
+    widget.store?.add(
+      PublishJob(
+        id: 'job-${now.microsecondsSinceEpoch}',
+        contentId: 'content-${now.microsecondsSinceEpoch}',
+        productId: widget.product.id,
+        platform: 'tiktok',
+        status: mode == PublishMode.now
+            ? JobStatus.queued
+            : JobStatus.scheduled,
+        scheduledAt: mode == PublishMode.now ? now : scheduledAt,
+        caption: caption.text.trim(),
+        sourceLabel: widget.sourceLabel,
+      ),
+    );
+    setState(() {
+      submitting = false;
+      submitted = true;
+    });
   }
 
   void _openPreview() => showModalBottomSheet<void>(

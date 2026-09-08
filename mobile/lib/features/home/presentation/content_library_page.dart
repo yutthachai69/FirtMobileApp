@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../app/widgets/skeleton.dart';
+import '../domain/content_store.dart';
 import '../domain/home_data.dart';
-import 'content_detail_page.dart';
 import 'home_controller.dart';
 import 'home_page.dart' show JobCard;
 
@@ -14,8 +14,15 @@ import 'home_page.dart' show JobCard;
 /// เพราะข้อมูลชุดเดียวกัน (publish_jobs + contents) แค่มุมมองต่างกัน:
 /// หน้าหลักจัดกลุ่มตามความเร่งด่วน หน้านี้กรองแบบ flat ตามสถานะ
 class ContentLibraryPage extends StatefulWidget {
-  const ContentLibraryPage({super.key, required this.controller});
+  const ContentLibraryPage({
+    super.key,
+    required this.controller,
+    this.store,
+  });
   final HomeController controller;
+
+  /// แหล่งงานกลาง — ถ้าไม่มีข้อมูลจาก backend หน้านี้จะแสดงงานจาก store
+  final ContentStore? store;
 
   @override
   State<ContentLibraryPage> createState() => _ContentLibraryPageState();
@@ -33,9 +40,16 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
     if (!widget.controller.loaded) widget.controller.load();
   }
 
+  /// true = กำลังแสดงงานจาก store (prototype) ไม่ใช่ข้อมูล backend
+  bool _usingStore(HomeData data) {
+    final real = [...data.working, ...data.scheduled, ...data.publishedToday];
+    return real.isEmpty && data.needAction.isEmpty && widget.store != null;
+  }
+
   List<PublishJob> _sourceJobs(HomeData data) {
     final real = [...data.working, ...data.scheduled, ...data.publishedToday];
-    return real.isEmpty && data.needAction.isEmpty ? demoContentJobs : real;
+    if (real.isNotEmpty || data.needAction.isNotEmpty) return real;
+    return widget.store?.jobs ?? const [];
   }
 
   List<PublishJob> _jobsFor(HomeData data) {
@@ -57,17 +71,21 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: widget.controller,
+    listenable: widget.store == null
+        ? widget.controller
+        : Listenable.merge([widget.controller, widget.store!]),
     builder: (context, _) {
       final c = widget.controller;
-      final data = c.data;
+      // ไม่มีข้อมูล backend แต่มี store -> ใช้ HomeData ว่างแล้วให้ _sourceJobs
+      // ดึงงานจาก store มาแสดงแทนการขึ้นหน้า error
+      final data = c.data ?? (widget.store != null ? const HomeData() : null);
 
       return Scaffold(
         appBar: AppBar(title: const Text('คอนเทนต์')),
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: c.load,
-            child: !c.loaded && c.loading
+            child: !c.loaded && c.loading && widget.store == null
                 ? const SkeletonList()
                 : data == null
                 ? _errorBody(c)
@@ -133,7 +151,7 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
           ),
         ),
         const SizedBox(height: Spacing.lg),
-        if (source == demoContentJobs) ...[
+        if (_usingStore(data)) ...[
           _PreviewBanner(),
           const SizedBox(height: Spacing.md),
         ],

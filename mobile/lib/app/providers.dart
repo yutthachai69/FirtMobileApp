@@ -12,6 +12,7 @@ import '../features/connections/presentation/connections_controller.dart';
 import '../features/create/data/create_api.dart';
 import '../features/create/presentation/create_controller.dart';
 import '../features/home/data/home_api.dart';
+import '../features/home/domain/content_store.dart';
 import '../features/home/presentation/home_controller.dart';
 
 /// dio ตัวเดียวใช้ร่วมกันทั้งแอป
@@ -87,4 +88,12 @@ final homeProvider = Provider<HomeController>((ref) {
   );
   ref.onDispose(controller.dispose);
   return controller;
+});
+
+/// แหล่งงานคอนเทนต์ตัวเดียวของทั้งแอปในโหมด prototype
+/// Home / Content / Notifications และการกดเผยแพร่ ใช้ instance เดียวกันนี้
+final contentStoreProvider = Provider<ContentStore>((ref) {
+  final store = ContentStore();
+  ref.onDispose(store.dispose);
+  return store;
 });

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
-import 'content_detail_page.dart';
 
 enum _NoticeFilter { all, action, update }
 
@@ -111,8 +110,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void _open(int index) {
     setState(() => read.add(index));
     if (index == 0) {
-      final failed = demoContentJobs.firstWhere((j) => j.id == 'demo-failed');
-      context.go('/content/${failed.id}', extra: failed);
+      // ปล่อยให้ route แกะงานจากแหล่งกลางตาม id เอง
+      context.go('/content/demo-failed');
     } else if (index == 3) {
       context.go('/connections');
     } else {

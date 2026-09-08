@@ -2,65 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../domain/content_store.dart';
 import '../domain/home_data.dart';
 import 'content_artwork.dart';
 
-final demoContentJobs = <PublishJob>[
-  PublishJob(
-    id: 'demo-draft',
-    contentId: 'content-draft',
-    platform: 'tiktok',
-    status: JobStatus.draft,
-    scheduledAt: DateTime(2026, 9, 8, 11, 30),
-    caption: 'รีวิวเซรั่มวิตามินซี ฉบับร่างจาก AI Content Inbox',
-  ),
-  PublishJob(
-    id: 'demo-processing',
-    contentId: 'content-processing',
-    platform: 'tiktok',
-    status: JobStatus.processing,
-    scheduledAt: DateTime(2026, 9, 8, 14, 10),
-    caption: 'คลิปแกะกล่องไมโครโฟนไร้สายสำหรับ Creator',
-  ),
-  PublishJob(
-    id: 'demo-scheduled',
-    contentId: 'content-scheduled',
-    platform: 'tiktok',
-    status: JobStatus.scheduled,
-    scheduledAt: DateTime(2026, 9, 9, 19, 30),
-    caption: 'ป้ายยาแก้วเก็บความเย็น พร้อมโปรประจำสัปดาห์',
-  ),
-  PublishJob(
-    id: 'demo-published',
-    contentId: 'content-published',
-    platform: 'tiktok',
-    status: JobStatus.published,
-    scheduledAt: DateTime(2026, 9, 8, 9, 15),
-    caption: '3 เหตุผลที่ควรลองเซรั่มตัวนี้ก่อนโปรหมด',
-    permalink: 'https://www.tiktok.com/',
-  ),
-  PublishJob(
-    id: 'demo-failed',
-    contentId: 'content-failed',
-    platform: 'tiktok',
-    status: JobStatus.failed,
-    scheduledAt: DateTime(2026, 9, 8, 8, 40),
-    caption: 'คลิปรีวิวสินค้าเวอร์ชัน Hook เร็ว',
-    errorMessage: 'สินค้าที่ผูกไว้หมดสต็อกก่อนถึงเวลาเผยแพร่',
-  ),
-];
+/// fixture ตั้งต้นของหน้าคอนเทนต์ — ตอนนี้เป็นของ [ContentStore]
+/// ยังเปิด getter ไว้ให้โค้ดเก่าที่อ้างถึง demo job ตามชื่อ
+List<PublishJob> get demoContentJobs => ContentStore.seedJobs();
 
 class ContentDetailPage extends StatefulWidget {
-  const ContentDetailPage({super.key, required this.job});
+  const ContentDetailPage({super.key, required this.job, this.store});
   final PublishJob job;
+
+  /// เมื่อส่งเข้ามา การเปลี่ยนเวลา/ยกเลิก/นำกลับ จะเขียนกลับไปที่แหล่งข้อมูลกลาง
+  /// รายการในแท็บคอนเทนต์จึงอัปเดตตาม
+  final ContentStore? store;
 
   @override
   State<ContentDetailPage> createState() => _ContentDetailPageState();
 }
 
 class _ContentDetailPageState extends State<ContentDetailPage> {
-  late JobStatus status = widget.job.status;
-  late DateTime scheduledAt = widget.job.scheduledAt;
+  late JobStatus status = _current.status;
+  late DateTime scheduledAt = _current.scheduledAt;
+
+  PublishJob get _current => widget.store?.byId(widget.job.id) ?? widget.job;
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +139,7 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
   };
 
   void _retry() {
+    widget.store?.retry(widget.job.id);
     setState(() => status = JobStatus.queued);
     _toast('เพิ่มงานกลับเข้าคิวแล้ว คุณออกจากหน้านี้ได้');
   }
@@ -190,14 +157,16 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       initialTime: TimeOfDay.fromDateTime(scheduledAt),
     );
     if (time == null || !mounted) return;
+    final next = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    widget.store?.reschedule(widget.job.id, next);
     setState(() {
-      scheduledAt = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      );
+      scheduledAt = next;
       status = JobStatus.scheduled;
     });
     _toast('เปลี่ยนเวลาเผยแพร่แล้ว');
@@ -226,12 +195,14 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       ),
     );
     if (confirmed == true && mounted) {
+      widget.store?.cancel(widget.job.id);
       setState(() => status = JobStatus.cancelled);
       _toast('ยกเลิกการเผยแพร่แล้ว');
     }
   }
 
   void _restoreSchedule() {
+    widget.store?.restore(widget.job.id);
     setState(() => status = JobStatus.scheduled);
     _toast('นำงานกลับมาตั้งเวลาแล้ว');
   }

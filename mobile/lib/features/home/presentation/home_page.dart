@@ -4,14 +4,23 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../app/widgets/skeleton.dart';
 import '../../../core/auth/auth_controller.dart';
+import '../domain/content_store.dart';
 import '../domain/home_data.dart';
 import 'content_artwork.dart';
 import 'home_controller.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.auth, required this.controller});
+  const HomePage({
+    super.key,
+    required this.auth,
+    required this.controller,
+    this.store,
+  });
   final AuthController auth;
   final HomeController controller;
+
+  /// เมื่อ backend ยังไม่มีข้อมูล หน้าหลักจะแสดงงานจากแหล่งกลางนี้แทนหน้าว่าง
+  final ContentStore? store;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -26,12 +35,20 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: Listenable.merge([widget.auth, widget.controller]),
+    listenable: Listenable.merge([
+      widget.auth,
+      widget.controller,
+      widget.store,
+    ]),
     builder: (context, _) {
       final rawName = widget.auth.account?.name.trim();
       final name = rawName == null || rawName.isEmpty ? 'คุณ' : rawName;
       final c = widget.controller;
-      final data = c.data;
+      // ข้อมูล backend มาก่อน ถ้าไม่มีหรือว่างเปล่าใช้แหล่งกลาง (prototype)
+      final backend = c.data;
+      final data = (backend != null && !backend.isEmpty)
+          ? backend
+          : widget.store?.homeData() ?? backend;
       return Scaffold(
         appBar: AppBar(
           toolbarHeight: 72,
@@ -68,13 +85,12 @@ class _HomePageState extends State<HomePage> {
   );
 
   Widget _body(BuildContext context, HomeController c, HomeData? data) {
-    if (!c.loaded && c.loading) {
-      return const SkeletonList();
-    }
-    if (c.error != null && !c.loaded) {
-      return _ErrorView(message: c.error!, onRetry: c.load);
-    }
-    if (data == null || data.isEmpty) {
+    final hasData = data != null && !data.isEmpty;
+    if (!hasData) {
+      if (!c.loaded && c.loading) return const SkeletonList();
+      if (c.error != null && !c.loaded && widget.store == null) {
+        return _ErrorView(message: c.error!, onRetry: c.load);
+      }
       return _EmptyState(
         onImportAi: () => context.go('/create/import-ai'),
         onUpload: () => context.go('/create/upload'),
@@ -90,7 +106,8 @@ class _HomePageState extends State<HomePage> {
         Spacing.xl,
       ),
       children: [
-        if (c.error != null) ...[
+        // แสดง inline error เฉพาะตอนพึ่ง backend ล้วน ไม่ใช่ตอน fallback ไป store
+        if (c.error != null && widget.store == null) ...[
           _InlineError(message: c.error!),
           const SizedBox(height: Spacing.md),
         ],

@@ -93,6 +93,12 @@ RelayContent เป็นเจ้าของฝั่งซ้าย เคร
 
 ## 3. Phase 0 — งานฐานที่ต้องทำก่อนฟีเจอร์ทุกตัว
 
+> **สถานะ: เสร็จแล้ว** (commit ถัดจากเอกสารนี้) — `ContentStore` เป็น source of truth
+> ตัวเดียว, seed คำนวณวันเวลาสัมพันธ์กับตอนนี้, กดเผยแพร่แล้วงานเข้ารายการจริง,
+> Home / Content / Notifications อ่านชุดเดียวกัน, `demoContentJobs` ที่เป็น
+> top-level list ถูกลบแล้ว, มี `reschedule` / `cancel` / `restore` / `retry` /
+> `byProduct` พร้อมเทส 9 เคส
+
 ### ปัญหาที่มีอยู่วันนี้
 
 "งาน" กระจายอยู่ 3 ที่ และไม่ตรงกัน

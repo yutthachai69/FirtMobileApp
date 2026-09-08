@@ -15,6 +15,7 @@ import '../features/create/presentation/create_hub_page.dart';
 import '../features/create/presentation/create_page.dart';
 import '../features/create/presentation/guided_film_page.dart';
 import '../features/create/presentation/publish_review_page.dart';
+import '../features/home/domain/content_store.dart';
 import '../features/home/domain/home_data.dart' as home;
 import '../features/home/presentation/content_detail_page.dart';
 import '../features/home/presentation/content_library_page.dart';
@@ -36,6 +37,7 @@ class RelayApp extends ConsumerStatefulWidget {
 
 class _RelayAppState extends ConsumerState<RelayApp> {
   late final AuthController auth;
+  late final ContentStore contentStore;
   late final GoRouter router;
   ThemeMode themeMode = ThemeMode.dark;
   bool reducedMotion = false;
@@ -43,6 +45,7 @@ class _RelayAppState extends ConsumerState<RelayApp> {
   void initState() {
     super.initState();
     auth = ref.read(authProvider);
+    contentStore = ref.read(contentStoreProvider);
     router = GoRouter(
       initialLocation: '/session',
       refreshListenable: auth,
@@ -84,8 +87,11 @@ class _RelayAppState extends ConsumerState<RelayApp> {
               routes: [
                 GoRoute(
                   path: '/',
-                  builder: (_, _) =>
-                      HomePage(auth: auth, controller: ref.read(homeProvider)),
+                  builder: (_, _) => HomePage(
+                    auth: auth,
+                    controller: ref.read(homeProvider),
+                    store: contentStore,
+                  ),
                 ),
                 GoRoute(
                   path: '/notifications',
@@ -180,12 +186,14 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                             mediaName: extra.mediaName,
                             durationSec: extra.durationSec,
                             sourceLabel: extra.sourceLabel,
+                            store: contentStore,
                           );
                         }
                         return PublishReviewPage(
                           product: extra is ShowcaseProduct
                               ? extra
                               : ShowcaseProduct.mock.first,
+                          store: contentStore,
                         );
                       },
                     ),
@@ -197,29 +205,26 @@ class _RelayAppState extends ConsumerState<RelayApp> {
               routes: [
                 GoRoute(
                   path: '/content',
-                  builder: (_, _) =>
-                      ContentLibraryPage(controller: ref.read(homeProvider)),
+                  builder: (_, _) => ContentLibraryPage(
+                    controller: ref.read(homeProvider),
+                    store: contentStore,
+                  ),
                   routes: [
                     GoRoute(
                       path: ':jobId',
                       builder: (_, state) {
                         final extra = state.extra;
-                        home.PublishJob? job = extra is home.PublishJob
+                        final job = extra is home.PublishJob
                             ? extra
-                            : null;
-                        if (job == null) {
-                          for (final item in demoContentJobs) {
-                            if (item.id == state.pathParameters['jobId']) {
-                              job = item;
-                              break;
-                            }
-                          }
-                        }
+                            : contentStore.byId(
+                                state.pathParameters['jobId'] ?? '',
+                              );
                         return job == null
                             ? ContentLibraryPage(
                                 controller: ref.read(homeProvider),
+                                store: contentStore,
                               )
-                            : ContentDetailPage(job: job);
+                            : ContentDetailPage(job: job, store: contentStore);
                       },
                     ),
                   ],

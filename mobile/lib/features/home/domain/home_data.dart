@@ -53,6 +53,8 @@ class PublishJob {
     this.permalink = '',
     this.errorMessage = '',
     this.caption = '',
+    this.productId,
+    this.sourceLabel = '',
   });
 
   final String id;
@@ -67,6 +69,13 @@ class PublishJob {
   /// backend ไม่ได้ส่งมาด้วยเพราะ publish_jobs เก็บแค่ content_id
   final String caption;
 
+  /// สินค้าที่ปักตะกร้ากับงานนี้ — ใช้เชื่อมหน้า Showcase กับคอนเทนต์
+  /// null สำหรับงานเก่าที่ backend ยังไม่ผูกสินค้า
+  final String? productId;
+
+  /// ที่มาของคอนเทนต์ เช่น "AI Content Inbox · Google Flow" หรือ "อัปโหลดเอง"
+  final String sourceLabel;
+
   /// ข้อความที่ใช้แทนชื่องานในรายการ
   String get title {
     final t = caption.trim();
@@ -77,15 +86,27 @@ class PublishJob {
         : '${firstLine.substring(0, 60)}…';
   }
 
-  PublishJob withCaption(String c) => PublishJob(
+  PublishJob withCaption(String c) => copyWith(caption: c);
+
+  PublishJob copyWith({
+    JobStatus? status,
+    DateTime? scheduledAt,
+    String? permalink,
+    String? errorMessage,
+    String? caption,
+    String? productId,
+    String? sourceLabel,
+  }) => PublishJob(
     id: id,
     contentId: contentId,
     platform: platform,
-    status: status,
-    scheduledAt: scheduledAt,
-    permalink: permalink,
-    errorMessage: errorMessage,
-    caption: c,
+    status: status ?? this.status,
+    scheduledAt: scheduledAt ?? this.scheduledAt,
+    permalink: permalink ?? this.permalink,
+    errorMessage: errorMessage ?? this.errorMessage,
+    caption: caption ?? this.caption,
+    productId: productId ?? this.productId,
+    sourceLabel: sourceLabel ?? this.sourceLabel,
   );
 
   factory PublishJob.fromJson(Map<String, dynamic> json) => PublishJob(
@@ -100,6 +121,7 @@ class PublishJob {
     errorMessage: json['last_error'] is Map
         ? ((json['last_error'] as Map)['message'] as String? ?? '')
         : '',
+    productId: json['product_id'] as String?,
   );
 }
 
