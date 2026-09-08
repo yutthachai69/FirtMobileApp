@@ -60,6 +60,7 @@ class ContentDetailPage extends StatefulWidget {
 
 class _ContentDetailPageState extends State<ContentDetailPage> {
   late JobStatus status = widget.job.status;
+  late DateTime scheduledAt = widget.job.scheduledAt;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +85,7 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
                 _StatusPill(status: status, color: color),
                 const Spacer(),
                 Text(
-                  _updatedText(status),
+                  _updatedText(status, scheduledAt),
                   style: TextStyle(
                     color: context.t.textSecondary,
                     fontSize: 11,
@@ -115,12 +116,14 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
               )
             else if (status == JobStatus.published)
               const _PublishedMetrics()
+            else if (status == JobStatus.cancelled)
+              _CancelledCard(onRestore: _restoreSchedule)
             else
               _ProgressTimeline(status: status),
             const SizedBox(height: Spacing.lg),
             _CommerceCard(status: status),
             const SizedBox(height: Spacing.lg),
-            _ScheduleCard(job: widget.job, status: status),
+            _ScheduleCard(scheduledAt: scheduledAt, status: status),
           ],
         ),
       ),
@@ -147,9 +150,15 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       label: const Text('แก้แล้วลองส่งใหม่'),
     ),
     JobStatus.scheduled => OutlinedButton.icon(
-      onPressed: () => _toast('เปิดตัวเลือกเปลี่ยนเวลาแล้ว'),
+      key: const Key('reschedule-job'),
+      onPressed: _reschedule,
       icon: const Icon(Icons.edit_calendar_outlined),
       label: const Text('เปลี่ยนเวลาเผยแพร่'),
+    ),
+    JobStatus.cancelled => FilledButton.icon(
+      onPressed: _restoreSchedule,
+      icon: const Icon(Icons.restore_rounded),
+      label: const Text('นำกลับมาตั้งเวลา'),
     ),
     JobStatus.published => FilledButton.icon(
       onPressed: () => _toast('เปิดลิงก์ผลงานตัวอย่างแล้ว'),
@@ -168,6 +177,65 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
     _toast('เพิ่มงานกลับเข้าคิวแล้ว คุณออกจากหน้านี้ได้');
   }
 
+  Future<void> _reschedule() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: scheduledAt,
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 180)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(scheduledAt),
+    );
+    if (time == null || !mounted) return;
+    setState(() {
+      scheduledAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+      status = JobStatus.scheduled;
+    });
+    _toast('เปลี่ยนเวลาเผยแพร่แล้ว');
+  }
+
+  Future<void> _confirmCancel() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.event_busy_outlined, color: context.t.warning),
+        title: const Text('ยกเลิกการเผยแพร่?'),
+        content: const Text(
+          'งานนี้จะไม่ถูกส่งตามเวลาที่ตั้งไว้ คุณสามารถนำกลับมาตั้งเวลาใหม่ได้ภายหลัง',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('เก็บเวลาเดิม'),
+          ),
+          FilledButton(
+            key: const Key('confirm-cancel-job'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('ยกเลิกการเผยแพร่'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      setState(() => status = JobStatus.cancelled);
+      _toast('ยกเลิกการเผยแพร่แล้ว');
+    }
+  }
+
+  void _restoreSchedule() {
+    setState(() => status = JobStatus.scheduled);
+    _toast('นำงานกลับมาตั้งเวลาแล้ว');
+  }
+
   void _toast(String text) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
@@ -180,6 +248,31 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (status == JobStatus.scheduled) ...[
+              ListTile(
+                leading: const Icon(Icons.edit_calendar_outlined),
+                title: const Text('เปลี่ยนเวลาเผยแพร่'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _reschedule();
+                },
+              ),
+              ListTile(
+                key: const Key('cancel-scheduled-job'),
+                leading: Icon(
+                  Icons.event_busy_outlined,
+                  color: context.t.warning,
+                ),
+                title: Text(
+                  'ยกเลิกการเผยแพร่',
+                  style: TextStyle(color: context.t.warning),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmCancel();
+                },
+              ),
+            ],
             ListTile(
               leading: const Icon(Icons.copy_rounded),
               title: const Text('สร้างสำเนา'),
@@ -471,8 +564,8 @@ class _CommerceCard extends StatelessWidget {
 }
 
 class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({required this.job, required this.status});
-  final PublishJob job;
+  const _ScheduleCard({required this.scheduledAt, required this.status});
+  final DateTime scheduledAt;
   final JobStatus status;
   @override
   Widget build(BuildContext context) => _Panel(
@@ -488,10 +581,7 @@ class _ScheduleCard extends StatelessWidget {
                 'เวลาที่กำหนด',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
-              Text(
-                _format(job.scheduledAt),
-                style: const TextStyle(fontSize: 11),
-              ),
+              Text(_format(scheduledAt), style: const TextStyle(fontSize: 11)),
             ],
           ),
         ),
@@ -504,6 +594,37 @@ class _ScheduleCard extends StatelessWidget {
   );
   static String _format(DateTime d) =>
       '${d.day}/${d.month}/${d.year} · ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+}
+
+class _CancelledCard extends StatelessWidget {
+  const _CancelledCard({required this.onRestore});
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) => _Panel(
+    child: Row(
+      children: [
+        Icon(Icons.event_busy_outlined, color: context.t.warning),
+        const SizedBox(width: 10),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ยกเลิกการเผยแพร่แล้ว',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                'งานยังอยู่ในคลังและนำกลับมาตั้งเวลาได้',
+                style: TextStyle(fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+        TextButton(onPressed: onRestore, child: const Text('นำกลับ')),
+      ],
+    ),
+  );
 }
 
 class _Panel extends StatelessWidget {
@@ -524,12 +645,13 @@ class _Panel extends StatelessWidget {
 Color _statusColor(BuildContext context, JobStatus status) =>
     contentStatusColor(context, status);
 
-String _updatedText(JobStatus status) => switch (status) {
+String _updatedText(JobStatus status, DateTime scheduledAt) => switch (status) {
   JobStatus.processing ||
   JobStatus.uploading ||
   JobStatus.queued => 'อัปเดตเมื่อครู่',
   JobStatus.failed => 'พบปัญหา 12 นาทีที่แล้ว',
   JobStatus.published => 'เผยแพร่วันนี้',
-  JobStatus.scheduled => 'พรุ่งนี้ 19:30',
+  JobStatus.scheduled => _ScheduleCard._format(scheduledAt),
+  JobStatus.cancelled => 'ยกเลิกโดยคุณ',
   _ => 'แก้ไขล่าสุดวันนี้',
 };

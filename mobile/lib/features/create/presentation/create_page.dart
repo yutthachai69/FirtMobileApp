@@ -28,11 +28,14 @@ class _CreatePageState extends State<CreatePage> {
   int _durationSec = 0;
   double _trimStart = 0;
   double _trimEnd = 1;
+  double _thumbnailPosition = .25;
+  bool _previewFailed = false;
 
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_onStep);
+    _onStep();
   }
 
   @override
@@ -50,6 +53,7 @@ class _CreatePageState extends State<CreatePage> {
 
     final p = VideoPlayerController.networkUrl(Uri.parse(url));
     _player = p;
+    _previewFailed = false;
     p
         .initialize()
         .then((_) {
@@ -59,7 +63,7 @@ class _CreatePageState extends State<CreatePage> {
         .catchError((_) {
           // อ่าน metadata ไม่ได้ก็ไม่ควรบล็อกผู้ใช้
           // หน้า Composer จะข้ามการตรวจความยาวไปเอง (ส่ง 0)
-          if (mounted) setState(() {});
+          if (mounted) setState(() => _previewFailed = true);
         });
   }
 
@@ -82,6 +86,8 @@ class _CreatePageState extends State<CreatePage> {
                   _durationSec = 0;
                   _trimStart = 0;
                   _trimEnd = 1;
+                  _thumbnailPosition = .25;
+                  _previewFailed = false;
                   c.reset();
                 },
                 child: const Text('เริ่มใหม่'),
@@ -115,9 +121,12 @@ class _CreatePageState extends State<CreatePage> {
                   durationSec: _durationSec,
                   trimStart: _trimStart,
                   trimEnd: _trimEnd,
+                  thumbnailPosition: _thumbnailPosition,
+                  previewFailed: _previewFailed,
                   hasProduct: widget.selectedProduct != null,
                   onReplace: _replaceVideo,
                   onTrim: _openTrimSheet,
+                  onThumbnail: _openThumbnailSheet,
                   onContinue: () => _goToComposer(context),
                 ),
               },
@@ -162,6 +171,8 @@ class _CreatePageState extends State<CreatePage> {
     _durationSec = 0;
     _trimStart = 0;
     _trimEnd = 1;
+    _thumbnailPosition = .25;
+    _previewFailed = false;
     widget.controller.reset();
   }
 
@@ -217,6 +228,67 @@ class _CreatePageState extends State<CreatePage> {
         _trimStart = result.start;
         _trimEnd = result.end;
       });
+    }
+  }
+
+  Future<void> _openThumbnailSheet() async {
+    var selected = _thumbnailPosition;
+    final result = await showModalBottomSheet<double>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'เลือกภาพปก',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'เลือกเฟรมที่เห็นสินค้าและอ่านง่ายเมื่ออยู่บนหน้าฟีด',
+                  style: TextStyle(color: context.t.textSecondary),
+                ),
+                const SizedBox(height: Spacing.md),
+                Row(
+                  children: [
+                    for (final position in const [.15, .5, .85])
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _ThumbnailChoice(
+                            position: position,
+                            durationSec: _durationSec <= 0 ? 30 : _durationSec,
+                            product: widget.selectedProduct,
+                            selected: selected == position,
+                            onTap: () =>
+                                setSheetState(() => selected = position),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: Spacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const Key('confirm-thumbnail'),
+                    onPressed: () => Navigator.pop(context, selected),
+                    child: const Text('ใช้เป็นภาพปก'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _thumbnailPosition = result);
     }
   }
 }
@@ -425,9 +497,12 @@ class _DescribeStep extends StatelessWidget {
     required this.durationSec,
     required this.trimStart,
     required this.trimEnd,
+    required this.thumbnailPosition,
+    required this.previewFailed,
     required this.hasProduct,
     required this.onReplace,
     required this.onTrim,
+    required this.onThumbnail,
     required this.onContinue,
   });
 
@@ -437,9 +512,12 @@ class _DescribeStep extends StatelessWidget {
   final int durationSec;
   final double trimStart;
   final double trimEnd;
+  final double thumbnailPosition;
+  final bool previewFailed;
   final bool hasProduct;
   final VoidCallback onReplace;
   final VoidCallback onTrim;
+  final VoidCallback onThumbnail;
   final VoidCallback onContinue;
 
   @override
@@ -467,7 +545,7 @@ class _DescribeStep extends StatelessWidget {
 
         if (ready)
           _Preview(player: player!)
-        else
+        else if (player != null && !previewFailed)
           Container(
             height: 180,
             alignment: Alignment.center,
@@ -477,6 +555,41 @@ class _DescribeStep extends StatelessWidget {
               border: Border.all(color: context.t.border),
             ),
             child: const CircularProgressIndicator(),
+          )
+        else
+          Container(
+            height: 180,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(Spacing.lg),
+            decoration: BoxDecoration(
+              color: context.t.surfaceContainer,
+              borderRadius: BorderRadius.circular(Radii.md),
+              border: Border.all(color: context.t.border),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.video_file_outlined,
+                  color: context.t.primary,
+                  size: 36,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'ไฟล์พร้อมแก้ไข',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'อุปกรณ์นี้ไม่รองรับการเล่นตัวอย่าง แต่ยังเลือกภาพปกและเขียนแคปชันต่อได้',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: context.t.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
 
         const SizedBox(height: 12),
@@ -507,24 +620,18 @@ class _DescribeStep extends StatelessWidget {
                         fontSize: 11,
                       ),
                     ),
+                    Text(
+                      'ภาพปกที่ ${((durationSec <= 0 ? 30 : durationSec) * thumbnailPosition).round()} วินาที',
+                      style: TextStyle(color: context.t.primary, fontSize: 11),
+                    ),
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
+              IconButton(
+                key: const Key('manage-uploaded-clip'),
                 tooltip: 'จัดการคลิป',
-                onSelected: (value) =>
-                    value == 'replace' ? onReplace() : onTrim(),
-                itemBuilder: (_) => [
-                  if (durationSec > 1)
-                    const PopupMenuItem(
-                      value: 'trim',
-                      child: Text('ตัดช่วงคลิป'),
-                    ),
-                  const PopupMenuItem(
-                    value: 'replace',
-                    child: Text('เปลี่ยนคลิป'),
-                  ),
-                ],
+                onPressed: () => _openClipActions(context),
+                icon: const Icon(Icons.more_vert_rounded),
               ),
             ],
           ),
@@ -580,6 +687,59 @@ class _DescribeStep extends StatelessWidget {
   static String _len(int s) => s >= 60
       ? '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')} นาที'
       : '$s วินาที';
+
+  Future<void> _openClipActions(BuildContext context) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'จัดการคลิป',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                key: const Key('select-thumbnail-menu'),
+                leading: const Icon(Icons.image_outlined),
+                title: const Text('เลือกภาพปก'),
+                subtitle: const Text('เลือกเฟรมที่เห็นสินค้าได้ชัด'),
+                onTap: () => Navigator.pop(context, 'cover'),
+              ),
+              if (durationSec > 1)
+                ListTile(
+                  key: const Key('trim-uploaded-clip'),
+                  leading: const Icon(Icons.content_cut_rounded),
+                  title: const Text('ตัดช่วงคลิป'),
+                  subtitle: const Text('กำหนดจุดเริ่มและจบของวิดีโอ'),
+                  onTap: () => Navigator.pop(context, 'trim'),
+                ),
+              ListTile(
+                key: const Key('replace-uploaded-clip'),
+                leading: const Icon(Icons.video_file_outlined),
+                title: const Text('เปลี่ยนคลิป'),
+                subtitle: const Text('เลือกไฟล์ใหม่จากอุปกรณ์'),
+                onTap: () => Navigator.pop(context, 'replace'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    switch (action) {
+      case 'cover':
+        onThumbnail();
+      case 'trim':
+        onTrim();
+      case 'replace':
+        onReplace();
+    }
+  }
 }
 
 class _Preview extends StatefulWidget {
@@ -621,6 +781,93 @@ class _PreviewState extends State<_Preview> {
 }
 
 // ── ส่วนประกอบเล็ก ๆ ──────────────────────────────────────────
+
+class _ThumbnailChoice extends StatelessWidget {
+  const _ThumbnailChoice({
+    required this.position,
+    required this.durationSec,
+    required this.product,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final double position;
+  final int durationSec;
+  final ShowcaseProduct? product;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    key: Key('thumbnail-$position'),
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(Radii.md),
+    child: AspectRatio(
+      aspectRatio: 9 / 14,
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(
+            color: selected ? context.t.primary : context.t.border,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (product != null)
+              ProductArtwork(product: product!, borderRadius: 0)
+            else
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      context.t.surfaceElevated,
+                      context.t.primary.withValues(alpha: .38 + position * .25),
+                    ],
+                  ),
+                ),
+              ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xAA000000)],
+                ),
+              ),
+            ),
+            if (selected)
+              const Positioned(
+                top: 6,
+                right: 6,
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            Positioned(
+              left: 6,
+              bottom: 5,
+              child: Text(
+                '${(durationSec * position).round()} วิ',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
 class _ErrorBox extends StatelessWidget {
   const _ErrorBox({required this.message});

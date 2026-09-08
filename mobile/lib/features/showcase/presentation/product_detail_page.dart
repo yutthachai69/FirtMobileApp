@@ -4,17 +4,42 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/tokens.dart';
 import '../domain/showcase_product.dart';
 import 'product_artwork.dart';
+import 'saved_products_controller.dart';
 
 class ProductDetailPage extends StatefulWidget {
-  const ProductDetailPage({super.key, required this.product});
+  const ProductDetailPage({
+    super.key,
+    required this.product,
+    this.savedProducts,
+  });
   final ShowcaseProduct product;
+  final SavedProductsController? savedProducts;
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
-  bool saved = false;
+  SavedProductsController get _saved =>
+      widget.savedProducts ?? savedProductsController;
+
+  bool get saved => _saved.contains(widget.product.id);
+
+  @override
+  void initState() {
+    super.initState();
+    _saved.addListener(_onSavedChanged);
+  }
+
+  @override
+  void dispose() {
+    _saved.removeListener(_onSavedChanged);
+    super.dispose();
+  }
+
+  void _onSavedChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +50,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         actions: [
           IconButton(
             onPressed: () {
-              setState(() => saved = !saved);
+              _saved.toggle(widget.product.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(

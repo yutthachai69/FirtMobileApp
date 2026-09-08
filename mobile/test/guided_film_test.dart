@@ -47,5 +47,34 @@ void main() {
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 700));
     await tester.pump();
     expect(find.text('ช็อต 2 จาก 3'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('ช็อตก่อนหน้า'));
+    await tester.pump();
+    expect(find.text('ช็อต 1 จาก 3'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('guided-next')))
+          .onPressed,
+      isNotNull,
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('delete-guided-take')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('เทค 1'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('delete-guided-take')));
+    await tester.pumpAndSettle();
+    expect(find.text('ลบเทค 1?'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('confirm-delete-guided-take')));
+    await tester.pumpAndSettle();
+    expect(find.text('เทค 1'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('guided-next')))
+          .onPressed,
+      isNull,
+    );
   });
 }

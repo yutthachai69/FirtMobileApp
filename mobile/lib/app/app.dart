@@ -76,146 +76,177 @@ class _RelayAppState extends ConsumerState<RelayApp> {
           path: '/onboarding',
           builder: (_, _) => OnboardingPage(auth: auth),
         ),
-        ShellRoute(
-          builder: (_, state, child) =>
-              MainShell(location: state.uri.path, child: child),
-          routes: [
-            GoRoute(
-              path: '/',
-              builder: (_, _) =>
-                  HomePage(auth: auth, controller: ref.read(homeProvider)),
-            ),
-            GoRoute(
-              path: '/showcase',
-              builder: (_, _) => const ShowcasePage(),
+        StatefulShellRoute.indexedStack(
+          builder: (_, _, navigationShell) =>
+              MainShell(navigationShell: navigationShell),
+          branches: [
+            StatefulShellBranch(
               routes: [
                 GoRoute(
-                  path: 'import-ai',
-                  builder: (_, state) => AiSourcesPage(
-                    product: state.extra is ShowcaseProduct
-                        ? state.extra! as ShowcaseProduct
-                        : null,
-                  ),
+                  path: '/',
+                  builder: (_, _) =>
+                      HomePage(auth: auth, controller: ref.read(homeProvider)),
                 ),
                 GoRoute(
-                  path: ':productId',
-                  builder: (_, state) {
-                    ShowcaseProduct? product;
-                    for (final item in ShowcaseProduct.mock) {
-                      if (item.id == state.pathParameters['productId']) {
-                        product = item;
-                        break;
-                      }
-                    }
-                    return product == null
-                        ? const ShowcasePage()
-                        : ProductDetailPage(product: product);
-                  },
+                  path: '/notifications',
+                  builder: (_, _) => const NotificationsPage(),
                 ),
               ],
             ),
-            GoRoute(
-              path: '/create',
-              builder: (_, state) => CreateHubPage(
-                selectedProduct: state.extra is ShowcaseProduct
-                    ? state.extra! as ShowcaseProduct
-                    : null,
-              ),
+            StatefulShellBranch(
               routes: [
                 GoRoute(
-                  path: 'ai',
-                  builder: (_, state) => AiCreatePage(
-                    product: state.extra is ShowcaseProduct
-                        ? state.extra! as ShowcaseProduct
-                        : ShowcaseProduct.mock.first,
-                  ),
+                  path: '/showcase',
+                  builder: (_, _) => const ShowcasePage(),
+                  routes: [
+                    GoRoute(
+                      path: 'import-ai',
+                      builder: (_, state) => AiSourcesPage(
+                        product: state.extra is ShowcaseProduct
+                            ? state.extra! as ShowcaseProduct
+                            : null,
+                      ),
+                    ),
+                    GoRoute(
+                      path: ':productId',
+                      builder: (_, state) {
+                        ShowcaseProduct? product;
+                        for (final item in ShowcaseProduct.mock) {
+                          if (item.id == state.pathParameters['productId']) {
+                            product = item;
+                            break;
+                          }
+                        }
+                        return product == null
+                            ? const ShowcasePage()
+                            : ProductDetailPage(product: product);
+                      },
+                    ),
+                  ],
                 ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
                 GoRoute(
-                  path: 'upload',
-                  builder: (_, state) => CreatePage(
-                    controller: ref.read(createProvider),
+                  path: '/create',
+                  builder: (_, state) => CreateHubPage(
                     selectedProduct: state.extra is ShowcaseProduct
                         ? state.extra! as ShowcaseProduct
                         : null,
                   ),
+                  routes: [
+                    GoRoute(
+                      path: 'import-ai',
+                      builder: (_, state) => AiSourcesPage(
+                        product: state.extra is ShowcaseProduct
+                            ? state.extra! as ShowcaseProduct
+                            : null,
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'ai',
+                      builder: (_, state) => AiCreatePage(
+                        product: state.extra is ShowcaseProduct
+                            ? state.extra! as ShowcaseProduct
+                            : ShowcaseProduct.mock.first,
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'upload',
+                      builder: (_, state) => CreatePage(
+                        controller: ref.read(createProvider),
+                        selectedProduct: state.extra is ShowcaseProduct
+                            ? state.extra! as ShowcaseProduct
+                            : null,
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'guided',
+                      builder: (_, state) => GuidedFilmPage(
+                        product: state.extra is ShowcaseProduct
+                            ? state.extra! as ShowcaseProduct
+                            : ShowcaseProduct.mock.first,
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'publish',
+                      builder: (_, state) {
+                        final extra = state.extra;
+                        if (extra is PublishReviewArgs) {
+                          return PublishReviewPage(
+                            product: extra.product,
+                            initialCaption: extra.caption,
+                            mediaName: extra.mediaName,
+                            durationSec: extra.durationSec,
+                            sourceLabel: extra.sourceLabel,
+                          );
+                        }
+                        return PublishReviewPage(
+                          product: extra is ShowcaseProduct
+                              ? extra
+                              : ShowcaseProduct.mock.first,
+                        );
+                      },
+                    ),
+                  ],
                 ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
                 GoRoute(
-                  path: 'guided',
-                  builder: (_, state) => GuidedFilmPage(
-                    product: state.extra is ShowcaseProduct
-                        ? state.extra! as ShowcaseProduct
-                        : ShowcaseProduct.mock.first,
+                  path: '/content',
+                  builder: (_, _) =>
+                      ContentLibraryPage(controller: ref.read(homeProvider)),
+                  routes: [
+                    GoRoute(
+                      path: ':jobId',
+                      builder: (_, state) {
+                        final extra = state.extra;
+                        home.PublishJob? job = extra is home.PublishJob
+                            ? extra
+                            : null;
+                        if (job == null) {
+                          for (final item in demoContentJobs) {
+                            if (item.id == state.pathParameters['jobId']) {
+                              job = item;
+                              break;
+                            }
+                          }
+                        }
+                        return job == null
+                            ? ContentLibraryPage(
+                                controller: ref.read(homeProvider),
+                              )
+                            : ContentDetailPage(job: job);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/profile',
+                  builder: (_, _) => ProfilePage(
+                    auth: auth,
+                    themeMode: themeMode,
+                    reducedMotion: reducedMotion,
+                    onThemeModeChanged: (value) =>
+                        setState(() => themeMode = value),
+                    onReducedMotionChanged: (value) =>
+                        setState(() => reducedMotion = value),
                   ),
                 ),
                 GoRoute(
-                  path: 'publish',
-                  builder: (_, state) {
-                    final extra = state.extra;
-                    if (extra is PublishReviewArgs) {
-                      return PublishReviewPage(
-                        product: extra.product,
-                        initialCaption: extra.caption,
-                        mediaName: extra.mediaName,
-                        durationSec: extra.durationSec,
-                        sourceLabel: extra.sourceLabel,
-                      );
-                    }
-                    return PublishReviewPage(
-                      product: extra is ShowcaseProduct
-                          ? extra
-                          : ShowcaseProduct.mock.first,
-                    );
-                  },
+                  path: '/connections',
+                  builder: (_, _) => ConnectionsPage(
+                    controller: ref.read(connectionsProvider),
+                  ),
                 ),
               ],
-            ),
-            GoRoute(
-              path: '/content',
-              builder: (_, _) =>
-                  ContentLibraryPage(controller: ref.read(homeProvider)),
-              routes: [
-                GoRoute(
-                  path: ':jobId',
-                  builder: (_, state) {
-                    final extra = state.extra;
-                    home.PublishJob? job = extra is home.PublishJob
-                        ? extra
-                        : null;
-                    if (job == null) {
-                      for (final item in demoContentJobs) {
-                        if (item.id == state.pathParameters['jobId']) {
-                          job = item;
-                          break;
-                        }
-                      }
-                    }
-                    return job == null
-                        ? ContentLibraryPage(controller: ref.read(homeProvider))
-                        : ContentDetailPage(job: job);
-                  },
-                ),
-              ],
-            ),
-            GoRoute(
-              path: '/connections',
-              builder: (_, _) =>
-                  ConnectionsPage(controller: ref.read(connectionsProvider)),
-            ),
-            GoRoute(
-              path: '/profile',
-              builder: (_, _) => ProfilePage(
-                auth: auth,
-                themeMode: themeMode,
-                reducedMotion: reducedMotion,
-                onThemeModeChanged: (value) =>
-                    setState(() => themeMode = value),
-                onReducedMotionChanged: (value) =>
-                    setState(() => reducedMotion = value),
-              ),
-            ),
-            GoRoute(
-              path: '/notifications',
-              builder: (_, _) => const NotificationsPage(),
             ),
           ],
         ),

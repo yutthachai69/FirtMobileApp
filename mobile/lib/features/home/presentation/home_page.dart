@@ -36,20 +36,24 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           toolbarHeight: 72,
           titleSpacing: Spacing.md,
-          title: _CreatorTitle(name: name),
+          title: _CreatorTitle(
+            name: name,
+            subtitle: data == null || data.isEmpty
+                ? 'พร้อมรับคอนเทนต์ชิ้นแรก'
+                : data.needAction.isNotEmpty
+                ? 'มี ${data.needAction.length} งานรอคุณตรวจ'
+                : 'ทุกงานกำลังเดินตามแผน',
+          ),
           actions: [
-            IconButton.filledTonal(
-              onPressed: () => context.push('/notifications'),
-              icon: const Icon(Icons.notifications_none_rounded),
-              tooltip: 'การแจ้งเตือน',
+            Badge(
+              isLabelVisible: data?.needAction.isNotEmpty ?? false,
+              child: IconButton.filledTonal(
+                onPressed: () => context.push('/notifications'),
+                icon: const Icon(Icons.notifications_none_rounded),
+                tooltip: 'การแจ้งเตือน',
+              ),
             ),
-            const SizedBox(width: Spacing.sm),
-            IconButton(
-              onPressed: widget.auth.busy ? null : widget.auth.signOut,
-              icon: const Icon(Icons.logout_rounded),
-              tooltip: 'ออกจากระบบ',
-            ),
-            const SizedBox(width: Spacing.sm),
+            const SizedBox(width: 12),
           ],
         ),
         body: SafeArea(
@@ -71,7 +75,12 @@ class _HomePageState extends State<HomePage> {
       return _ErrorView(message: c.error!, onRetry: c.load);
     }
     if (data == null || data.isEmpty) {
-      return _EmptyState(onCreate: () => _create(context));
+      return _EmptyState(
+        onImportAi: () => context.go('/create/import-ai'),
+        onUpload: () => context.go('/create/upload'),
+        onCreateAi: () => context.go('/create/ai'),
+        onShowcase: () => context.go('/showcase'),
+      );
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -86,6 +95,12 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: Spacing.md),
         ],
         _Overview(data: data),
+        const SizedBox(height: Spacing.md),
+        _QuickRelayBar(
+          onImportAi: () => context.go('/create/import-ai'),
+          onUpload: () => context.go('/create/upload'),
+          onShowcase: () => context.go('/showcase'),
+        ),
         const SizedBox(height: Spacing.lg),
         Row(
           children: [
@@ -94,7 +109,10 @@ class _HomePageState extends State<HomePage> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const Spacer(),
-            TextButton(onPressed: c.load, child: const Text('อัปเดต')),
+            TextButton(
+              onPressed: () => context.go('/content'),
+              child: const Text('ดูทั้งหมด'),
+            ),
           ],
         ),
         const SizedBox(height: Spacing.sm),
@@ -151,16 +169,12 @@ class _HomePageState extends State<HomePage> {
       const SnackBar(content: Text('รายละเอียดงานจะพร้อมในหน้าคอนเทนต์')),
     );
   }
-
-  Future<void> _create(BuildContext context) async {
-    await context.push('/create');
-    if (context.mounted) await widget.controller.load();
-  }
 }
 
 class _CreatorTitle extends StatelessWidget {
-  const _CreatorTitle({required this.name});
+  const _CreatorTitle({required this.name, required this.subtitle});
   final String name;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -195,7 +209,7 @@ class _CreatorTitle extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             Text(
-              'มาดูว่าวันนี้มีอะไรต้องทำ',
+              subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall,
@@ -204,6 +218,53 @@ class _CreatorTitle extends StatelessWidget {
         ),
       ),
     ],
+  );
+}
+
+class _QuickRelayBar extends StatelessWidget {
+  const _QuickRelayBar({
+    required this.onImportAi,
+    required this.onUpload,
+    required this.onShowcase,
+  });
+
+  final VoidCallback onImportAi;
+  final VoidCallback onUpload;
+  final VoidCallback onShowcase;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: context.t.surfaceContainer,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      border: Border.all(color: context.t.border),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            key: const Key('home-quick-import-ai'),
+            onPressed: onImportAi,
+            icon: const Icon(Icons.auto_awesome_rounded, size: 19),
+            label: const Text('รับจาก AI'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.filledTonal(
+          key: const Key('home-quick-upload'),
+          tooltip: 'อัปโหลดคลิป',
+          onPressed: onUpload,
+          icon: const Icon(Icons.upload_file_rounded),
+        ),
+        const SizedBox(width: 5),
+        IconButton.filledTonal(
+          tooltip: 'เลือกสินค้า',
+          onPressed: onShowcase,
+          icon: const Icon(Icons.shopping_bag_outlined),
+        ),
+      ],
+    ),
   );
 }
 
@@ -556,95 +617,228 @@ void showJobActions(BuildContext context, PublishJob job) {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onCreate});
-  final VoidCallback onCreate;
+  const _EmptyState({
+    required this.onImportAi,
+    required this.onUpload,
+    required this.onCreateAi,
+    required this.onShowcase,
+  });
+  final VoidCallback onImportAi;
+  final VoidCallback onUpload;
+  final VoidCallback onCreateAi;
+  final VoidCallback onShowcase;
 
   @override
   Widget build(BuildContext context) => ListView(
     physics: const AlwaysScrollableScrollPhysics(),
     padding: const EdgeInsets.all(Spacing.md),
     children: [
-      const SizedBox(height: Spacing.lg),
       Container(
-        padding: const EdgeInsets.fromLTRB(20, 26, 20, 22),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: context.t.border),
+          border: Border.all(color: context.t.primary.withValues(alpha: .35)),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [context.t.surfaceElevated, context.t.surfaceContainer],
+            colors: [
+              context.t.primary.withValues(alpha: .16),
+              context.t.surfaceContainer,
+            ],
           ),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 76,
-              height: 76,
-              decoration: BoxDecoration(
-                color: context.t.primary.withValues(alpha: .12),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: context.t.primary.withValues(alpha: .35),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: context.t.primary.withValues(alpha: .14),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: context.t.primary.withValues(alpha: .35),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.move_to_inbox_outlined,
+                    size: 25,
+                    color: context.t.primary,
+                  ),
                 ),
-              ),
-              child: Icon(
-                Icons.movie_creation_outlined,
-                size: 36,
-                color: context.t.primary,
-              ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.t.primary.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    'AI CONTENT RELAY',
+                    style: TextStyle(
+                      color: context.t.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: .8,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: Spacing.md),
             Text(
-              'ยังไม่มีคอนเทนต์เลย',
+              'เปลี่ยนคอนเทนต์ให้พร้อมขาย',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            const SizedBox(height: Spacing.sm),
+            const SizedBox(height: 6),
             Text(
-              'เลือกสินค้าหรือวิดีโอ แล้วเตรียมคลิปที่มีตะกร้าสินค้าพร้อมโพสต์บน TikTok',
-              textAlign: TextAlign.center,
+              'รับคลิปจากเครื่องมือ AI ที่คุณใช้อยู่ หรืออัปโหลดจากมือถือ แล้วผูกสินค้า ตรวจตะกร้า และตั้งเวลาในที่เดียว',
               style: Theme.of(context).textTheme.bodyMedium
                   ?.copyWith(color: context.t.textSecondary, height: 1.55),
             ),
-            const SizedBox(height: Spacing.lg),
+            const SizedBox(height: Spacing.md),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
+                key: const Key('home-import-ai'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: context.t.creative,
-                  foregroundColor: Colors.white,
+                  backgroundColor: context.t.primary,
+                  foregroundColor: context.t.onPrimary,
                 ),
-                onPressed: onCreate,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('สร้างคลิปแรก'),
+                onPressed: onImportAi,
+                icon: const Icon(Icons.auto_awesome_rounded),
+                label: const Text('รับคอนเทนต์จาก AI'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onShowcase,
+                icon: const Icon(Icons.shopping_bag_outlined),
+                label: const Text('เลือกสินค้าใน Showcase'),
               ),
             ),
           ],
         ),
       ),
+      const SizedBox(height: Spacing.md),
+      Text('เริ่มด้วยวิธีอื่น', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: Spacing.sm),
+      Row(
+        children: [
+          Expanded(
+            child: _StartPath(
+              icon: Icons.video_file_outlined,
+              title: 'อัปโหลดคลิป',
+              detail: 'จากมือถือ',
+              onTap: onUpload,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _StartPath(
+              icon: Icons.auto_fix_high_rounded,
+              title: 'สร้างด้วย AI',
+              detail: 'เมื่อยังไม่มีคลิป',
+              creative: true,
+              onTap: onCreateAi,
+            ),
+          ),
+        ],
+      ),
       const SizedBox(height: Spacing.lg),
       Text(
-        'เริ่มต้นใน 3 ขั้นตอน',
+        'เส้นทางสู่โพสต์ขาย',
         style: Theme.of(context).textTheme.titleMedium,
       ),
       const SizedBox(height: Spacing.sm),
       const _GuideStep(
         number: '1',
-        title: 'เลือกสินค้าใน Showcase',
-        detail: 'เลือกสินค้าที่ต้องการทำคอนเทนต์',
+        title: 'นำคอนเทนต์เข้ามา',
+        detail: 'รับจาก AI หรือเลือกไฟล์จากมือถือ',
       ),
       const _GuideStep(
         number: '2',
-        title: 'สร้างด้วย AI หรือใช้วิดีโอของคุณ',
-        detail: 'ปรับสคริปต์ เสียง และข้อความก่อนเผยแพร่',
+        title: 'ผูกสินค้าจาก Showcase',
+        detail: 'เลือกสินค้าที่ต้องการปักตะกร้ากับคลิป',
       ),
       const _GuideStep(
         number: '3',
-        title: 'ตรวจคลิปและยืนยันตะกร้า',
-        detail: 'คุณเป็นผู้อนุมัติทุกครั้งก่อนโพสต์',
+        title: 'Preview และยืนยันเผยแพร่',
+        detail: 'ตรวจคลิป แคปชัน ตะกร้า และเวลาโพสต์',
       ),
     ],
   );
+}
+
+class _StartPath extends StatelessWidget {
+  const _StartPath({
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.onTap,
+    this.creative = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String detail;
+  final VoidCallback onTap;
+  final bool creative;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = creative ? context.t.creative : context.t.primary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: context.t.surfaceContainer,
+            borderRadius: BorderRadius.circular(Radii.lg),
+            border: Border.all(color: color.withValues(alpha: .35)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 23),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      detail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _GuideStep extends StatelessWidget {

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../showcase/domain/showcase_product.dart';
+import '../../showcase/presentation/product_artwork.dart';
 import '../domain/ai_source.dart';
 import 'ai_sources_controller.dart';
 import 'publish_review_page.dart';
@@ -20,7 +21,10 @@ class AiSourcesPage extends StatefulWidget {
 }
 
 class _AiSourcesPageState extends State<AiSourcesPage> {
-  late final AiSourcesController _c = widget.controller ?? AiSourcesController();
+  late final AiSourcesController _c =
+      widget.controller ?? AiSourcesController();
+  final Set<String> _selectedItems = {};
+  bool _selecting = false;
   bool get _ownsController => widget.controller == null;
 
   @override
@@ -69,7 +73,24 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
             const SizedBox(height: Spacing.lg),
             _InboxSection(
               controller: _c,
-              onOpen: (item) => _openContent(context, item),
+              product: widget.product,
+              onOpen: _openPreview,
+              selecting: _selecting,
+              selectedItems: _selectedItems,
+              onStartSelecting: () => setState(() => _selecting = true),
+              onCancelSelecting: () => setState(() {
+                _selecting = false;
+                _selectedItems.clear();
+              }),
+              onToggle: (id) => setState(() {
+                if (!_selectedItems.add(id)) _selectedItems.remove(id);
+              }),
+              onSelectAll: () => setState(() {
+                _selectedItems
+                  ..clear()
+                  ..addAll(_c.readyItems.map((item) => item.id));
+              }),
+              onDeleteSelected: _deleteSelected,
             ),
             const SizedBox(height: Spacing.lg),
             OutlinedButton.icon(
@@ -99,6 +120,52 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
         sourceLabel: 'AI Content Inbox · ${item.sourceName}',
       ),
     );
+  }
+
+  Future<void> _openPreview(InboxItem item) async {
+    final useContent = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.black,
+      builder: (_) => _InboxPreviewSheet(item: item, product: widget.product),
+    );
+    if (useContent == true && mounted) _openContent(context, item);
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selectedItems.isEmpty) return;
+    final count = _selectedItems.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.delete_outline_rounded, color: context.t.error),
+        title: Text('ลบคอนเทนต์ $count รายการ?'),
+        content: const Text(
+          'รายการจะถูกนำออกจาก Inbox เท่านั้น ไฟล์ต้นฉบับในเครื่องมือ AI จะไม่ถูกลบ',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('เก็บไว้'),
+          ),
+          FilledButton(
+            key: const Key('confirm-delete-inbox-items'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('ลบจาก Inbox'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    for (final id in _selectedItems) {
+      _c.dismiss(id);
+    }
+    setState(() {
+      _selectedItems.clear();
+      _selecting = false;
+    });
+    _toast('ลบ $count รายการออกจาก Inbox แล้ว');
   }
 
   Future<void> _connect(String id) async {
@@ -261,9 +328,28 @@ class _SourcesSection extends StatelessWidget {
 }
 
 class _InboxSection extends StatelessWidget {
-  const _InboxSection({required this.controller, required this.onOpen});
+  const _InboxSection({
+    required this.controller,
+    required this.product,
+    required this.onOpen,
+    required this.selecting,
+    required this.selectedItems,
+    required this.onStartSelecting,
+    required this.onCancelSelecting,
+    required this.onToggle,
+    required this.onSelectAll,
+    required this.onDeleteSelected,
+  });
   final AiSourcesController controller;
+  final ShowcaseProduct? product;
   final void Function(InboxItem) onOpen;
+  final bool selecting;
+  final Set<String> selectedItems;
+  final VoidCallback onStartSelecting;
+  final VoidCallback onCancelSelecting;
+  final ValueChanged<String> onToggle;
+  final VoidCallback onSelectAll;
+  final VoidCallback onDeleteSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -276,12 +362,20 @@ class _InboxSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'คอนเทนต์ล่าสุด',
-                style: TextStyle(fontWeight: FontWeight.w700),
+                selecting
+                    ? 'เลือกแล้ว ${selectedItems.length} รายการ'
+                    : 'คอนเทนต์ล่าสุด',
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
+            if (ready.isNotEmpty)
+              TextButton(
+                key: const Key('toggle-inbox-selection'),
+                onPressed: selecting ? onCancelSelecting : onStartSelecting,
+                child: Text(selecting ? 'ยกเลิก' : 'เลือก'),
+              ),
             if (controller.syncing)
               const Padding(
                 padding: EdgeInsets.all(10),
@@ -300,6 +394,15 @@ class _InboxSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
+        if (selecting) ...[
+          _BulkActions(
+            selectedCount: selectedItems.length,
+            allSelected: selectedItems.length == ready.length,
+            onSelectAll: onSelectAll,
+            onDelete: onDeleteSelected,
+          ),
+          const SizedBox(height: 10),
+        ],
         if (controller.isEmpty)
           _EmptyInbox()
         else ...[
@@ -316,7 +419,17 @@ class _InboxSection extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           for (final item in ready) ...[
-            _ReadyItem(item: item, onTap: () => onOpen(item)),
+            _ReadyItem(
+              item: item,
+              product: product,
+              selecting: selecting,
+              selected: selectedItems.contains(item.id),
+              onTap: () => selecting ? onToggle(item.id) : onOpen(item),
+              onLongPress: () {
+                if (!selecting) onStartSelecting();
+                onToggle(item.id);
+              },
+            ),
             const SizedBox(height: 10),
           ],
         ],
@@ -418,9 +531,7 @@ class _SourceChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.t.surfaceContainer,
             borderRadius: BorderRadius.circular(Radii.md),
-            border: Border.all(
-              color: connected ? accent : context.t.border,
-            ),
+            border: Border.all(color: connected ? accent : context.t.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,33 +585,36 @@ class _SourceChip extends StatelessWidget {
 }
 
 class _ReadyItem extends StatelessWidget {
-  const _ReadyItem({required this.item, required this.onTap});
+  const _ReadyItem({
+    required this.item,
+    required this.product,
+    required this.selecting,
+    required this.selected,
+    required this.onTap,
+    required this.onLongPress,
+  });
   final InboxItem item;
+  final ShowcaseProduct? product;
+  final bool selecting;
+  final bool selected;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   @override
   Widget build(BuildContext context) => _Panel(
     child: InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Row(
         children: [
-          Container(
-            width: 64,
-            height: 82,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  context.t.surfaceElevated,
-                  context.t.primary.withValues(alpha: .35),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(Radii.md),
+          if (selecting) ...[
+            Checkbox(
+              key: Key('select-inbox-${item.id}'),
+              value: selected,
+              onChanged: (_) => onTap(),
             ),
-            child: Icon(
-              Icons.play_circle_fill,
-              color: context.t.primary,
-              size: 32,
-            ),
-          ),
+            const SizedBox(width: 4),
+          ],
+          _InboxArtwork(item: item, product: product, width: 64, height: 82),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -528,9 +642,268 @@ class _ReadyItem extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded),
+          Icon(
+            selecting
+                ? (selected
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded)
+                : Icons.chevron_right_rounded,
+            color: selected ? context.t.primary : null,
+          ),
         ],
       ),
+    ),
+  );
+}
+
+class _BulkActions extends StatelessWidget {
+  const _BulkActions({
+    required this.selectedCount,
+    required this.allSelected,
+    required this.onSelectAll,
+    required this.onDelete,
+  });
+
+  final int selectedCount;
+  final bool allSelected;
+  final VoidCallback onSelectAll;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
+    decoration: BoxDecoration(
+      color: context.t.primary.withValues(alpha: .08),
+      borderRadius: BorderRadius.circular(Radii.md),
+      border: Border.all(color: context.t.primary.withValues(alpha: .3)),
+    ),
+    child: Row(
+      children: [
+        TextButton.icon(
+          key: const Key('select-all-inbox'),
+          onPressed: allSelected ? null : onSelectAll,
+          icon: const Icon(Icons.select_all_rounded),
+          label: Text(allSelected ? 'เลือกทั้งหมดแล้ว' : 'เลือกทั้งหมด'),
+        ),
+        const Spacer(),
+        IconButton(
+          key: const Key('delete-selected-inbox'),
+          tooltip: 'ลบรายการที่เลือก',
+          onPressed: selectedCount == 0 ? null : onDelete,
+          icon: Icon(Icons.delete_outline_rounded, color: context.t.error),
+        ),
+      ],
+    ),
+  );
+}
+
+class _InboxArtwork extends StatelessWidget {
+  const _InboxArtwork({
+    required this.item,
+    required this.product,
+    this.width,
+    this.height,
+    this.borderRadius = Radii.md,
+    this.showControls = true,
+  });
+
+  final InboxItem item;
+  final ShowcaseProduct? product;
+  final double? width;
+  final double? height;
+  final double borderRadius;
+  final bool showControls;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: width,
+    height: height,
+    child: Stack(
+      fit: StackFit.expand,
+      children: [
+        if (product != null)
+          ProductArtwork(product: product!, borderRadius: borderRadius)
+        else
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.t.surfaceElevated,
+                  context.t.primary.withValues(alpha: .45),
+                ],
+              ),
+            ),
+          ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(borderRadius),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Color(0x99000000)],
+            ),
+          ),
+        ),
+        if (showControls) ...[
+          Center(
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: .55),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 5,
+            bottom: 4,
+            child: Text(
+              '${item.durationSec}s',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _InboxPreviewSheet extends StatefulWidget {
+  const _InboxPreviewSheet({required this.item, required this.product});
+
+  final InboxItem item;
+  final ShowcaseProduct? product;
+
+  @override
+  State<_InboxPreviewSheet> createState() => _InboxPreviewSheetState();
+}
+
+class _InboxPreviewSheetState extends State<_InboxPreviewSheet> {
+  bool playing = false;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    body: Stack(
+      fit: StackFit.expand,
+      children: [
+        _InboxArtwork(
+          item: widget.item,
+          product: widget.product,
+          borderRadius: 0,
+          showControls: false,
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x55000000), Color(0x22000000), Color(0xEE000000)],
+              stops: [0, .5, 1],
+            ),
+          ),
+        ),
+        Positioned(
+          top: 10,
+          left: 10,
+          child: IconButton.filledTonal(
+            key: const Key('close-inbox-preview'),
+            tooltip: 'ปิดตัวอย่าง',
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ),
+        Positioned(
+          top: 16,
+          right: 18,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: .6),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: Text(
+              widget.item.vertical ? '9:16 พร้อมใช้' : '16:9 ต้องครอป',
+              style: const TextStyle(color: Colors.white, fontSize: 11),
+            ),
+          ),
+        ),
+        Center(
+          child: IconButton.filled(
+            key: const Key('inbox-preview-play-pause'),
+            onPressed: () => setState(() => playing = !playing),
+            iconSize: 40,
+            icon: Icon(
+              playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            ),
+          ),
+        ),
+        Positioned(
+          left: 18,
+          right: 18,
+          bottom: 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.item.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                '${widget.item.sourceName} · ${widget.item.durationSec} วินาที',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              if (widget.product != null) ...[
+                const SizedBox(height: 7),
+                Text(
+                  'จะปักตะกร้า: ${widget.product!.name}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  key: const Key('use-inbox-content'),
+                  onPressed: () => Navigator.pop(context, true),
+                  icon: Icon(
+                    widget.product == null
+                        ? Icons.add_shopping_cart_rounded
+                        : Icons.arrow_forward_rounded,
+                  ),
+                  label: Text(
+                    widget.product == null
+                        ? 'เลือกสินค้าที่จะปักตะกร้า'
+                        : 'ใช้คอนเทนต์นี้',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -637,11 +1010,7 @@ class _EmptyInbox extends StatelessWidget {
   Widget build(BuildContext context) => _Panel(
     child: Column(
       children: [
-        Icon(
-          Icons.inbox_outlined,
-          size: 36,
-          color: context.t.textSecondary,
-        ),
+        Icon(Icons.inbox_outlined, size: 36, color: context.t.textSecondary),
         const SizedBox(height: 8),
         const Text(
           'ยังไม่มีคอนเทนต์ใน Inbox',

@@ -32,7 +32,9 @@ void main() {
     await tester.pumpAndSettle();
     // หน้าหลักใหม่เป็นห้องควบคุม ไม่ใช่หน้าโปรไฟล์
     expect(find.text('สวัสดี, Tester'), findsOneWidget);
-    expect(find.text('ยังไม่มีคอนเทนต์เลย'), findsOneWidget);
+    expect(find.text('เปลี่ยนคอนเทนต์ให้พร้อมขาย'), findsOneWidget);
+    expect(find.byKey(const Key('home-import-ai')), findsOneWidget);
+    expect(find.byTooltip('ออกจากระบบ'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     auth.dispose();
@@ -51,7 +53,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('สวัสดี, Tester'), findsOneWidget);
     expect(api.loginCount, 1);
-    await tester.tap(find.byTooltip('ออกจากระบบ'));
+    await tester.tap(find.byIcon(Icons.person_outline_rounded));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      4,
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('profile-sign-out')),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.byKey(const Key('profile-sign-out')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ออกจากระบบ').last);
     await tester.pumpAndSettle();
     expect(find.text('กลับมาส่งไอเดียต่อ'), findsOneWidget);
     expect(store.value, isNull);

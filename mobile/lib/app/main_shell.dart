@@ -4,35 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'theme/tokens.dart';
 
 class MainShell extends StatelessWidget {
-  const MainShell({super.key, required this.location, required this.child});
+  const MainShell({super.key, required this.navigationShell});
 
-  final String location;
-  final Widget child;
-
-  int get _selectedIndex => switch (location) {
-    String path when path.startsWith('/showcase') => 1,
-    String path when path.startsWith('/create') => 2,
-    String path when path.startsWith('/content') => 3,
-    String path
-        when path.startsWith('/profile') || path.startsWith('/connections') =>
-      4,
-    _ => 0,
-  };
+  final StatefulNavigationShell navigationShell;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: child,
+    body: navigationShell,
     bottomNavigationBar: NavigationBar(
-      selectedIndex: _selectedIndex,
+      selectedIndex: navigationShell.currentIndex,
       onDestinationSelected: (index) {
-        final destination = switch (index) {
-          0 => '/',
-          1 => '/showcase',
-          2 => '/create',
-          3 => '/content',
-          _ => '/profile',
-        };
-        if (destination != location) context.go(destination);
+        navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        );
       },
       destinations: [
         const NavigationDestination(

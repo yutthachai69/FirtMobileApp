@@ -24,6 +24,7 @@ class _AiCreatePageState extends State<AiCreatePage> {
   int _variant = 0;
   bool _subtitles = true;
   bool _generating = false;
+  int _generationRun = 0;
   late final TextEditingController _script;
 
   static const _concepts = [
@@ -141,7 +142,23 @@ class _AiCreatePageState extends State<AiCreatePage> {
         ),
       ),
       bottomNavigationBar: _generating
-          ? null
+          ? SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.md,
+                  8,
+                  Spacing.md,
+                  12,
+                ),
+                child: OutlinedButton.icon(
+                  key: const Key('cancel-ai-generation'),
+                  onPressed: _cancelGeneration,
+                  icon: const Icon(Icons.close_rounded),
+                  label: const Text('ยกเลิกและกลับไปแก้สคริปต์'),
+                ),
+              ),
+            )
           : SafeArea(
               top: false,
               child: Padding(
@@ -187,13 +204,23 @@ class _AiCreatePageState extends State<AiCreatePage> {
   }
 
   Future<void> _startGeneration() async {
+    final run = ++_generationRun;
     setState(() => _generating = true);
     await Future<void>.delayed(const Duration(milliseconds: 2200));
-    if (!mounted) return;
+    if (!mounted || run != _generationRun) return;
     setState(() {
       _generating = false;
       _step = _AiStep.preview;
     });
+  }
+
+  void _cancelGeneration() {
+    _generationRun++;
+    setState(() {
+      _generating = false;
+      _step = _AiStep.script;
+    });
+    _toast('ยกเลิกการสร้างแล้ว คุณแก้สคริปต์และลองใหม่ได้');
   }
 
   String get _title => switch (_step) {

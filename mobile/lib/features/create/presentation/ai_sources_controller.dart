@@ -27,6 +27,7 @@ class AiSourcesController extends ChangeNotifier {
   late List<AiSource> _sources;
   late List<InboxItem> _inbox;
   Timer? _timer;
+  bool _disposed = false;
 
   bool syncing = false;
   String? busySourceId;
@@ -44,11 +45,11 @@ class AiSourcesController extends ChangeNotifier {
   int get connectedCount => _sources.where((s) => s.isConnected).length;
   bool get isEmpty => _inbox.isEmpty;
 
-  AiSource sourceById(String id) =>
-      _sources.firstWhere((s) => s.id == id);
+  AiSource sourceById(String id) => _sources.firstWhere((s) => s.id == id);
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     super.dispose();
   }
@@ -64,6 +65,7 @@ class AiSourcesController extends ChangeNotifier {
     if (autoAdvance) {
       await Future<void>.delayed(const Duration(milliseconds: 350));
     }
+    if (_disposed) return;
 
     final source = _sources[index];
     // แหล่งที่มีข้อจำกัด (ครอปแนวตั้ง / ยังเชื่อมตรงไม่ได้) เชื่อมได้แต่ต้องเตือน
@@ -110,6 +112,7 @@ class AiSourcesController extends ChangeNotifier {
     if (autoAdvance) {
       await Future<void>.delayed(const Duration(milliseconds: 400));
     }
+    if (_disposed) return;
 
     _advanceImports(0.5, silent: true);
 

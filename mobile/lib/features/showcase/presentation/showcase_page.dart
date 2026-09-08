@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/tokens.dart';
 import '../domain/showcase_product.dart';
 import 'product_artwork.dart';
+import 'saved_products_controller.dart';
 
 enum _ProductFilter { all, saved, highCommission, inStock, unavailable }
 
 class ShowcasePage extends StatefulWidget {
-  const ShowcasePage({super.key});
+  const ShowcasePage({super.key, this.savedProducts});
+
+  final SavedProductsController? savedProducts;
 
   @override
   State<ShowcasePage> createState() => _ShowcasePageState();
@@ -17,12 +20,25 @@ class ShowcasePage extends StatefulWidget {
 class _ShowcasePageState extends State<ShowcasePage> {
   final _search = TextEditingController();
   _ProductFilter _filter = _ProductFilter.all;
-  final _saved = <String>{};
+
+  SavedProductsController get _saved =>
+      widget.savedProducts ?? savedProductsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _saved.addListener(_onSavedChanged);
+  }
 
   @override
   void dispose() {
+    _saved.removeListener(_onSavedChanged);
     _search.dispose();
     super.dispose();
+  }
+
+  void _onSavedChanged() {
+    if (mounted) setState(() {});
   }
 
   List<ShowcaseProduct> get _products {
@@ -129,11 +145,7 @@ class _ShowcasePageState extends State<ShowcasePage> {
                 _ProductCard(
                   product: product,
                   saved: _saved.contains(product.id),
-                  onSaved: () => setState(() {
-                    _saved.contains(product.id)
-                        ? _saved.remove(product.id)
-                        : _saved.add(product.id);
-                  }),
+                  onSaved: () => _saved.toggle(product.id),
                   onOpen: () => context.go('/showcase/${product.id}'),
                   onCreate: product.inStock
                       ? () => context.go('/create', extra: product)

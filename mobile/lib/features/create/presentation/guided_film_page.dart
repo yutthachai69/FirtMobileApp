@@ -17,8 +17,11 @@ class GuidedFilmPage extends StatefulWidget {
 
 class _GuidedFilmPageState extends State<GuidedFilmPage> {
   int shot = 0;
-  int takeCount = 0;
-  int selectedTake = 0;
+  final takeCounts = <int>[0, 0, 0];
+  final selectedTakes = <int>[0, 0, 0];
+
+  int get takeCount => takeCounts[shot];
+  int get selectedTake => selectedTakes[shot];
 
   static const shots = [
     (
@@ -76,8 +79,8 @@ class _GuidedFilmPageState extends State<GuidedFilmPage> {
             duration: shots[shot].$3,
             takeCount: takeCount,
             onRecord: () => setState(() {
-              takeCount++;
-              selectedTake = takeCount;
+              takeCounts[shot]++;
+              selectedTakes[shot] = takeCounts[shot];
             }),
           ),
           if (takeCount > 0) ...[
@@ -96,9 +99,20 @@ class _GuidedFilmPageState extends State<GuidedFilmPage> {
                     avatar: const Icon(Icons.play_arrow_rounded, size: 17),
                     label: Text('เทค $index'),
                     selected: selectedTake == index,
-                    onSelected: (_) => setState(() => selectedTake = index),
+                    onSelected: (_) =>
+                        setState(() => selectedTakes[shot] = index),
                   ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('delete-guided-take'),
+                onPressed: _deleteSelectedTake,
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                label: Text('ลบเทค $selectedTake'),
+              ),
             ),
           ],
           const SizedBox(height: Spacing.lg),
@@ -119,11 +133,7 @@ class _GuidedFilmPageState extends State<GuidedFilmPage> {
             if (shot > 0)
               IconButton.outlined(
                 tooltip: 'ช็อตก่อนหน้า',
-                onPressed: () => setState(() {
-                  shot--;
-                  takeCount = 0;
-                  selectedTake = 0;
-                }),
+                onPressed: () => setState(() => shot--),
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
             if (shot > 0) const SizedBox(width: 10),
@@ -151,11 +161,7 @@ class _GuidedFilmPageState extends State<GuidedFilmPage> {
 
   void _next() {
     if (shot < shots.length - 1) {
-      setState(() {
-        shot++;
-        takeCount = 0;
-        selectedTake = 0;
-      });
+      setState(() => shot++);
       return;
     }
     context.go(
@@ -169,6 +175,37 @@ class _GuidedFilmPageState extends State<GuidedFilmPage> {
             '${widget.product.name} ใช้แล้วเป็นยังไง มาดูกัน ✨ ดูรายละเอียดและโปรได้ที่ตะกร้า',
       ),
     );
+  }
+
+  Future<void> _deleteSelectedTake() async {
+    final target = selectedTake;
+    if (target == 0) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.delete_outline_rounded, color: context.t.warning),
+        title: Text('ลบเทค $target?'),
+        content: const Text(
+          'เทคนี้จะถูกนำออกจากช็อต คุณยังอัดใหม่ได้ก่อนดำเนินการต่อ',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('เก็บไว้'),
+          ),
+          FilledButton(
+            key: const Key('confirm-delete-guided-take'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('ลบเทค'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      takeCounts[shot]--;
+      selectedTakes[shot] = takeCounts[shot];
+    });
   }
 }
 

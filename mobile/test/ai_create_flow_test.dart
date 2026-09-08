@@ -40,4 +40,29 @@ void main() {
     expect(find.text('อนุมัติคลิปแล้ว'), findsOneWidget);
     expect(find.text('ตรวจตะกร้าและเผยแพร่'), findsOneWidget);
   });
+
+  testWidgets('ยกเลิกการสร้างกลางทางแล้วกลับไปแก้สคริปต์ได้', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: appTheme(Brightness.dark),
+        home: AiCreatePage(product: ShowcaseProduct.mock.first),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('ai-next')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('ai-next')));
+    await tester.pump();
+    expect(find.byKey(const Key('cancel-ai-generation')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('cancel-ai-generation')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.byKey(const Key('ai-script')), findsOneWidget);
+    expect(find.text('ตรวจสอบคลิป'), findsNothing);
+    expect(
+      find.text('ยกเลิกการสร้างแล้ว คุณแก้สคริปต์และลองใหม่ได้'),
+      findsOneWidget,
+    );
+  });
 }
