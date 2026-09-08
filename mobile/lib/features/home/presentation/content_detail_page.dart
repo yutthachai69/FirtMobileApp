@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../create/domain/remix.dart';
+import '../../create/presentation/publish_review_page.dart';
+import '../../showcase/domain/showcase_product.dart';
 import '../domain/content_store.dart';
 import '../domain/home_data.dart';
 import 'content_artwork.dart';
@@ -210,6 +213,74 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
   void _toast(String text) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
+  ShowcaseProduct get _remixProduct {
+    final id = widget.job.productId;
+    return ShowcaseProduct.mock.firstWhere(
+      (p) => p.id == id,
+      orElse: () => ShowcaseProduct.mock.first,
+    );
+  }
+
+  void _openRemix(BuildContext context) => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(Spacing.lg, 4, Spacing.lg, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'ทำเวอร์ชันใหม่จากคลิปนี้',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          for (final kind in RemixKind.values)
+            ListTile(
+              leading: Icon(_remixIcon(kind)),
+              title: Text(RemixPreset.of(kind, widget.job).label),
+              onTap: () {
+                Navigator.pop(context);
+                _startRemix(kind);
+              },
+            ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    ),
+  );
+
+  IconData _remixIcon(RemixKind kind) => switch (kind) {
+    RemixKind.newHook => Icons.bolt_rounded,
+    RemixKind.newCta => Icons.campaign_outlined,
+    RemixKind.short15 => Icons.timer_outlined,
+    RemixKind.newProduct => Icons.swap_horiz_rounded,
+    RemixKind.newCaption => Icons.edit_note_rounded,
+  };
+
+  void _startRemix(RemixKind kind) {
+    final preset = RemixPreset.of(kind, widget.job);
+    if (preset.needsProductPick) {
+      _toast('เลือกสินค้าใหม่สำหรับเวอร์ชันรีมิกซ์');
+      context.go('/showcase');
+      return;
+    }
+    context.go(
+      '/create/publish',
+      extra: PublishReviewArgs(
+        product: _remixProduct,
+        caption: preset.seedCaption,
+        durationSec: preset.durationSec,
+        sourceLabel: 'รีมิกซ์ · ${preset.label}',
+        remixOfId: widget.job.id,
+        remixNote: preset.note,
+      ),
+    );
+  }
+
   void _actions(BuildContext context) => showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -245,11 +316,13 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
               ),
             ],
             ListTile(
-              leading: const Icon(Icons.copy_rounded),
-              title: const Text('สร้างสำเนา'),
+              key: const Key('remix-job'),
+              leading: const Icon(Icons.auto_awesome_motion_outlined),
+              title: const Text('ทำเวอร์ชันใหม่'),
+              subtitle: const Text('รีมิกซ์จากคลิปนี้'),
               onTap: () {
                 Navigator.pop(context);
-                _toast('สร้างสำเนาฉบับร่างแล้ว');
+                _openRemix(context);
               },
             ),
             ListTile(

@@ -190,6 +190,8 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                             durationSec: extra.durationSec,
                             sourceLabel: extra.sourceLabel,
                             store: contentStore,
+                            remixOfId: extra.remixOfId,
+                            remixNote: extra.remixNote,
                           );
                         }
                         return PublishReviewPage(

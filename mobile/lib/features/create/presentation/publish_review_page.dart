@@ -17,6 +17,8 @@ class PublishReviewArgs {
     this.mediaName,
     this.durationSec = 30,
     this.sourceLabel = 'AI Content Inbox',
+    this.remixOfId,
+    this.remixNote,
   });
 
   final ShowcaseProduct product;
@@ -24,6 +26,10 @@ class PublishReviewArgs {
   final String? mediaName;
   final int durationSec;
   final String sourceLabel;
+
+  /// id ของงานต้นทางเมื่อมาจากการรีมิกซ์ และคำอธิบายว่ารีมิกซ์แบบไหน
+  final String? remixOfId;
+  final String? remixNote;
 }
 
 class PublishReviewPage extends StatefulWidget {
@@ -35,6 +41,8 @@ class PublishReviewPage extends StatefulWidget {
     this.durationSec = 30,
     this.sourceLabel = 'AI Content Inbox',
     this.store,
+    this.remixOfId,
+    this.remixNote,
   });
   final ShowcaseProduct product;
   final String? initialCaption;
@@ -45,6 +53,10 @@ class PublishReviewPage extends StatefulWidget {
   /// เมื่อส่งเข้ามา การกดยืนยันจะเพิ่มงานเข้าแหล่งข้อมูลกลาง
   /// งานจึงไปโผล่ในแท็บคอนเทนต์และหน้าหลักจริง
   final ContentStore? store;
+
+  /// งานต้นทางและคำอธิบายเมื่อหน้านี้เปิดจากการรีมิกซ์
+  final String? remixOfId;
+  final String? remixNote;
 
   @override
   State<PublishReviewPage> createState() => _PublishReviewPageState();
@@ -125,6 +137,10 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
           controller: scrollController,
           padding: const EdgeInsets.fromLTRB(Spacing.md, 8, Spacing.md, 24),
           children: [
+            if (widget.remixNote != null) ...[
+              _RemixBanner(note: widget.remixNote!),
+              const SizedBox(height: Spacing.md),
+            ],
             _VideoSummary(
               product: widget.product,
               mediaName: widget.mediaName,
@@ -339,6 +355,7 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
         scheduledAt: mode == PublishMode.now ? now : scheduledAt,
         caption: caption.text.trim(),
         sourceLabel: widget.sourceLabel,
+        remixOfId: widget.remixOfId,
       ),
     );
     setState(() {
@@ -379,6 +396,29 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
       mediaName: widget.mediaName ?? widget.product.name,
       durationSec: widget.durationSec,
       sourceLabel: widget.sourceLabel,
+    ),
+  );
+}
+
+class _RemixBanner extends StatelessWidget {
+  const _RemixBanner({required this.note});
+  final String note;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: context.t.creative.withValues(alpha: .12),
+      borderRadius: BorderRadius.circular(Radii.md),
+      border: Border.all(color: context.t.creative.withValues(alpha: .4)),
+    ),
+    child: Row(
+      children: [
+        Icon(Icons.auto_awesome_motion_outlined, color: context.t.creative),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(note, style: const TextStyle(fontSize: 12, height: 1.4)),
+        ),
+      ],
     ),
   );
 }

@@ -55,6 +55,7 @@ class PublishJob {
     this.caption = '',
     this.productId,
     this.sourceLabel = '',
+    this.remixOfId,
   });
 
   final String id;
@@ -76,6 +77,9 @@ class PublishJob {
   /// ที่มาของคอนเทนต์ เช่น "AI Content Inbox · Google Flow" หรือ "อัปโหลดเอง"
   final String sourceLabel;
 
+  /// ถ้างานนี้เกิดจากการรีมิกซ์งานเดิม เก็บ id ของงานต้นทางไว้
+  final String? remixOfId;
+
   /// ข้อความที่ใช้แทนชื่องานในรายการ
   String get title {
     final t = caption.trim();
@@ -96,6 +100,7 @@ class PublishJob {
     String? caption,
     String? productId,
     String? sourceLabel,
+    String? remixOfId,
   }) => PublishJob(
     id: id,
     contentId: contentId,
@@ -107,6 +112,7 @@ class PublishJob {
     caption: caption ?? this.caption,
     productId: productId ?? this.productId,
     sourceLabel: sourceLabel ?? this.sourceLabel,
+    remixOfId: remixOfId ?? this.remixOfId,
   );
 
   factory PublishJob.fromJson(Map<String, dynamic> json) => PublishJob(
@@ -122,6 +128,7 @@ class PublishJob {
         ? ((json['last_error'] as Map)['message'] as String? ?? '')
         : '',
     productId: json['product_id'] as String?,
+    remixOfId: json['remix_of_id'] as String?,
   );
 }
 
