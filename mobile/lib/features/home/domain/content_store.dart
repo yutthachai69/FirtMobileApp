@@ -3,6 +3,12 @@ import 'package:flutter/foundation.dart';
 import '../../connections/domain/connection.dart';
 import 'home_data.dart';
 
+/// จำนวนออเดอร์จำลองต่อคลิปที่โพสต์แล้ว — คงที่ต่อ id เดียวกัน
+/// มาแทนด้วยเลขจริงจาก TikTok เมื่อต่อ backend
+int mockOrdersFor(PublishJob job) => job.status == JobStatus.published
+    ? (job.id.hashCode.abs() % 34) + 12
+    : 0;
+
 /// แหล่งข้อมูล "งานคอนเทนต์" ตัวเดียวของทั้งแอปในโหมด prototype
 ///
 /// ก่อนหน้านี้งานกระจายอยู่สามที่และไม่ตรงกัน: backend (`homeProvider`),

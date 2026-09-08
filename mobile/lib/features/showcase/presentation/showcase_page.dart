@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../home/domain/content_store.dart';
+import '../domain/opportunity.dart';
 import '../domain/showcase_product.dart';
 import 'product_artwork.dart';
 import 'saved_products_controller.dart';
@@ -9,9 +11,12 @@ import 'saved_products_controller.dart';
 enum _ProductFilter { all, saved, highCommission, inStock, unavailable }
 
 class ShowcasePage extends StatefulWidget {
-  const ShowcasePage({super.key, this.savedProducts});
+  const ShowcasePage({super.key, this.savedProducts, this.store});
 
   final SavedProductsController? savedProducts;
+
+  /// ใช้คำนวณ Opportunity Radar จากคลิปที่เคยทำ
+  final ContentStore? store;
 
   @override
   State<ShowcasePage> createState() => _ShowcasePageState();
@@ -131,6 +136,15 @@ class _ShowcasePageState extends State<ShowcasePage> {
               ),
             ),
             const SizedBox(height: Spacing.md),
+            if (widget.store != null)
+              _OpportunityRadar(
+                opportunities: Opportunity.scan(
+                  products: ShowcaseProduct.mock,
+                  store: widget.store!,
+                ),
+                onOpen: (p) => context.go('/showcase/${p.id}'),
+                onCreate: (p) => context.go('/create', extra: p),
+              ),
             _PreviewNotice(),
             const SizedBox(height: Spacing.md),
             if (products.isEmpty)
@@ -164,6 +178,167 @@ class _ShowcasePageState extends State<ShowcasePage> {
     _ProductFilter.inStock => 'พร้อมขาย',
     _ProductFilter.unavailable => 'ไม่พร้อมขาย',
   };
+}
+
+class _OpportunityRadar extends StatelessWidget {
+  const _OpportunityRadar({
+    required this.opportunities,
+    required this.onOpen,
+    required this.onCreate,
+  });
+  final List<Opportunity> opportunities;
+  final void Function(ShowcaseProduct) onOpen;
+  final void Function(ShowcaseProduct) onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    if (opportunities.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Spacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.radar_rounded, size: 18, color: context.t.creative),
+              const SizedBox(width: Spacing.sm),
+              Text(
+                'โอกาสวันนี้',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(width: Spacing.sm),
+              Text(
+                '${opportunities.length}',
+                style: TextStyle(color: context.t.textSecondary, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.sm),
+          SizedBox(
+            height: 152,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: opportunities.length,
+              separatorBuilder: (_, _) => const SizedBox(width: Spacing.sm),
+              itemBuilder: (context, i) => _OpportunityCard(
+                opportunity: opportunities[i],
+                onOpen: () => onOpen(opportunities[i].product),
+                onCreate: () => onCreate(opportunities[i].product),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpportunityCard extends StatelessWidget {
+  const _OpportunityCard({
+    required this.opportunity,
+    required this.onOpen,
+    required this.onCreate,
+  });
+  final Opportunity opportunity;
+  final VoidCallback onOpen;
+  final VoidCallback onCreate;
+
+  ({IconData icon, Color color}) _style(BuildContext context) =>
+      switch (opportunity.kind) {
+        OpportunityKind.proven => (
+          icon: Icons.trending_up_rounded,
+          color: context.t.success,
+        ),
+        OpportunityKind.lowStock => (
+          icon: Icons.inventory_2_outlined,
+          color: context.t.warning,
+        ),
+        OpportunityKind.highCommission => (
+          icon: Icons.payments_outlined,
+          color: context.t.creative,
+        ),
+        OpportunityKind.noContent => (
+          icon: Icons.add_circle_outline_rounded,
+          color: context.t.primary,
+        ),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final s = _style(context);
+    return SizedBox(
+      width: 236,
+      child: InkWell(
+        onTap: onOpen,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: context.t.surfaceContainer,
+            borderRadius: BorderRadius.circular(Radii.lg),
+            border: Border.all(color: s.color.withValues(alpha: .4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(s.icon, size: 15, color: s.color),
+                  const SizedBox(width: 6),
+                  Text(
+                    opportunity.headline,
+                    style: TextStyle(
+                      color: s.color,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                opportunity.product.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: Text(
+                  opportunity.detail,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.35,
+                    color: context.t.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                height: 34,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 34),
+                    backgroundColor: s.color.withValues(alpha: .16),
+                    foregroundColor: s.color,
+                    padding: EdgeInsets.zero,
+                  ),
+                  onPressed: onCreate,
+                  child: const Text(
+                    'สร้างคอนเทนต์',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _PreviewNotice extends StatelessWidget {

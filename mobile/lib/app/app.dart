@@ -103,7 +103,7 @@ class _RelayAppState extends ConsumerState<RelayApp> {
               routes: [
                 GoRoute(
                   path: '/showcase',
-                  builder: (_, _) => const ShowcasePage(),
+                  builder: (_, _) => ShowcasePage(store: contentStore),
                   routes: [
                     GoRoute(
                       path: 'import-ai',

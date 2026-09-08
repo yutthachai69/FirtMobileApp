@@ -89,7 +89,12 @@ void main() {
 
     await tester.tap(find.text('สินค้า').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(ShowcaseProduct.mock.first.name).first);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Card),
+        matching: find.text(ShowcaseProduct.mock.first.name),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('รายละเอียดสินค้า'), findsOneWidget);
 
