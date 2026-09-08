@@ -17,7 +17,7 @@ This tracker measures the complete Flutter UI and local/mock interactions for th
 | In-app AI creation (secondary) | 100% | Product brief, concept and tone controls, editable script, voice and subtitle choices, generation progress, safe cancellation, three variants, safety checks and approval |
 | Upload creation | 100% | File picking, upload progress, preview/fallback, replace, trim, thumbnail selection, caption editing and handoff to the shared basket review |
 | Guided filming | 100% | Product-aware three-shot guide, composition grid, coaching, multiple takes, take selection, retained progress when going back, guarded take deletion and review handoff |
-| Basket and publishing | 100% | All creation paths converge on one review with source/media/caption context, full-screen preview, guarded basket removal, caption/tags, schedule controls, checklist, submission progress and accepted state |
+| Basket and publishing | 100% | All creation paths converge on one review with source/media/caption context, full-screen preview, guarded basket removal, caption/tags, schedule controls, a 100-point content readiness score with jump-to-fix and a non-blocking low-score confirm, checklist, submission progress and accepted state |
 | Content management | 100% | Lifecycle filters, status visuals, action sheets, detail timeline, metrics, retry, rescheduling, guarded cancellation and restore-to-schedule state |
 | Profile/connections | 100% | Editable local creator identity, TikTok and AI-source entry points, notification settings, theme, reduced motion, timezone, help/privacy details and confirmed sign-out |
 

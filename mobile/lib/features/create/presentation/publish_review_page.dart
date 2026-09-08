@@ -6,6 +6,7 @@ import '../../home/domain/content_store.dart';
 import '../../home/domain/home_data.dart';
 import '../../showcase/domain/showcase_product.dart';
 import '../../showcase/presentation/product_artwork.dart';
+import '../domain/readiness.dart';
 
 enum PublishMode { schedule, now }
 
@@ -52,12 +53,38 @@ class PublishReviewPage extends StatefulWidget {
 class _PublishReviewPageState extends State<PublishReviewPage> {
   final caption = TextEditingController();
   final scrollController = ScrollController();
+  final _captionKey = GlobalKey();
+  final _basketKey = GlobalKey();
   PublishMode mode = PublishMode.schedule;
   late DateTime scheduledAt;
   bool basket = true;
   bool submitted = false;
   bool submitting = false;
+  bool _acknowledgedLowScore = false;
   final tags = <String>{'#รีวิวของดี', '#TikTokป้ายยา'};
+
+  ReadinessReport get _readiness => ReadinessReport.evaluate(
+    caption: caption.text,
+    tags: tags,
+    durationSec: widget.durationSec,
+    basketEnabled: basket,
+    product: widget.product,
+  );
+
+  void _jumpTo(ReadinessTarget target) {
+    final key = switch (target) {
+      ReadinessTarget.caption => _captionKey,
+      ReadinessTarget.basket => _basketKey,
+      ReadinessTarget.none => null,
+    };
+    final ctx = key?.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 300),
+      alignment: 0.1,
+    );
+  }
 
   @override
   void initState() {
@@ -108,7 +135,11 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
             const SizedBox(height: Spacing.lg),
             const _DestinationCard(),
             const SizedBox(height: Spacing.lg),
-            const _Title(Icons.shopping_bag_outlined, 'ตะกร้าสินค้า'),
+            _Title(
+              Icons.shopping_bag_outlined,
+              'ตะกร้าสินค้า',
+              key: _basketKey,
+            ),
             const SizedBox(height: 10),
             _Basket(
               product: widget.product,
@@ -144,7 +175,7 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
               ),
             ],
             const SizedBox(height: Spacing.lg),
-            const _Title(Icons.notes_rounded, 'แคปชัน'),
+            _Title(Icons.notes_rounded, 'แคปชัน', key: _captionKey),
             const SizedBox(height: 10),
             TextField(
               key: const Key('publish-caption'),
@@ -178,6 +209,10 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
             ),
             const SizedBox(height: 12),
             _PostPreview(caption: caption.text, tags: tags),
+            const SizedBox(height: Spacing.lg),
+            const _Title(Icons.verified_outlined, 'ความพร้อมก่อนเผยแพร่'),
+            const SizedBox(height: 10),
+            _ReadinessCard(report: _readiness, onJump: _jumpTo),
             const SizedBox(height: Spacing.lg),
             _Checklist(basket: basket, mode: mode, scheduledAt: scheduledAt),
           ],
@@ -282,6 +317,12 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
   }
 
   Future<void> _submit() async {
+    // เตือน ไม่บล็อก — คะแนนต่ำมากถามยืนยันครั้งเดียว แล้วจำว่าผู้ใช้เลือกข้าม
+    if (_readiness.level == ReadinessLevel.poor && !_acknowledgedLowScore) {
+      final proceed = await _confirmLowReadiness();
+      if (proceed != true) return;
+      _acknowledgedLowScore = true;
+    }
     setState(() => submitting = true);
     await Future<void>.delayed(const Duration(milliseconds: 650));
     if (!mounted) return;
@@ -305,6 +346,28 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
       submitted = true;
     });
   }
+
+  Future<bool?> _confirmLowReadiness() => showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      icon: Icon(Icons.rule_rounded, color: context.t.warning),
+      title: const Text('คะแนนความพร้อมยังต่ำ'),
+      content: Text(
+        'ได้ ${_readiness.percent}/100 — คลิปนี้อาจไปได้ไม่ไกลเท่าที่ควร '
+        'ต้องการกลับไปแก้ตามคำแนะนำก่อนไหม',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('กลับไปแก้'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('เผยแพร่เลย'),
+        ),
+      ],
+    ),
+  );
 
   void _openPreview() => showModalBottomSheet<void>(
     context: context,
@@ -356,7 +419,7 @@ class _DestinationCard extends StatelessWidget {
 }
 
 class _Title extends StatelessWidget {
-  const _Title(this.icon, this.text);
+  const _Title(this.icon, this.text, {super.key});
   final IconData icon;
   final String text;
   @override
@@ -787,6 +850,163 @@ class _PostPreview extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _ReadinessCard extends StatelessWidget {
+  const _ReadinessCard({required this.report, required this.onJump});
+  final ReadinessReport report;
+  final ValueChanged<ReadinessTarget> onJump;
+
+  Color _color(BuildContext context) => switch (report.level) {
+    ReadinessLevel.good => context.t.success,
+    ReadinessLevel.fair => context.t.warning,
+    ReadinessLevel.poor => context.t.error,
+  };
+
+  String get _levelLabel => switch (report.level) {
+    ReadinessLevel.good => 'พร้อมเผยแพร่',
+    ReadinessLevel.fair => 'พอเผยแพร่ได้',
+    ReadinessLevel.poor => 'ควรปรับก่อน',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _color(context);
+    return _Panel(
+      borderColor: color.withValues(alpha: .4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '${report.percent}',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                  height: 1,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 10, left: 2),
+                child: Text('/100', style: TextStyle(fontSize: 12)),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .14),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  _levelLabel,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            report.level == ReadinessLevel.good
+                ? 'ทุกหัวข้อผ่านเกณฑ์แล้ว'
+                : 'แตะหัวข้อที่ยังไม่เต็มเพื่อไปแก้ตรงจุด',
+            style: TextStyle(color: context.t.textSecondary, fontSize: 11),
+          ),
+          const SizedBox(height: 6),
+          for (final check in report.checks)
+            _ReadinessRow(check: check, onJump: onJump),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReadinessRow extends StatelessWidget {
+  const _ReadinessRow({required this.check, required this.onJump});
+  final ReadinessCheck check;
+  final ValueChanged<ReadinessTarget> onJump;
+
+  @override
+  Widget build(BuildContext context) {
+    final ok = check.isFull;
+    final tappable = !ok && check.target != ReadinessTarget.none;
+    final color = ok
+        ? context.t.success
+        : check.ratio >= .5
+        ? context.t.warning
+        : context.t.error;
+
+    return InkWell(
+      onTap: tappable ? () => onJump(check.target) : null,
+      borderRadius: BorderRadius.circular(Radii.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              ok ? Icons.check_circle_rounded : Icons.adjust_rounded,
+              size: 17,
+              color: color,
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          check.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${check.score}/${check.maxScore}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: context.t.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!ok) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      check.hint,
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.4,
+                        color: context.t.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (tappable)
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: context.t.textSecondary,
+              ),
+          ],
+        ),
       ),
     );
   }

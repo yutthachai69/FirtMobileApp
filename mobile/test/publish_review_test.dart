@@ -131,7 +131,6 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('pick-publish-date')));
     await tester.pumpAndSettle();
