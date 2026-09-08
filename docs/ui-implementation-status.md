@@ -4,7 +4,7 @@ Updated: 8 September 2026
 
 This tracker measures the Flutter UI and local/mock interactions only. TikTok API availability is intentionally excluded.
 
-## Current overall status: 87%
+## Current overall status: 88%
 
 | Area | Status | Implemented now | Main gap |
 |---|---:|---|---|
@@ -13,7 +13,7 @@ This tracker measures the Flutter UI and local/mock interactions only. TikTok AP
 | Main navigation | 80% | Persistent five-tab shell for Home, Showcase, Create, Content, Profile | Preserve tab stacks and deep-link state |
 | Home | 88% | New-user state, active groups, all-clear summary, actionable errors, notification deep links, visual job cards and direct job-detail navigation | Trend insights and personalized recommendations |
 | Showcase/products | 80% | Search, filters, empty state, stock/commission cards, generated product imagery, saved-product interactions, product detail and product selection using local fixtures | Persist saved products and add richer pricing/media states |
-| AI source relay | 55% | AI Content Inbox, connected-source states, Share/import guidance, mock sync progress, content selection and product handoff | Real OAuth/share extension, provider capability checks, background imports and recovery |
+| AI source relay | 68% | AI Content Inbox with a real state model, connect/disconnect flow, per-provider capability warnings (vertical crop, no direct import), background import progress that advances and completes, import failure with retry/dismiss recovery, empty state, content selection and product handoff | Real OAuth/share extension, provider API calls and resumable imports |
 | In-app AI creation (secondary) | 70% | Product brief, concepts, duration, tone, editable script, voice, subtitles, generation motion, three variants, safety checks and approval | Real media rendering, full timeline editor and recovery |
 | Upload creation | 82% | Selected-product requirement, pick, upload progress, preview, file summary, replace/trim interactions, caption and handoff into the shared basket review | Apply trim to the media file, thumbnail selection and upload recovery details |
 | Guided filming | 70% | Product-aware three-shot guide, composition grid, coaching tips, multiple local takes, take selection and handoff into shared basket review | Real camera recording, permissions, clip stitching and device recovery |
@@ -28,6 +28,7 @@ This tracker measures the Flutter UI and local/mock interactions only. TikTok AP
 - Content-job thumbnails currently reuse product artwork until real imported/rendered media is available.
 - Guided filming interactions simulate takes until real camera permissions and recording are implemented.
 - Generation uses a convincing local preview; it does not render real media yet.
+- The AI Content Inbox now models connect, capability checks and background import recovery; it still runs on local fixtures, not real provider APIs.
 - Few controls demonstrate useful local interactions beyond validation and navigation.
 - Loading states now use shimmer skeletons on Home and Content; other lists still fall back to a plain spinner.
 - Empty, success, and recovery states are uneven across features.
