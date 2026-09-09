@@ -25,6 +25,24 @@ class ShowcasePage extends StatefulWidget {
 class _ShowcasePageState extends State<ShowcasePage> {
   final _search = TextEditingController();
   _ProductFilter _filter = _ProductFilter.all;
+  bool _selectMode = false;
+  final _selected = <String>{};
+
+  void _toggleSelectMode() => setState(() {
+    _selectMode = !_selectMode;
+    _selected.clear();
+  });
+
+  void _toggleSelected(String id) => setState(() {
+    _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
+  });
+
+  void _startBatch() {
+    final picked = ShowcaseProduct.mock
+        .where((p) => _selected.contains(p.id))
+        .toList();
+    context.go('/create/batch', extra: picked);
+  }
 
   SavedProductsController get _saved =>
       widget.savedProducts ?? savedProductsController;
@@ -69,18 +87,46 @@ class _ShowcasePageState extends State<ShowcasePage> {
     final products = _products;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('สินค้า'),
+        title: Text(_selectMode ? 'เลือกสินค้าทำเป็นชุด' : 'สินค้า'),
         actions: [
-          IconButton(
-            tooltip: 'ซิงก์ข้อมูลตัวอย่าง',
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('อัปเดตข้อมูลตัวอย่างแล้ว')),
+          if (widget.store != null)
+            IconButton(
+              key: const Key('toggle-batch-select'),
+              tooltip: _selectMode ? 'ยกเลิกเลือกหลายชิ้น' : 'เลือกหลายชิ้น',
+              onPressed: _toggleSelectMode,
+              icon: Icon(
+                _selectMode ? Icons.close_rounded : Icons.checklist_rounded,
+              ),
             ),
-            icon: const Icon(Icons.sync_rounded),
-          ),
+          if (!_selectMode)
+            IconButton(
+              tooltip: 'ซิงก์ข้อมูลตัวอย่าง',
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('อัปเดตข้อมูลตัวอย่างแล้ว')),
+              ),
+              icon: const Icon(Icons.sync_rounded),
+            ),
           const SizedBox(width: Spacing.sm),
         ],
       ),
+      bottomNavigationBar: _selectMode && _selected.isNotEmpty
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.md,
+                  Spacing.sm,
+                  Spacing.md,
+                  Spacing.md,
+                ),
+                child: FilledButton.icon(
+                  key: const Key('start-batch'),
+                  onPressed: _startBatch,
+                  icon: const Icon(Icons.playlist_add_rounded),
+                  label: Text('สร้างเป็นชุด (${_selected.length})'),
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
@@ -136,7 +182,7 @@ class _ShowcasePageState extends State<ShowcasePage> {
               ),
             ),
             const SizedBox(height: Spacing.md),
-            if (widget.store != null)
+            if (widget.store != null && !_selectMode)
               _OpportunityRadar(
                 opportunities: Opportunity.scan(
                   products: ShowcaseProduct.mock,
@@ -160,10 +206,14 @@ class _ShowcasePageState extends State<ShowcasePage> {
                   product: product,
                   saved: _saved.contains(product.id),
                   onSaved: () => _saved.toggle(product.id),
-                  onOpen: () => context.go('/showcase/${product.id}'),
-                  onCreate: product.inStock
-                      ? () => context.go('/create', extra: product)
-                      : null,
+                  selectMode: _selectMode,
+                  selected: _selected.contains(product.id),
+                  onOpen: _selectMode
+                      ? () => _toggleSelected(product.id)
+                      : () => context.go('/showcase/${product.id}'),
+                  onCreate: _selectMode || !product.inStock
+                      ? null
+                      : () => context.go('/create', extra: product),
                 ),
           ],
         ),
@@ -372,12 +422,16 @@ class _ProductCard extends StatelessWidget {
     required this.onCreate,
     required this.saved,
     required this.onSaved,
+    this.selectMode = false,
+    this.selected = false,
   });
   final ShowcaseProduct product;
   final VoidCallback onOpen;
   final VoidCallback? onCreate;
   final bool saved;
   final VoidCallback onSaved;
+  final bool selectMode;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -385,6 +439,12 @@ class _ProductCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
+      shape: selected
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.lg),
+              side: BorderSide(color: context.t.primary, width: 2),
+            )
+          : null,
       child: InkWell(
         onTap: onOpen,
         child: Padding(
@@ -392,6 +452,13 @@ class _ProductCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (selectMode) ...[
+                Checkbox(
+                  value: selected,
+                  onChanged: (_) => onOpen(),
+                ),
+                const SizedBox(width: 4),
+              ],
               ProductArtwork(product: p, width: 82, height: 106, hero: true),
               const SizedBox(width: 12),
               Expanded(
@@ -446,29 +513,33 @@ class _ProductCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 40,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(0, 40),
-                          backgroundColor: onCreate == null
-                              ? context.t.surfaceElevated
-                              : context.t.creative,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: onCreate,
-                        icon: Icon(
-                          onCreate == null
-                              ? Icons.block_rounded
-                              : Icons.movie_creation_outlined,
-                        ),
-                        label: Text(
-                          onCreate == null ? 'สินค้าหมดสต็อก' : 'สร้างคอนเทนต์',
+                    if (!selectMode) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 40,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 40),
+                            backgroundColor: onCreate == null
+                                ? context.t.surfaceElevated
+                                : context.t.creative,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: onCreate,
+                          icon: Icon(
+                            onCreate == null
+                                ? Icons.block_rounded
+                                : Icons.movie_creation_outlined,
+                          ),
+                          label: Text(
+                            onCreate == null
+                                ? 'สินค้าหมดสต็อก'
+                                : 'สร้างคอนเทนต์',
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

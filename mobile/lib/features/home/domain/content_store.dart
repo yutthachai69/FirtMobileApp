@@ -18,7 +18,8 @@ int mockOrdersFor(PublishJob job) => job.status == JobStatus.published
 ///
 /// backend repository มาแทนที่ seed ภายหลังได้โดยไม่แตะ UI
 class ContentStore extends ChangeNotifier {
-  ContentStore({List<PublishJob>? jobs}) : _jobs = jobs ?? seedJobs();
+  ContentStore({List<PublishJob>? jobs})
+    : _jobs = jobs != null ? List.of(jobs) : seedJobs();
 
   final List<PublishJob> _jobs;
 

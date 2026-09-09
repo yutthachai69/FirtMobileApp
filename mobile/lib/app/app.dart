@@ -13,6 +13,7 @@ import '../features/create/presentation/ai_create_page.dart';
 import '../features/create/presentation/ai_sources_page.dart';
 import '../features/create/presentation/create_hub_page.dart';
 import '../features/create/presentation/create_page.dart';
+import '../features/create/presentation/batch_create_page.dart';
 import '../features/create/presentation/guided_film_page.dart';
 import '../features/create/presentation/publish_review_page.dart';
 import '../features/home/domain/content_store.dart';
@@ -176,6 +177,15 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                         product: state.extra is ShowcaseProduct
                             ? state.extra! as ShowcaseProduct
                             : ShowcaseProduct.mock.first,
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'batch',
+                      builder: (_, state) => BatchCreatePage(
+                        products: state.extra is List<ShowcaseProduct>
+                            ? state.extra! as List<ShowcaseProduct>
+                            : const [],
+                        store: contentStore,
                       ),
                     ),
                     GoRoute(
