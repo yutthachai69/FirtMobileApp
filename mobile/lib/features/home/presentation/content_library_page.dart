@@ -5,6 +5,7 @@ import '../../../app/theme/tokens.dart';
 import '../../../app/widgets/skeleton.dart';
 import '../domain/content_store.dart';
 import '../domain/home_data.dart';
+import 'content_planner.dart';
 import 'home_controller.dart';
 import 'home_page.dart' show JobCard;
 
@@ -30,8 +31,11 @@ class ContentLibraryPage extends StatefulWidget {
 
 enum _Filter { all, needAction, working, scheduled, published }
 
+enum _ViewMode { list, week }
+
 class _ContentLibraryPageState extends State<ContentLibraryPage> {
   _Filter _filter = _Filter.all;
+  _ViewMode _view = _ViewMode.list;
 
   @override
   void initState() {
@@ -81,7 +85,31 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
       final data = c.data ?? (widget.store != null ? const HomeData() : null);
 
       return Scaffold(
-        appBar: AppBar(title: const Text('คอนเทนต์')),
+        appBar: AppBar(
+          title: const Text('คอนเทนต์'),
+          actions: [
+            if (widget.store != null)
+              SegmentedButton<_ViewMode>(
+                showSelectedIcon: false,
+                style: const ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                ),
+                segments: const [
+                  ButtonSegment(
+                    value: _ViewMode.list,
+                    icon: Icon(Icons.view_list_rounded),
+                  ),
+                  ButtonSegment(
+                    value: _ViewMode.week,
+                    icon: Icon(Icons.calendar_view_week_rounded),
+                  ),
+                ],
+                selected: {_view},
+                onSelectionChanged: (v) => setState(() => _view = v.first),
+              ),
+            const SizedBox(width: Spacing.sm),
+          ],
+        ),
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: c.load,
@@ -89,6 +117,13 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
                 ? const SkeletonList()
                 : data == null
                 ? _errorBody(c)
+                : _view == _ViewMode.week && widget.store != null
+                ? ContentPlanner(
+                    jobs: _sourceJobs(data),
+                    onReschedule: widget.store!.reschedule,
+                    onOpen: (job) =>
+                        context.go('/content/${job.id}', extra: job),
+                  )
                 : _list(context, data),
           ),
         ),
