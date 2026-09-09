@@ -39,6 +39,19 @@ class ContentStore extends ChangeNotifier {
       _jobs.where((j) => j.productId == productId).toList()
         ..sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
 
+  /// งานที่รอตรวจ ป้อนคิว Swipe Review เรียงจากใกล้ถึงเวลาที่สุด
+  List<PublishJob> get reviewQueue =>
+      _jobs.where((j) => j.status == JobStatus.awaitingReview).toList()
+        ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+
+  /// อนุมัติงานที่รอตรวจ → เข้าคิวตั้งเวลา
+  void approveReview(String id) =>
+      updateStatus(id, JobStatus.scheduled);
+
+  /// ส่งกลับไปเป็นฉบับร่างเพื่อแก้
+  void sendBackToDraft(String id) =>
+      updateStatus(id, JobStatus.draft);
+
   /// มุมมองจัดกลุ่มตามความเร่งด่วน สำหรับหน้าหลัก
   HomeData homeData({List<Connection> connections = const []}) =>
       HomeData.build(jobs: _jobs, connections: connections);
@@ -94,6 +107,36 @@ class ContentStore extends ChangeNotifier {
         scheduledAt: today.add(const Duration(hours: 11, minutes: 30)),
         caption: 'รีวิวเซรั่มวิตามินซี ฉบับร่างจาก AI Content Inbox',
         sourceLabel: 'AI Content Inbox · Google Flow',
+      ),
+      PublishJob(
+        id: 'demo-review-1',
+        contentId: 'content-review-1',
+        productId: 'mock-2',
+        platform: 'tiktok',
+        status: JobStatus.awaitingReview,
+        scheduledAt: DateTime(now.year, now.month, now.day + 2, 19, 30),
+        caption: 'ไมค์ไร้สายตัวนี้เปลี่ยนคุณภาพเสียงคลิปไปเลย กดที่ตะกร้าดูโปร',
+        sourceLabel: 'AI Content Inbox · Google Flow',
+      ),
+      PublishJob(
+        id: 'demo-review-2',
+        contentId: 'content-review-2',
+        productId: 'mock-1',
+        platform: 'tiktok',
+        status: JobStatus.awaitingReview,
+        scheduledAt: DateTime(now.year, now.month, now.day + 3, 12, 0),
+        caption: 'เซรั่มขวดนี้ใช้หมดไป 3 ขวดแล้ว มาเล่าให้ฟัง',
+        sourceLabel: 'อัปโหลดเอง',
+      ),
+      PublishJob(
+        id: 'demo-review-3',
+        contentId: 'content-review-3',
+        productId: 'mock-3',
+        platform: 'tiktok',
+        status: JobStatus.awaitingReview,
+        scheduledAt: DateTime(now.year, now.month, now.day + 4, 21, 0),
+        caption: 'แก้วเก็บความเย็นใบนี้พกไปทำงานทุกวัน',
+        sourceLabel: 'AI Content Inbox · Runway',
       ),
       PublishJob(
         id: 'demo-processing',

@@ -22,6 +22,7 @@ import '../features/home/presentation/content_detail_page.dart';
 import '../features/home/presentation/content_library_page.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/home/presentation/notifications_page.dart';
+import '../features/home/presentation/review_queue_page.dart';
 import '../features/profile/presentation/profile_page.dart';
 import '../features/showcase/domain/showcase_product.dart';
 import '../features/showcase/presentation/product_detail_page.dart';
@@ -97,6 +98,10 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                 GoRoute(
                   path: '/notifications',
                   builder: (_, _) => const NotificationsPage(),
+                ),
+                GoRoute(
+                  path: '/review',
+                  builder: (_, _) => ReviewQueuePage(store: contentStore),
                 ),
               ],
             ),

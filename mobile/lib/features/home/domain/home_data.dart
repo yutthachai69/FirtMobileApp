@@ -3,6 +3,7 @@ import '../../connections/domain/connection.dart';
 /// สถานะงานโพสต์ ตรงกับ publish_jobs.status ฝั่ง backend
 enum JobStatus {
   draft,
+  awaitingReview,
   scheduled,
   queued,
   uploading,
@@ -14,6 +15,7 @@ enum JobStatus {
 
   static JobStatus parse(String? raw) => switch (raw) {
     'draft' => JobStatus.draft,
+    'awaiting_review' => JobStatus.awaitingReview,
     'scheduled' => JobStatus.scheduled,
     'queued' => JobStatus.queued,
     'uploading' => JobStatus.uploading,
@@ -32,6 +34,7 @@ enum JobStatus {
 
   String get label => switch (this) {
     JobStatus.draft => 'ฉบับร่าง',
+    JobStatus.awaitingReview => 'รอตรวจ',
     JobStatus.scheduled => 'รอถึงเวลา',
     JobStatus.queued => 'เข้าคิวแล้ว',
     JobStatus.uploading => 'กำลังส่งขึ้น TikTok',
@@ -161,18 +164,23 @@ enum ActionKind { needsReauth, jobFailed }
 class HomeData {
   const HomeData({
     this.needAction = const [],
+    this.reviewQueue = const [],
     this.working = const [],
     this.scheduled = const [],
     this.publishedToday = const [],
   });
 
   final List<ActionItem> needAction;
+
+  /// งานที่ทำเสร็จแล้วรอผู้ใช้ตรวจ/อนุมัติ — ป้อนคิว Swipe Review
+  final List<PublishJob> reviewQueue;
   final List<PublishJob> working;
   final List<PublishJob> scheduled;
   final List<PublishJob> publishedToday;
 
   bool get isEmpty =>
       needAction.isEmpty &&
+      reviewQueue.isEmpty &&
       working.isEmpty &&
       scheduled.isEmpty &&
       publishedToday.isEmpty;
@@ -205,9 +213,12 @@ class HomeData {
     final working = <PublishJob>[];
     final scheduled = <PublishJob>[];
     final published = <PublishJob>[];
+    final review = <PublishJob>[];
 
     for (final j in jobs) {
       switch (j.status) {
+        case JobStatus.awaitingReview:
+          review.add(j);
         case JobStatus.failed:
           actions.add(
             ActionItem(
@@ -233,8 +244,11 @@ class HomeData {
     scheduled.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
     published.sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
 
+    review.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+
     return HomeData(
       needAction: actions,
+      reviewQueue: review,
       working: working,
       scheduled: scheduled,
       publishedToday: published,

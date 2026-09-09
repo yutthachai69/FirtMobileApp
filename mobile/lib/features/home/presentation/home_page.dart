@@ -118,6 +118,13 @@ class _HomePageState extends State<HomePage> {
           onUpload: () => context.go('/create/upload'),
           onShowcase: () => context.go('/showcase'),
         ),
+        if (data.reviewQueue.isNotEmpty) ...[
+          const SizedBox(height: Spacing.md),
+          _ReviewQueueBar(
+            count: data.reviewQueue.length,
+            onOpen: () => context.push('/review'),
+          ),
+        ],
         const SizedBox(height: Spacing.lg),
         Row(
           children: [
@@ -235,6 +242,54 @@ class _CreatorTitle extends StatelessWidget {
         ),
       ),
     ],
+  );
+}
+
+class _ReviewQueueBar extends StatelessWidget {
+  const _ReviewQueueBar({required this.count, required this.onOpen});
+  final int count;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onOpen,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: Container(
+        padding: const EdgeInsets.all(Spacing.md),
+        decoration: BoxDecoration(
+          color: context.t.creative.withValues(alpha: .12),
+          borderRadius: BorderRadius.circular(Radii.lg),
+          border: Border.all(color: context.t.creative.withValues(alpha: .4)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.swipe_rounded, color: context.t.creative),
+            const SizedBox(width: Spacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'มี $count งานรอตรวจ',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    'ปัดอนุมัติหรือส่งกลับแก้ทีละชิ้น',
+                    style: TextStyle(
+                      color: context.t.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded),
+          ],
+        ),
+      ),
+    ),
   );
 }
 

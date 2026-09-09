@@ -61,7 +61,13 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
     return switch (_filter) {
       _Filter.all => jobs,
       _Filter.needAction =>
-        jobs.where((j) => j.status == JobStatus.failed).toList(),
+        jobs
+            .where(
+              (j) =>
+                  j.status == JobStatus.failed ||
+                  j.status == JobStatus.awaitingReview,
+            )
+            .toList(),
       _Filter.working =>
         jobs
             .where((j) => j.status.isWorking || j.status == JobStatus.draft)
@@ -152,7 +158,11 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
     final counts = <_Filter, int>{
       _Filter.all: source.length,
       _Filter.needAction: source
-          .where((j) => j.status == JobStatus.failed)
+          .where(
+            (j) =>
+                j.status == JobStatus.failed ||
+                j.status == JobStatus.awaitingReview,
+          )
           .length,
       _Filter.working: source
           .where((j) => j.status.isWorking || j.status == JobStatus.draft)

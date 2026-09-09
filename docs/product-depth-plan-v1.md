@@ -275,15 +275,16 @@ seed caption/duration ที่เหมาะกับแต่ละแบบ 
 เรียก `store.reschedule` วันว่างและวันที่ไม่มีงานตั้งเวลาโชว์เวลาที่แนะนำ
 งานที่โพสต์แล้ว/ล้มเหลว ลากไม่ได้ เทส 2 เคส (render + drag)
 
-### 7. Swipe Review Queue
+### 7. Swipe Review Queue — เสร็จแล้ว
 
-ปัดขวาอนุมัติ ปัดซ้ายส่งกลับแก้ ปัดขึ้นพักไว้ พร้อม Undo
-
-- **ต้องเติมก่อน:** `JobStatus.awaitingReview` ใน
-  [home_data.dart](../mobile/lib/features/home/domain/home_data.dart)
-  ปัจจุบันมีแค่ draft / scheduled / queued / uploading / processing /
-  published / failed / cancelled / unknown
-- **ต้องนิยามก่อน:** ดูส่วนที่ 6
+- เพิ่ม `JobStatus.awaitingReview` ("รอตรวจ") + `HomeData.reviewQueue`
+- **นิยามคิว:** งานที่ `status == awaitingReview` — คือคอนเทนต์ที่เข้ามาแล้ว
+  (จาก AI Content Inbox / อัปโหลด) รอผู้ใช้ตัดสินก่อนตั้งเวลาจริง (ตัดสินใจ ข.)
+- `ReviewQueuePage` (route `/review`): การ์ดทีละใบ — ปัดขวา/ปุ่ม = อนุมัติ (→ scheduled),
+  ปัดซ้าย/ปุ่ม = ส่งกลับแก้ (→ draft), ปุ่ม "พักไว้ก่อน" (→ cancelled)
+  ทุกการกระทำมี SnackBar "เลิกทำ" คืนสถานะ awaitingReview
+- เข้าจาก: แถบบนหน้าหลัก "มี N งานรอตรวจ" + ตัวกรอง "ต้องทำ" ในแท็บคอนเทนต์
+- seed เพิ่ม 3 งาน awaitingReview เทส review_queue_test 4 เคส
 
 ### 8. รายได้
 
@@ -346,15 +347,11 @@ Google Flow และ Sora ซึ่งเราแพ้แน่นอน
 toggle มุมมอง list / ปฏิทิน ที่ AppBar ของแท็บคอนเทนต์ — ปฏิทินคือมุมมองหนึ่ง
 ของงานชุดเดียวกัน ไม่ใช่ที่ใหม่ (ทำแล้วในงาน #6)
 
-### ข. Swipe Review Queue ตรวจอะไร
+### ข. Swipe Review Queue ตรวจอะไร — ตัดสินแล้ว
 
-ยังไม่มีนิยามว่าอะไรเข้าคิว ตัวเลือก
-
-- งานที่ import จาก AI Content Inbox ทั้งหมด
-- งานที่ Readiness Score ต่ำกว่าเกณฑ์
-- งานที่ผู้ใช้กด "พักไว้" เอง
-
-**ถ้านิยามไม่ชัด ปัดไปก็ไม่รู้ว่าปัดอะไร** ต้องเลือกก่อนเริ่มลำดับที่ 7
+คิว = งานที่ `status == awaitingReview` — คอนเทนต์ที่เข้ามาแล้ว (จาก AI Content
+Inbox หรืออัปโหลด) และรอผู้ใช้ตัดสินก่อนตั้งเวลาจริง อนุมัติ = ไปตั้งเวลา,
+ส่งกลับแก้ = กลับเป็นฉบับร่าง, พักไว้ = ยกเลิกชั่วคราว (นำกลับได้) — ทำแล้วในงาน #7
 
 ### ค. Readiness Score เป็นคำแนะนำหรือด่าน
 
