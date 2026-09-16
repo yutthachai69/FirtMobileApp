@@ -318,7 +318,62 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                               );
                         return relayPage(
                           state,
-                          job == null
+                          job == null && AppConfig.isLive
+                              ? ContentDetailLoaderPage(
+                                  load: () async {
+                                    final jobId =
+                                        state.pathParameters['jobId'] ?? '';
+                                    return auth.authorized(
+                                      (access) => ref
+                                          .read(homeProvider)
+                                          .api
+                                          .get(access, jobId),
+                                    );
+                                  },
+                                  store: contentStore,
+                                  onRetryRemote: (jobId) async {
+                                    await auth.authorized(
+                                      (access) => ref
+                                          .read(homeProvider)
+                                          .api
+                                          .retry(access, jobId),
+                                    );
+                                    await ref.read(homeProvider).load();
+                                  },
+                                  onCancelRemote: (jobId) async {
+                                    await auth.authorized(
+                                      (access) => ref
+                                          .read(homeProvider)
+                                          .api
+                                          .cancel(access, jobId),
+                                    );
+                                    await ref.read(homeProvider).load();
+                                  },
+                                  onRescheduleRemote:
+                                      (jobId, scheduledAt) async {
+                                        await auth.authorized(
+                                          (access) => ref
+                                              .read(homeProvider)
+                                              .api
+                                              .reschedule(
+                                                access,
+                                                jobId,
+                                                scheduledAt,
+                                              ),
+                                        );
+                                        await ref.read(homeProvider).load();
+                                      },
+                                  onRestoreRemote: (jobId) async {
+                                    await auth.authorized(
+                                      (access) => ref
+                                          .read(homeProvider)
+                                          .api
+                                          .restore(access, jobId),
+                                    );
+                                    await ref.read(homeProvider).load();
+                                  },
+                                )
+                              : job == null
                               ? ContentLibraryPage(
                                   controller: ref.read(homeProvider),
                                   store: contentStore,
@@ -330,7 +385,8 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                                       ? (jobId) async {
                                           await auth.authorized(
                                             (access) => ref
-                                                .read(publishJobsApiProvider)
+                                                .read(homeProvider)
+                                                .api
                                                 .retry(access, jobId),
                                           );
                                           await ref.read(homeProvider).load();
@@ -340,7 +396,8 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                                       ? (jobId) async {
                                           await auth.authorized(
                                             (access) => ref
-                                                .read(publishJobsApiProvider)
+                                                .read(homeProvider)
+                                                .api
                                                 .cancel(access, jobId),
                                           );
                                           await ref.read(homeProvider).load();
@@ -350,7 +407,8 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                                       ? (jobId, scheduledAt) async {
                                           await auth.authorized(
                                             (access) => ref
-                                                .read(publishJobsApiProvider)
+                                                .read(homeProvider)
+                                                .api
                                                 .reschedule(
                                                   access,
                                                   jobId,
@@ -369,7 +427,8 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                                       ? (jobId) async {
                                           await auth.authorized(
                                             (access) => ref
-                                                .read(publishJobsApiProvider)
+                                                .read(homeProvider)
+                                                .api
                                                 .restore(access, jobId),
                                           );
                                           final home = ref.read(homeProvider);

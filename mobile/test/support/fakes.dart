@@ -81,7 +81,7 @@ class FakeAuthApi implements AuthApi {
 
 /// FakeHomeApi ให้เทสควบคุมสิ่งที่หน้าหลักแสดงได้
 /// โดยไม่ต้องยิง network จริง
-class FakeHomeApi implements HomeApi {
+class FakeHomeApi extends HomeApi {
   FakeHomeApi([this.data = const HomeData()]);
   HomeData data;
   int calls = 0;

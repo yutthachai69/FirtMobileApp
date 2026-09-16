@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../app/widgets/relay_state_panel.dart';
 import '../../create/domain/remix.dart';
 import '../../create/presentation/publish_review_page.dart';
 import '../../showcase/domain/showcase_product.dart';
@@ -39,6 +40,71 @@ class ContentDetailPage extends StatefulWidget {
 
   @override
   State<ContentDetailPage> createState() => _ContentDetailPageState();
+}
+
+/// Loads a content detail from the live repository for direct/deep-link routes.
+class ContentDetailLoaderPage extends StatefulWidget {
+  const ContentDetailLoaderPage({
+    super.key,
+    required this.load,
+    this.store,
+    this.onRetryRemote,
+    this.onCancelRemote,
+    this.onRescheduleRemote,
+    this.onRestoreRemote,
+  });
+
+  final Future<PublishJob> Function() load;
+  final ContentStore? store;
+  final Future<void> Function(String jobId)? onRetryRemote;
+  final Future<void> Function(String jobId)? onCancelRemote;
+  final Future<void> Function(String jobId, DateTime scheduledAt)?
+  onRescheduleRemote;
+  final Future<void> Function(String jobId)? onRestoreRemote;
+
+  @override
+  State<ContentDetailLoaderPage> createState() =>
+      _ContentDetailLoaderPageState();
+}
+
+class _ContentDetailLoaderPageState extends State<ContentDetailLoaderPage> {
+  late Future<PublishJob> _future = widget.load();
+
+  void _reload() {
+    setState(() {
+      _future = widget.load();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<PublishJob>(
+    future: _future,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      if (snapshot.hasError || !snapshot.hasData) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('รายละเอียดคอนเทนต์')),
+          body: RelayStatePanel(
+            kind: RelayStateKind.error,
+            title: 'โหลดคอนเทนต์ไม่สำเร็จ',
+            message: 'ตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง',
+            actionLabel: 'ลองใหม่',
+            onAction: _reload,
+          ),
+        );
+      }
+      return ContentDetailPage(
+        job: snapshot.data!,
+        store: widget.store,
+        onRetryRemote: widget.onRetryRemote,
+        onCancelRemote: widget.onCancelRemote,
+        onRescheduleRemote: widget.onRescheduleRemote,
+        onRestoreRemote: widget.onRestoreRemote,
+      );
+    },
+  );
 }
 
 class _ContentDetailPageState extends State<ContentDetailPage> {

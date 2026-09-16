@@ -102,7 +102,7 @@ void main() {
   }, skip: !const bool.fromEnvironment('RENDER_PREVIEWS'));
 }
 
-class _SampleHomeApi implements HomeApi {
+class _SampleHomeApi extends HomeApi {
   _SampleHomeApi(this.data);
   final HomeData data;
 
