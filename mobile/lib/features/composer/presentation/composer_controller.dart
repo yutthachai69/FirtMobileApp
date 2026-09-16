@@ -16,10 +16,12 @@ class ComposerController extends ChangeNotifier {
     required this.connectionId,
     required int videoDurationSec,
     required bool isAigc,
+    String? idempotencyKey,
   }) : _state = ComposerState(
-          videoDurationSec: videoDurationSec,
-          isAigc: isAigc,
-        );
+         videoDurationSec: videoDurationSec,
+         isAigc: isAigc,
+       ),
+       _idempotencyKey = idempotencyKey ?? _newKey();
 
   final AuthController auth;
   final ComposerApi api;
@@ -37,7 +39,7 @@ class ComposerController extends ChangeNotifier {
   ///
   /// ถ้าผู้ใช้กดโพสต์แล้วเน็ตหลุด แล้วกดใหม่ — ต้องใช้ key เดิม
   /// backend จะคืนงานเดิมแทนที่จะสร้างโพสต์ซ้ำ
-  late final String _idempotencyKey = _newKey();
+  final String _idempotencyKey;
 
   void _set(ComposerState next) {
     _state = next;

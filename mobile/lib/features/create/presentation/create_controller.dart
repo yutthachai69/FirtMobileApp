@@ -7,6 +7,7 @@ import '../../connections/data/connections_api.dart';
 import '../../connections/domain/connection.dart';
 import '../data/create_api.dart';
 import '../domain/picked_video.dart';
+import '../domain/publish_intent.dart';
 
 /// ขั้นตอนของหน้าสร้างคอนเทนต์
 enum CreateStep {
@@ -46,6 +47,9 @@ class CreateController extends ChangeNotifier {
 
   String? error;
   bool busy = false;
+
+  /// Stable identity shared by upload, content creation, and publish retry.
+  PublishIntent intent = PublishIntent.create();
 
   /// บัญชีที่จะใช้โพสต์ — โหลดพร้อมกันตอนเปิดหน้า
   Connection? target;
@@ -137,6 +141,7 @@ class CreateController extends ChangeNotifier {
       );
 
       assetId = ticket.assetId;
+      intent = intent.copyWith(assetId: ticket.assetId);
       step = CreateStep.describe;
     } on AuthFailure catch (f) {
       error = f.message;
@@ -166,6 +171,7 @@ class CreateController extends ChangeNotifier {
           mediaAssetId: assetId!,
         ),
       );
+      intent = intent.copyWith(contentId: contentId);
       step = CreateStep.ready;
       return true;
     } on AuthFailure catch (f) {
@@ -187,6 +193,7 @@ class CreateController extends ChangeNotifier {
     assetId = null;
     previewUrl = null;
     contentId = null;
+    intent = PublishIntent.create();
     caption = '';
     progress = 0;
     error = null;

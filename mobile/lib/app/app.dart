@@ -495,6 +495,7 @@ class _RelayAppState extends ConsumerState<RelayApp> {
               connectionId: args.connectionId,
               videoDurationSec: args.videoDurationSec,
               isAigc: args.isAigc,
+              idempotencyKey: args.idempotencyKey,
             );
             return relayPage(
               state,

@@ -181,6 +181,7 @@ class _CreatePageState extends State<CreatePage> {
           connectionId: connection.id,
           videoDurationSec: _trimmedDuration,
           isAigc: false,
+          idempotencyKey: c.intent.id,
         ),
       );
       return;
@@ -338,12 +339,14 @@ class ComposerArgs {
     required this.connectionId,
     required this.videoDurationSec,
     required this.isAigc,
+    this.idempotencyKey,
   });
 
   final String contentId;
   final String connectionId;
   final int videoDurationSec;
   final bool isAigc;
+  final String? idempotencyKey;
 }
 
 class _SelectedProduct extends StatelessWidget {
