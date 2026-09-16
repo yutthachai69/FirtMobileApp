@@ -2,7 +2,7 @@
 
 Updated: 16 September 2026
 
-Current progress: **approximately 68% production-MVP ready** — Milestone 0 and
+Current progress: **approximately 70% production-MVP ready** — Milestone 0 and
 the shared live-data slice of Milestone 1 are complete, and the first parts of
 Milestone 2 are already wired. The backend job snapshot now feeds the shared
 app repository.
@@ -43,6 +43,10 @@ when refresh fails and clearly mark it as stale with a retry action.
 The live content route now supports direct `/content/:jobId` links by loading
 the job from the authenticated repository, with loading, error, and retry
 states. Lifecycle mutations on the detail route use that same repository.
+
+Upload-to-publish now carries a stable `PublishIntent` id through the media
+and content checkpoints. The Composer reuses it as `Idempotency-Key` on retry,
+while a fresh upload starts a new intent.
 
 ## แผนดำเนินงานถัดไปจาก 65% ไป Internal Beta
 
