@@ -2,9 +2,10 @@
 
 Updated: 16 September 2026
 
-Current progress: **approximately 65% production-MVP ready** — Milestone 0 is
-complete, Milestone 1 is nearly complete, and the first parts of Milestone 2
-are already wired. The backend job snapshot now feeds the shared app store.
+Current progress: **approximately 68% production-MVP ready** — Milestone 0 and
+the shared live-data slice of Milestone 1 are complete, and the first parts of
+Milestone 2 are already wired. The backend job snapshot now feeds the shared
+app repository.
 Retry/cancel/reschedule/restore mutations use the real API in live mode with
 optimistic rollback on failure.
 
@@ -38,6 +39,10 @@ access plus publish-job create, read, reschedule, cancel, and restore paths.
 
 Home, Content, and Notifications preserve their latest successful snapshot
 when refresh fails and clearly mark it as stale with a retry action.
+
+The live content route now supports direct `/content/:jobId` links by loading
+the job from the authenticated repository, with loading, error, and retry
+states. Lifecycle mutations on the detail route use that same repository.
 
 ## แผนดำเนินงานถัดไปจาก 65% ไป Internal Beta
 
