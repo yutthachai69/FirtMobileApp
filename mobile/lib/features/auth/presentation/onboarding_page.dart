@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../app/widgets/relay_state_panel.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../showcase/domain/showcase_product.dart';
 import '../../showcase/presentation/product_artwork.dart';
@@ -18,7 +19,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
   int step = 0;
   String goal = 'ปักตะกร้าให้คอนเทนต์ AI';
   final sources = <String>{'Google Flow'};
-  ShowcaseProduct product = ShowcaseProduct.mock.first;
+  ShowcaseProduct? product = ShowcaseProduct.available.isEmpty
+      ? null
+      : ShowcaseProduct.available.first;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -156,11 +159,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
       detail: 'คอนเทนต์ที่รับเข้ามาจะถูกพาไปตรวจตะกร้ากับสินค้านี้ก่อนเผยแพร่',
     ),
     const SizedBox(height: Spacing.lg),
-    for (final item in ShowcaseProduct.mock.where((item) => item.inStock))
+    for (final item in ShowcaseProduct.available.where((item) => item.inStock))
       _ProductChoice(
         product: item,
-        selected: product.id == item.id,
+        selected: product?.id == item.id,
         onTap: () => setState(() => product = item),
+      ),
+    if (ShowcaseProduct.available.isEmpty)
+      const RelayStatePanel(
+        kind: RelayStateKind.empty,
+        title: 'ยังไม่มีสินค้าจาก Showcase',
+        message: 'เข้าแอปก่อน แล้วเชื่อม TikTok Shop เพื่อซิงก์สินค้าจริง',
       ),
     const SizedBox(height: 12),
     Container(
@@ -191,7 +200,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   void _finish() {
     widget.auth.completeOnboarding();
-    context.go('/create/import-ai', extra: product);
+    final selected = product;
+    if (selected == null) {
+      context.go('/showcase');
+      return;
+    }
+    context.go('/create/import-ai', extra: selected);
   }
 }
 

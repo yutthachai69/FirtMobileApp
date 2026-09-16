@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../app/widgets/relay_state_panel.dart';
 import '../../../app/widgets/skeleton.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/config/app_config.dart';
@@ -189,9 +190,12 @@ class _HomePageState extends State<HomePage>
         Spacing.xl,
       ),
       children: [
-        // แสดง inline error เฉพาะตอนพึ่ง backend ล้วน ไม่ใช่ตอน fallback ไป store
-        if (c.error != null && widget.store == null) ...[
-          _InlineError(message: c.error!),
+        // Keep cached data visible in live mode, but never hide that its
+        // latest refresh failed just because a shared store exists.
+        if (c.error != null &&
+            c.loaded &&
+            (AppConfig.isLive || widget.store == null)) ...[
+          RelayStaleBanner(message: c.error!, onRetry: c.load),
           const SizedBox(height: Spacing.md),
         ],
         _Overview(data: data),
@@ -1569,33 +1573,6 @@ class _ErrorView extends StatelessWidget {
       const SizedBox(height: Spacing.lg),
       FilledButton(onPressed: onRetry, child: const Text('ลองใหม่')),
     ],
-  );
-}
-
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: context.t.error.withValues(alpha: .10),
-      borderRadius: BorderRadius.circular(Radii.md),
-      border: Border.all(color: context.t.error.withValues(alpha: .25)),
-    ),
-    child: Row(
-      children: [
-        Icon(Icons.error_outline, size: 18, color: context.t.error),
-        const SizedBox(width: Spacing.sm),
-        Expanded(
-          child: Text(
-            message,
-            style: TextStyle(color: context.t.error, fontSize: 13),
-          ),
-        ),
-      ],
-    ),
   );
 }
 

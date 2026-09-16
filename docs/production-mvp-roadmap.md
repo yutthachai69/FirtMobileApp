@@ -1,8 +1,8 @@
 # RelayContent — Production MVP Roadmap
 
-Updated: 14 September 2026
+Updated: 16 September 2026
 
-Current progress: **approximately 62% production-MVP ready** — Milestone 0 is
+Current progress: **approximately 65% production-MVP ready** — Milestone 0 is
 complete, Milestone 1 is nearly complete, and the first parts of Milestone 2
 are already wired. The backend job snapshot now feeds the shared app store.
 Retry/cancel/reschedule/restore mutations use the real API in live mode with
@@ -27,7 +27,19 @@ HTTP v1 when service-account settings are supplied, while mobile builds request
 permission, register and refresh FCM tokens through `/v1/devices` when Firebase
 is configured. Missing Firebase settings remain a safe no-op.
 
-## แผนดำเนินงานถัดไปจาก 62% ไป Internal Beta
+The live product catalog now reads from authenticated `/v1/products` endpoints
+backed by a tenant-scoped `products` table. Demo products are gated behind
+`APP_DATA_MODE=demo`; live and release paths show loading, offline, or empty
+states instead of silently falling back to mock products.
+
+Publish creation now verifies content ownership at both the service boundary
+and atomically in SQL. PostgreSQL integration tests cover cross-account product
+access plus publish-job create, read, reschedule, cancel, and restore paths.
+
+Home, Content, and Notifications preserve their latest successful snapshot
+when refresh fails and clearly mark it as stale with a retry action.
+
+## แผนดำเนินงานถัดไปจาก 65% ไป Internal Beta
 
 ลำดับนี้ให้ความสำคัญกับเส้นทางหลักที่ผู้ใช้ต้องทำได้จริงก่อนเพิ่มฟีเจอร์ใหม่:
 

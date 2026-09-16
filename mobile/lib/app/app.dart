@@ -128,7 +128,10 @@ class _RelayAppState extends ConsumerState<RelayApp> {
               routes: [
                 GoRoute(
                   path: '/showcase',
-                  builder: (_, _) => ShowcasePage(store: contentStore),
+                  builder: (_, _) => ShowcasePage(
+                    store: contentStore,
+                    controller: ref.read(productsProvider),
+                  ),
                   routes: [
                     GoRoute(
                       path: 'import-ai',
@@ -138,6 +141,9 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                           product: state.extra is ShowcaseProduct
                               ? state.extra! as ShowcaseProduct
                               : null,
+                          products: AppConfig.isLive
+                              ? ref.read(productsProvider).items
+                              : ShowcaseProduct.available,
                         ),
                       ),
                     ),
@@ -145,7 +151,10 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                       path: ':productId',
                       pageBuilder: (_, state) {
                         ShowcaseProduct? product;
-                        for (final item in ShowcaseProduct.mock) {
+                        final catalog = AppConfig.isLive
+                            ? ref.read(productsProvider).items
+                            : ShowcaseProduct.available;
+                        for (final item in catalog) {
                           if (item.id == state.pathParameters['productId']) {
                             product = item;
                             break;
@@ -154,7 +163,10 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                         return relayPage(
                           state,
                           product == null
-                              ? const ShowcasePage()
+                              ? ShowcasePage(
+                                  store: contentStore,
+                                  controller: ref.read(productsProvider),
+                                )
                               : ProductDetailPage(
                                   product: product,
                                   store: contentStore,
@@ -185,19 +197,27 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                           product: state.extra is ShowcaseProduct
                               ? state.extra! as ShowcaseProduct
                               : null,
+                          products: AppConfig.isLive
+                              ? ref.read(productsProvider).items
+                              : ShowcaseProduct.available,
                         ),
                       ),
                     ),
                     GoRoute(
                       path: 'ai',
-                      pageBuilder: (_, state) => relayPage(
-                        state,
-                        AiCreatePage(
-                          product: state.extra is ShowcaseProduct
-                              ? state.extra! as ShowcaseProduct
-                              : ShowcaseProduct.mock.first,
-                        ),
-                      ),
+                      pageBuilder: (_, state) {
+                        final product = state.extra is ShowcaseProduct
+                            ? state.extra! as ShowcaseProduct
+                            : AppConfig.isDemo
+                            ? ShowcaseProduct.available.first
+                            : null;
+                        return relayPage(
+                          state,
+                          product == null
+                              ? const CreateHubPage()
+                              : AiCreatePage(product: product),
+                        );
+                      },
                     ),
                     GoRoute(
                       path: 'upload',
@@ -213,14 +233,19 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                     ),
                     GoRoute(
                       path: 'guided',
-                      pageBuilder: (_, state) => relayPage(
-                        state,
-                        GuidedFilmPage(
-                          product: state.extra is ShowcaseProduct
-                              ? state.extra! as ShowcaseProduct
-                              : ShowcaseProduct.mock.first,
-                        ),
-                      ),
+                      pageBuilder: (_, state) {
+                        final product = state.extra is ShowcaseProduct
+                            ? state.extra! as ShowcaseProduct
+                            : AppConfig.isDemo
+                            ? ShowcaseProduct.available.first
+                            : null;
+                        return relayPage(
+                          state,
+                          product == null
+                              ? const CreateHubPage()
+                              : GuidedFilmPage(product: product),
+                        );
+                      },
                     ),
                     GoRoute(
                       path: 'batch',
@@ -255,12 +280,17 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                         }
                         return relayPage(
                           state,
-                          PublishReviewPage(
-                            product: extra is ShowcaseProduct
-                                ? extra
-                                : ShowcaseProduct.mock.first,
-                            store: contentStore,
-                          ),
+                          extra is ShowcaseProduct
+                              ? PublishReviewPage(
+                                  product: extra,
+                                  store: contentStore,
+                                )
+                              : AppConfig.isDemo
+                              ? PublishReviewPage(
+                                  product: ShowcaseProduct.available.first,
+                                  store: contentStore,
+                                )
+                              : const CreateHubPage(),
                         );
                       },
                     ),
@@ -524,7 +554,8 @@ class SessionPage extends StatelessWidget {
                     RelayStatePanel(
                       kind: RelayStateKind.offline,
                       title: 'ยังเปิดบัญชีไม่ได้',
-                      message: auth.error ?? 'กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่',
+                      message:
+                          auth.error ?? 'กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่',
                       actionLabel: 'ลองเปิดบัญชีอีกครั้ง',
                       onAction: auth.busy ? null : auth.restore,
                     ),

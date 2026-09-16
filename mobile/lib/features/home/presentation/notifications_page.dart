@@ -189,14 +189,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             .length,
                       ),
                       const SizedBox(height: Spacing.md),
+                      if (controller.error != null &&
+                          controller.items.isNotEmpty) ...[
+                        RelayStaleBanner(
+                          message: controller.error!,
+                          onRetry: controller.load,
+                        ),
+                        const SizedBox(height: Spacing.md),
+                      ],
                       _filterBar(),
                       const SizedBox(height: Spacing.md),
                       if (visible.isEmpty)
                         const RelayStatePanel(
                           kind: RelayStateKind.empty,
                           title: 'กล่องแจ้งเตือนว่างแล้ว',
-                          message:
-                              'เมื่อมีงานเสร็จ ตารางเผยแพร่ หรือเรื่องที่ต้องจัดการ จะแสดงที่นี่',
+                          message: 'เมื่อมีงานเสร็จ ตารางเผยแพร่ หรือเรื่องที่ต้องจัดการ จะแสดงที่นี่',
                         ),
                       for (final item in visible) ...[
                         _NoticeCard(

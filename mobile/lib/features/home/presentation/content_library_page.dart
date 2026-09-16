@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../app/widgets/relay_state_panel.dart';
 import '../../../app/widgets/skeleton.dart';
 import '../../../core/config/app_config.dart';
 import '../domain/content_store.dart';
@@ -169,6 +170,15 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
     return ListView(
       padding: const EdgeInsets.all(Spacing.md),
       children: [
+        if (widget.controller.error != null &&
+            widget.controller.loaded &&
+            AppConfig.isLive) ...[
+          RelayStaleBanner(
+            message: widget.controller.error!,
+            onRetry: widget.controller.load,
+          ),
+          const SizedBox(height: Spacing.md),
+        ],
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(

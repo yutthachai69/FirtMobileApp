@@ -23,6 +23,7 @@ import (
 	"relaycontent/internal/httpserver"
 	"relaycontent/internal/media"
 	"relaycontent/internal/notification"
+	"relaycontent/internal/product"
 	"relaycontent/internal/publish"
 	"relaycontent/pkg/logger"
 )
@@ -65,6 +66,7 @@ func run() error {
 		Connections:   connection.NewHandler(deps.Connections, cfg.AppScheme, log),
 		Media:         media.NewHandler(deps.Media, log),
 		Content:       content.NewHandler(deps.Content, log),
+		Products:      product.NewHandler(deps.Products, log),
 		Publish:       publish.NewHandler(deps.Publish, log),
 		Notifications: notification.NewHandler(deps.Notifications, log),
 		Limiter:       httpserver.NewLimiter(deps.Redis, log),

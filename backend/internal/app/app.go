@@ -20,6 +20,7 @@ import (
 	"relaycontent/internal/database"
 	"relaycontent/internal/media"
 	"relaycontent/internal/notification"
+	"relaycontent/internal/product"
 	"relaycontent/internal/publish"
 	"relaycontent/internal/publisher"
 	"relaycontent/internal/publisher/tiktok"
@@ -45,6 +46,7 @@ type Deps struct {
 	Content       *content.Service
 	Publish       *publish.Service
 	Notifications *notification.Service
+	Products      *product.Service
 	Registry      *publisher.Registry
 	PublishRepo   *publish.Repository
 
@@ -171,6 +173,7 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, runMigrati
 
 	// ── content / publish / notification ────────────────────
 	d.Content = content.NewService(content.NewRepository(db), d.Media, log)
+	d.Products = product.NewService(product.NewRepository(db))
 
 	// pusher เป็น nil = บันทึกการแจ้งเตือนอย่างเดียว ยังไม่ส่ง push
 	// (รอตั้งค่า Firebase — ดู README)

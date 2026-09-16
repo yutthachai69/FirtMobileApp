@@ -19,6 +19,8 @@ import '../features/home/data/publish_jobs_api.dart';
 import '../features/home/domain/content_store.dart';
 import '../features/home/presentation/home_controller.dart';
 import '../features/home/presentation/notifications_controller.dart';
+import '../features/showcase/data/products_api.dart';
+import '../features/showcase/presentation/products_controller.dart';
 
 /// dio ตัวเดียวใช้ร่วมกันทั้งแอป
 ///
@@ -110,6 +112,19 @@ final notificationsProvider = Provider<NotificationsController>((ref) {
   final controller = NotificationsController(
     ref.watch(authProvider),
     ref.watch(notificationsApiProvider),
+  );
+  ref.onDispose(controller.dispose);
+  return controller;
+});
+
+final productsApiProvider = Provider<ProductsApi>(
+  (ref) => HttpProductsApi(ref.watch(apiClientProvider)),
+);
+
+final productsProvider = Provider<ProductsController>((ref) {
+  final controller = ProductsController(
+    ref.watch(authProvider),
+    ref.watch(productsApiProvider),
   );
   ref.onDispose(controller.dispose);
   return controller;

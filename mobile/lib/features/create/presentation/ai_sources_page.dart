@@ -13,9 +13,15 @@ import 'publish_review_page.dart';
 import 'widgets/synaptic_beam_connect_tile.dart';
 
 class AiSourcesPage extends StatefulWidget {
-  const AiSourcesPage({super.key, this.product, this.controller});
+  const AiSourcesPage({
+    super.key,
+    this.product,
+    this.controller,
+    this.products,
+  });
 
   final ShowcaseProduct? product;
+  final List<ShowcaseProduct>? products;
 
   /// ฉีดจากเทสเพื่อคุมเวลาเอง ปกติหน้าเพจสร้างเอง
   final AiSourcesController? controller;
@@ -201,7 +207,10 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (_) => _ProductPickerSheet(current: _selectedProduct),
+      builder: (_) => _ProductPickerSheet(
+        current: _selectedProduct,
+        products: widget.products ?? ShowcaseProduct.available,
+      ),
     );
     if (product == null || !mounted) return null;
     HapticFeedback.mediumImpact();
@@ -1302,9 +1311,10 @@ class _NeedProduct extends StatelessWidget {
 }
 
 class _ProductPickerSheet extends StatefulWidget {
-  const _ProductPickerSheet({required this.current});
+  const _ProductPickerSheet({required this.current, required this.products});
 
   final ShowcaseProduct? current;
+  final List<ShowcaseProduct> products;
 
   @override
   State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
@@ -1337,8 +1347,8 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
 
   List<ShowcaseProduct> get _products {
     final query = _query.trim().toLowerCase();
-    if (query.isEmpty) return ShowcaseProduct.mock;
-    return ShowcaseProduct.mock
+    if (query.isEmpty) return widget.products;
+    return widget.products
         .where(
           (product) =>
               product.name.toLowerCase().contains(query) ||

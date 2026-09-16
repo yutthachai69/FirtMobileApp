@@ -112,6 +112,98 @@ func TestCreateRejectsDuplicateIdempotencyKey(t *testing.T) {
 	}
 }
 
+func TestCreateRejectsCrossTenantReferences(t *testing.T) {
+	pool := testDB(t)
+	r := NewRepository(pool)
+	userA, contentA, connA := fixture(t, pool)
+	_, contentB, connB := fixture(t, pool)
+	ctx := context.Background()
+
+	cases := []struct {
+		name      string
+		contentID string
+		connID    string
+	}{
+		{name: "content owned by another user", contentID: contentB, connID: connA},
+		{name: "connection owned by another user", contentID: contentA, connID: connB},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := r.Create(ctx, CreateParams{
+				UserID:         userA,
+				ContentID:      tc.contentID,
+				ConnectionID:   tc.connID,
+				Platform:       publisher.PlatformTikTok,
+				Options:        publisher.Options{"privacy_level": "SELF_ONLY"},
+				ScheduledAt:    time.Now().Add(time.Hour),
+				IdempotencyKey: uuid.NewString(),
+			})
+			if err != ErrNotFound {
+				t.Fatalf("cross-tenant create error = %v, want ErrNotFound", err)
+			}
+		})
+	}
+}
+
+func TestOwnedLifecycleRejectsOtherUser(t *testing.T) {
+	pool := testDB(t)
+	r := NewRepository(pool)
+	ownerID, contentID, connID := fixture(t, pool)
+	otherID, _, _ := fixture(t, pool)
+	ctx := context.Background()
+
+	job := newJob(t, r, ownerID, contentID, connID, time.Now().Add(time.Hour))
+	if _, err := r.Get(ctx, otherID, job.ID); err != ErrNotFound {
+		t.Fatalf("other user Get error = %v, want ErrNotFound", err)
+	}
+	otherJobs, err := r.List(ctx, otherID, "", 50)
+	if err != nil {
+		t.Fatalf("other user List: %v", err)
+	}
+	if containsJobs(otherJobs, job.ID) {
+		t.Fatal("other user's list exposed the owner's job")
+	}
+
+	rescheduledAt := time.Now().Add(2 * time.Hour).Truncate(time.Microsecond)
+	if err := r.RescheduleOwned(ctx, otherID, job.ID, rescheduledAt); err != ErrNotFound {
+		t.Fatalf("other user RescheduleOwned error = %v, want ErrNotFound", err)
+	}
+	if err := r.RescheduleOwned(ctx, ownerID, job.ID, rescheduledAt); err != nil {
+		t.Fatalf("owner RescheduleOwned: %v", err)
+	}
+	got, err := r.Get(ctx, ownerID, job.ID)
+	if err != nil {
+		t.Fatalf("owner Get after reschedule: %v", err)
+	}
+	if got.Status != StatusScheduled || !got.ScheduledAt.Equal(rescheduledAt) {
+		t.Fatalf("rescheduled job = (%v, %v), want (scheduled, %v)",
+			got.Status, got.ScheduledAt, rescheduledAt)
+	}
+
+	if err := r.Cancel(ctx, otherID, job.ID); err != ErrNotFound {
+		t.Fatalf("other user Cancel error = %v, want ErrNotFound", err)
+	}
+	if err := r.Cancel(ctx, ownerID, job.ID); err != nil {
+		t.Fatalf("owner Cancel: %v", err)
+	}
+	got, _ = r.Get(ctx, ownerID, job.ID)
+	if got.Status != StatusCancelled {
+		t.Fatalf("status after cancel = %s, want cancelled", got.Status)
+	}
+
+	if err := r.Restore(ctx, otherID, job.ID); err != ErrNotFound {
+		t.Fatalf("other user Restore error = %v, want ErrNotFound", err)
+	}
+	if err := r.Restore(ctx, ownerID, job.ID); err != nil {
+		t.Fatalf("owner Restore: %v", err)
+	}
+	got, _ = r.Get(ctx, ownerID, job.ID)
+	if got.Status != StatusScheduled {
+		t.Fatalf("status after restore = %s, want scheduled", got.Status)
+	}
+}
+
 func TestClaimDueOnlyPicksJobsThatAreReady(t *testing.T) {
 	pool := testDB(t)
 	r := NewRepository(pool)
@@ -362,6 +454,15 @@ func TestCountTodayUsesUserTimezone(t *testing.T) {
 func contains(ids []string, want string) bool {
 	for _, id := range ids {
 		if id == want {
+			return true
+		}
+	}
+	return false
+}
+
+func containsJobs(jobs []*Job, want string) bool {
+	for _, job := range jobs {
+		if job.ID == want {
 			return true
 		}
 	}

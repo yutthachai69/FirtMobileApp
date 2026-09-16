@@ -91,3 +91,42 @@ class RelayStatePanel extends StatelessWidget {
     );
   }
 }
+
+/// Compact warning above cached data when its latest refresh failed.
+class RelayStaleBanner extends StatelessWidget {
+  const RelayStaleBanner({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+    decoration: BoxDecoration(
+      color: context.t.warning.withValues(alpha: .1),
+      borderRadius: BorderRadius.circular(Radii.md),
+      border: Border.all(color: context.t.warning.withValues(alpha: .35)),
+    ),
+    child: Row(
+      children: [
+        Icon(Icons.cloud_off_outlined, size: 19, color: context.t.warning),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            message,
+            style: TextStyle(
+              color: context.t.textSecondary,
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
+        ),
+        TextButton(onPressed: () => onRetry(), child: const Text('ลองใหม่')),
+      ],
+    ),
+  );
+}

@@ -111,14 +111,16 @@ class ContentArtwork extends StatelessWidget {
 }
 
 ShowcaseProduct productForJob(PublishJob job) {
+  final available = ShowcaseProduct.available;
+  if (available.isEmpty) return ShowcaseProduct.placeholder;
   final title = job.title.toLowerCase();
   if (title.contains('ไมโครโฟน') || title.contains('creator')) {
-    return ShowcaseProduct.mock[1];
+    return available[1];
   }
   if (title.contains('แก้ว') || title.contains('ความเย็น')) {
-    return ShowcaseProduct.mock[2];
+    return available[2];
   }
-  return ShowcaseProduct.mock.first;
+  return available.first;
 }
 
 Color contentStatusColor(BuildContext context, JobStatus status) =>

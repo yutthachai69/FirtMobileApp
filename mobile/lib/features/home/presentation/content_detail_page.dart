@@ -298,12 +298,12 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
   void _toast(String text) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
-  ShowcaseProduct get _remixProduct {
+  ShowcaseProduct? get _remixProduct {
     final id = widget.job.productId;
-    return ShowcaseProduct.mock.firstWhere(
-      (p) => p.id == id,
-      orElse: () => ShowcaseProduct.mock.first,
-    );
+    for (final product in ShowcaseProduct.available) {
+      if (product.id == id) return product;
+    }
+    return null;
   }
 
   void _openRemix(BuildContext context) => showModalBottomSheet<void>(
@@ -353,10 +353,16 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       context.go('/showcase');
       return;
     }
+    final product = _remixProduct;
+    if (product == null) {
+      _toast('เลือกสินค้าจริงก่อนสร้างเวอร์ชันรีมิกซ์');
+      context.go('/showcase');
+      return;
+    }
     context.go(
       '/create/publish',
       extra: PublishReviewArgs(
-        product: _remixProduct,
+        product: product,
         caption: preset.seedCaption,
         durationSec: preset.durationSec,
         sourceLabel: 'รีมิกซ์ · ${preset.label}',

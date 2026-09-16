@@ -3,21 +3,30 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../app/widgets/relay_state_panel.dart';
+import '../../../core/config/app_config.dart';
 import '../../home/domain/content_store.dart';
 import '../domain/opportunity.dart';
 import '../domain/showcase_product.dart';
 import 'product_artwork.dart';
+import 'products_controller.dart';
 import 'saved_products_controller.dart';
 
 enum _ProductFilter { all, saved, highCommission, inStock, unavailable }
 
 class ShowcasePage extends StatefulWidget {
-  const ShowcasePage({super.key, this.savedProducts, this.store});
+  const ShowcasePage({
+    super.key,
+    this.savedProducts,
+    this.store,
+    this.controller,
+  });
 
   final SavedProductsController? savedProducts;
 
   /// ใช้คำนวณ Opportunity Radar จากคลิปที่เคยทำ
   final ContentStore? store;
+  final ProductsController? controller;
 
   @override
   State<ShowcasePage> createState() => _ShowcasePageState();
@@ -45,9 +54,7 @@ class _ShowcasePageState extends State<ShowcasePage> {
   }
 
   void _startBatch() {
-    final picked = ShowcaseProduct.mock
-        .where((p) => _selected.contains(p.id))
-        .toList();
+    final picked = _catalog.where((p) => _selected.contains(p.id)).toList();
     context.go('/create/batch', extra: picked);
   }
 
@@ -58,11 +65,14 @@ class _ShowcasePageState extends State<ShowcasePage> {
   void initState() {
     super.initState();
     _saved.addListener(_onSavedChanged);
+    widget.controller?.addListener(_onProductsChanged);
+    if (AppConfig.isLive) widget.controller?.load();
   }
 
   @override
   void dispose() {
     _saved.removeListener(_onSavedChanged);
+    widget.controller?.removeListener(_onProductsChanged);
     _search.dispose();
     super.dispose();
   }
@@ -71,9 +81,17 @@ class _ShowcasePageState extends State<ShowcasePage> {
     if (mounted) setState(() {});
   }
 
+  void _onProductsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  List<ShowcaseProduct> get _catalog => AppConfig.isLive
+      ? widget.controller?.items ?? const []
+      : ShowcaseProduct.available;
+
   List<ShowcaseProduct> get _products {
     final query = _search.text.trim().toLowerCase();
-    return ShowcaseProduct.mock.where((product) {
+    return _catalog.where((product) {
       final matchesQuery =
           query.isEmpty ||
           product.name.toLowerCase().contains(query) ||
@@ -92,11 +110,14 @@ class _ShowcasePageState extends State<ShowcasePage> {
   @override
   Widget build(BuildContext context) {
     final products = _products;
+    final catalog = _catalog;
+    final live = AppConfig.isLive;
+    final productState = widget.controller;
     return Scaffold(
       appBar: AppBar(
         title: Text(_selectMode ? 'เลือกสินค้าทำเป็นชุด' : 'สินค้า'),
         actions: [
-          if (widget.store != null)
+          if (widget.store != null && catalog.isNotEmpty)
             IconButton.outlined(
               key: const Key('toggle-batch-select'),
               tooltip: _selectMode ? 'ยกเลิกเลือกหลายชิ้น' : 'เลือกหลายชิ้น',
@@ -120,13 +141,17 @@ class _ShowcasePageState extends State<ShowcasePage> {
             ),
           if (!_selectMode)
             IconButton.outlined(
-              tooltip: 'ซิงก์ข้อมูลตัวอย่าง',
+              tooltip: live ? 'ซิงก์สินค้า' : 'ซิงก์ข้อมูลตัวอย่าง',
               style: IconButton.styleFrom(
                 backgroundColor: context.t.surfaceElevated,
                 side: BorderSide(color: context.t.border),
               ),
               onPressed: () {
                 HapticFeedback.selectionClick();
+                if (live && productState != null) {
+                  productState.load();
+                  return;
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('อัปเดตข้อมูลตัวอย่างแล้ว')),
                 );
@@ -167,7 +192,7 @@ class _ShowcasePageState extends State<ShowcasePage> {
             ),
             const SizedBox(height: 2),
             Text(
-              '${ShowcaseProduct.mock.length} สินค้าพร้อมใช้สร้างคอนเทนต์',
+              '${catalog.length} สินค้าพร้อมใช้สร้างคอนเทนต์',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: Spacing.md),
@@ -224,18 +249,39 @@ class _ShowcasePageState extends State<ShowcasePage> {
               ),
             ),
             const SizedBox(height: Spacing.md),
-            if (widget.store != null && !_selectMode)
+            if (widget.store != null && !_selectMode && catalog.isNotEmpty)
               _OpportunityRadar(
                 opportunities: Opportunity.scan(
-                  products: ShowcaseProduct.mock,
+                  products: catalog,
                   store: widget.store!,
                 ),
                 onOpen: (p) => context.go('/showcase/${p.id}'),
                 onCreate: (p) => context.go('/create', extra: p),
               ),
-            _PreviewNotice(),
+            if (!live) _PreviewNotice(),
             const SizedBox(height: Spacing.md),
-            if (products.isEmpty)
+            if (live && productState?.loading == true && catalog.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 64),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (live && productState?.error != null && catalog.isEmpty)
+              RelayStatePanel(
+                kind: RelayStateKind.offline,
+                title: 'ยังดึงสินค้าไม่ได้',
+                message: productState!.error!,
+                actionLabel: 'ลองใหม่',
+                onAction: productState.load,
+              )
+            else if (live && productState?.loaded == true && catalog.isEmpty)
+              RelayStatePanel(
+                kind: RelayStateKind.empty,
+                title: 'ยังไม่มีสินค้าใน Showcase',
+                message: 'เชื่อมบัญชี TikTok Shop แล้วซิงก์สินค้าก่อนเริ่มสร้างคอนเทนต์',
+                actionLabel: 'ซิงก์อีกครั้ง',
+                onAction: productState!.load,
+              )
+            else if (products.isEmpty)
               _NoResults(
                 onReset: () {
                   _search.clear();

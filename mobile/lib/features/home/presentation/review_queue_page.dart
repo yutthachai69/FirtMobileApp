@@ -29,10 +29,8 @@ class _ReviewQueuePageState extends State<ReviewQueuePage> {
           content: Text('$verb: ${job.title}'),
           action: SnackBarAction(
             label: 'เลิกทำ',
-            onPressed: () => widget.store.updateStatus(
-              job.id,
-              JobStatus.awaitingReview,
-            ),
+            onPressed: () =>
+                widget.store.updateStatus(job.id, JobStatus.awaitingReview),
           ),
         ),
       );
@@ -72,8 +70,7 @@ class _ReviewQueuePageState extends State<ReviewQueuePage> {
                           onSendBack: () => _act(
                             queue.first,
                             'ส่งกลับไปแก้',
-                            () =>
-                                widget.store.sendBackToDraft(queue.first.id),
+                            () => widget.store.sendBackToDraft(queue.first.id),
                           ),
                         ),
                       ),
@@ -115,7 +112,7 @@ class _ReviewCard extends StatelessWidget {
   final VoidCallback onSendBack;
 
   ShowcaseProduct? get _product {
-    for (final p in ShowcaseProduct.mock) {
+    for (final p in ShowcaseProduct.available) {
       if (p.id == job.productId) return p;
     }
     return null;
@@ -140,9 +137,8 @@ class _ReviewCard extends StatelessWidget {
         'ส่งกลับแก้',
         context.t.warning,
       ),
-      onDismissed: (dir) => dir == DismissDirection.startToEnd
-          ? onApprove()
-          : onSendBack(),
+      onDismissed: (dir) =>
+          dir == DismissDirection.startToEnd ? onApprove() : onSendBack(),
       child: Container(
         decoration: BoxDecoration(
           color: context.t.surfaceContainer,
@@ -165,9 +161,7 @@ class _ReviewCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    job.sourceLabel.isEmpty
-                        ? 'รอตรวจ'
-                        : job.sourceLabel,
+                    job.sourceLabel.isEmpty ? 'รอตรวจ' : job.sourceLabel,
                     style: TextStyle(
                       color: context.t.primary,
                       fontSize: 11,
@@ -215,10 +209,7 @@ class _ReviewCard extends StatelessWidget {
                         child: FilledButton.icon(
                           key: const Key('review-approve'),
                           onPressed: onApprove,
-                          icon: const Icon(
-                            Icons.check_rounded,
-                            size: 18,
-                          ),
+                          icon: const Icon(Icons.check_rounded, size: 18),
                           label: const Text('อนุมัติ'),
                         ),
                       ),
@@ -267,10 +258,7 @@ class _Done extends StatelessWidget {
       children: [
         Icon(Icons.task_alt_rounded, size: 64, color: context.t.success),
         const SizedBox(height: Spacing.md),
-        Text(
-          'ตรวจครบแล้ว',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
+        Text('ตรวจครบแล้ว', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
         Text(
           'ไม่มีงานรอตรวจในคิว',

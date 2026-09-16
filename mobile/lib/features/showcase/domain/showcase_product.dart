@@ -1,3 +1,5 @@
+import '../../../core/config/app_config.dart';
+
 /// สินค้าจาก TikTok Shop Showcase ของ creator
 ///
 /// ⚠️ ยังไม่มี backend จริง — รอสมัคร TikTok Shop Partner Center และยืนยัน
@@ -14,6 +16,7 @@ class ShowcaseProduct {
     required this.shopName,
     required this.sellingPoints,
     this.discountPercent = 0,
+    this.imageUrl = '',
   });
 
   final String id;
@@ -24,6 +27,7 @@ class ShowcaseProduct {
   final String shopName;
   final List<String> sellingPoints;
   final int discountPercent;
+  final String imageUrl;
 
   int get commissionBaht => (priceBaht * commissionPercent / 100).round();
   bool get inStock => stock > 0;
@@ -32,8 +36,39 @@ class ShowcaseProduct {
     'mock-1' => 'assets/images/products/serum.png',
     'mock-2' => 'assets/images/products/wireless-mic.png',
     'mock-3' => 'assets/images/products/tumbler.png',
-    _ => 'assets/images/products/serum.png',
+    _ => '',
   };
+
+  /// The demo catalog is never exposed when APP_DATA_MODE resolves to live.
+  static List<ShowcaseProduct> get available =>
+      AppConfig.isDemo ? mock : const [];
+
+  static const placeholder = ShowcaseProduct(
+    id: 'unlinked-product',
+    name: 'คอนเทนต์',
+    priceBaht: 0,
+    commissionPercent: 0,
+    stock: 0,
+    shopName: '',
+    sellingPoints: [],
+  );
+
+  factory ShowcaseProduct.fromJson(Map<String, dynamic> json) =>
+      ShowcaseProduct(
+        id: json['id'] as String,
+        name: json['name'] as String? ?? '',
+        priceBaht: json['price_baht'] as int? ?? 0,
+        commissionPercent: json['commission_percent'] as int? ?? 0,
+        stock: json['stock'] as int? ?? 0,
+        shopName: json['shop_name'] as String? ?? '',
+        sellingPoints:
+            (json['selling_points'] as List?)?.whereType<String>().toList(
+              growable: false,
+            ) ??
+            const [],
+        discountPercent: json['discount_percent'] as int? ?? 0,
+        imageUrl: json['image_url'] as String? ?? '',
+      );
 
   static const mock = [
     ShowcaseProduct(

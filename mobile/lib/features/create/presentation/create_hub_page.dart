@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../core/config/app_config.dart';
 import '../../showcase/domain/showcase_product.dart';
 import '../../showcase/presentation/product_artwork.dart';
 
@@ -154,10 +155,16 @@ class _CreateHubPageState extends State<CreateHubPage>
               index: 3,
               child: _AiLabCard(
                 product: product,
-                onTap: () => context.go(
-                  '/create/ai',
-                  extra: product ?? ShowcaseProduct.mock.first,
-                ),
+                onTap: () {
+                  if (product == null && AppConfig.isLive) {
+                    context.go('/showcase');
+                    return;
+                  }
+                  context.go(
+                    '/create/ai',
+                    extra: product ?? ShowcaseProduct.available.first,
+                  );
+                },
               ),
             ),
             if (product == null) ...[

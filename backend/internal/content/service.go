@@ -96,6 +96,16 @@ func (s *Service) Update(ctx context.Context, userID, id string, in UpdateInput)
 
 // ── สิ่งที่ publish/worker เรียกใช้ ───────────────────────────
 
+// EnsureOwned verifies content ownership without revealing whether an ID
+// belongs to another account or does not exist.
+func (s *Service) EnsureOwned(ctx context.Context, userID, contentID string) error {
+	_, err := s.repo.Get(ctx, userID, contentID)
+	if errors.Is(err, ErrNotFound) {
+		return apierror.ErrNotFound
+	}
+	return err
+}
+
 func (s *Service) CaptionOf(ctx context.Context, contentID string) (string, error) {
 	return s.repo.CaptionOf(ctx, contentID)
 }

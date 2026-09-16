@@ -17,6 +17,9 @@ import (
 // และทำให้เขียนเทสด้วยตัวปลอมได้
 
 type ContentStore interface {
+	// EnsureOwned protects the tenant boundary before worker-only methods use
+	// a content ID without a user ID.
+	EnsureOwned(ctx context.Context, userID, contentID string) error
 	CaptionOf(ctx context.Context, contentID string) (string, error)
 	SetContentStatus(ctx context.Context, contentID, status string) error
 }
@@ -93,6 +96,12 @@ func (s *Service) Create(ctx context.Context, in CreateInput) (*Job, error) {
 	if existing, err := s.repo.GetByIdempotencyKey(ctx, in.UserID, in.IdempotencyKey); err == nil {
 		return existing, nil
 	} else if !errors.Is(err, ErrNotFound) {
+		return nil, err
+	}
+
+	// Media URLs are intentionally ownerless for background workers. Verify
+	// ownership here so a caller cannot publish another account's upload.
+	if err := s.contents.EnsureOwned(ctx, in.UserID, in.ContentID); err != nil {
 		return nil, err
 	}
 

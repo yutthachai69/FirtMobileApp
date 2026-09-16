@@ -16,6 +16,7 @@ import (
 	"relaycontent/internal/health"
 	"relaycontent/internal/media"
 	"relaycontent/internal/notification"
+	"relaycontent/internal/product"
 	"relaycontent/internal/publish"
 )
 
@@ -26,11 +27,12 @@ type Server struct {
 }
 
 type Deps struct {
-	Health      *health.Handler
-	Auth        *auth.Handler
+	Health        *health.Handler
+	Auth          *auth.Handler
 	Connections   *connection.Handler
 	Media         *media.Handler
 	Content       *content.Handler
+	Products      *product.Handler
 	Publish       *publish.Handler
 	Notifications *notification.Handler
 	Limiter       *Limiter
@@ -73,6 +75,7 @@ func New(cfg *config.Config, log *slog.Logger, deps Deps) *Server {
 	deps.Connections.RegisterRoutes(v1, requireAuth)
 	deps.Media.RegisterRoutes(v1, requireAuth)
 	deps.Content.RegisterRoutes(v1, requireAuth)
+	deps.Products.RegisterRoutes(v1, requireAuth)
 	deps.Publish.RegisterRoutes(v1, requireAuth)
 	deps.Notifications.RegisterRoutes(v1, requireAuth)
 

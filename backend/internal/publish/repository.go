@@ -52,11 +52,17 @@ func (r *Repository) Create(ctx context.Context, p CreateParams) (*Job, error) {
 		return nil, fmt.Errorf("publish: แปลง options ไม่ได้: %w", err)
 	}
 
+	// INSERT ... SELECT enforces ownership atomically. The service performs
+	// the same check for a friendly error; this is the final database guard.
 	const q = `
 		INSERT INTO publish_jobs (
 			user_id, content_id, connection_id, platform, platform_options,
 			scheduled_at, idempotency_key, status
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,'scheduled')
+		)
+		SELECT $1, c.id, pc.id, $4, $5, $6, $7, 'scheduled'
+		  FROM contents c
+		  JOIN platform_connections pc ON pc.id = $3 AND pc.user_id = $1
+		 WHERE c.id = $2 AND c.user_id = $1
 		RETURNING ` + columns
 
 	job, err := r.scanOne(ctx, q, p.UserID, p.ContentID, p.ConnectionID,
