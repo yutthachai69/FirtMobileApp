@@ -225,10 +225,16 @@ func (r *Runner) handleAuthFailure(ctx context.Context, job *Job, cause error) {
 	}
 
 	next := time.Now().Add(30 * time.Minute)
-	_ = r.repo.Reschedule(ctx, job.ID, next, map[string]any{
-		"code":    "CONNECTION_NEEDS_REAUTH",
-		"message": "การเชื่อมต่อหมดอายุ กรุณาเชื่อมบัญชีใหม่",
-	})
+	if job.ExternalPublishID != "" {
+		// TikTok already accepted the upload. Keep processing and delay only
+		// the status poll; rescheduling would publish the same video again.
+		_ = r.repo.SetNextPoll(ctx, job.ID, next)
+	} else {
+		_ = r.repo.Reschedule(ctx, job.ID, next, map[string]any{
+			"code":    "CONNECTION_NEEDS_REAUTH",
+			"message": "การเชื่อมต่อหมดอายุ กรุณาเชื่อมบัญชีใหม่",
+		})
+	}
 
 	// dedupe ที่ connection — งานค้างหลายชิ้นบนบัญชีเดียวกันคือปัญหาเดียว
 	// ผู้ใช้ควรได้ push อันเดียว ไม่ใช่หนึ่งอันต่อหนึ่งงาน

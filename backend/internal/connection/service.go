@@ -200,6 +200,10 @@ func (s *Service) TikTokCreatorInfo(ctx context.Context, userID, connID string) 
 // สำคัญ: TikTok หมุน refresh token ทุกครั้งที่ refresh
 // จึงต้องบันทึกทั้งคู่ทับของเดิมเสมอ ไม่งั้นครั้งถัดไปจะต่ออายุไม่ได้
 func (s *Service) validAccessToken(ctx context.Context, userID string, conn *Connection) (string, error) {
+	if !conn.IsUsable() {
+		return "", apierror.ErrNeedsReauth
+	}
+
 	ts, err := s.repo.LoadTokens(ctx, userID, conn.ID)
 	if errors.Is(err, ErrNotFound) {
 		return "", apierror.ErrNotFound
