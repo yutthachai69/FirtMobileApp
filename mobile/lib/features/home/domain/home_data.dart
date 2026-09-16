@@ -163,12 +163,18 @@ enum ActionKind { needsReauth, jobFailed }
 /// ถ้าเรียงตามเวลา งานที่ล้มเหลวเมื่อวานจะจมอยู่ล่างสุดโดยไม่มีใครเห็น
 class HomeData {
   const HomeData({
+    this.jobs = const [],
     this.needAction = const [],
     this.reviewQueue = const [],
     this.working = const [],
     this.scheduled = const [],
     this.publishedToday = const [],
   });
+
+  /// Raw jobs returned by the backend. The grouped lists below are derived
+  /// views for the home dashboard; keeping this list prevents other screens
+  /// from maintaining a second, divergent copy of the same data.
+  final List<PublishJob> jobs;
 
   final List<ActionItem> needAction;
 
@@ -247,6 +253,7 @@ class HomeData {
     review.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
     return HomeData(
+      jobs: List.unmodifiable(jobs),
       needAction: actions,
       reviewQueue: review,
       working: working,

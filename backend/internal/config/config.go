@@ -18,8 +18,8 @@ type Config struct {
 	HTTPPort        string
 	ShutdownTimeout time.Duration
 
-	DatabaseURL     string
-	DBMaxConns      int32
+	DatabaseURL         string
+	DBMaxConns          int32
 	DatabaseAutoMigrate bool
 
 	RedisURL string
@@ -47,6 +47,7 @@ type Config struct {
 
 	TikTok  TikTokConfig
 	Google  GoogleConfig
+	FCM     FCMConfig
 	Storage StorageConfig
 }
 
@@ -59,6 +60,16 @@ type GoogleConfig struct {
 }
 
 func (g GoogleConfig) Enabled() bool { return g.ClientID != "" }
+
+type FCMConfig struct {
+	ProjectID   string
+	ClientEmail string
+	PrivateKey  string
+}
+
+func (f FCMConfig) Enabled() bool {
+	return f.ProjectID != "" && f.ClientEmail != "" && f.PrivateKey != ""
+}
 
 type StorageConfig struct {
 	R2AccountID       string
@@ -136,6 +147,12 @@ func Load() (*Config, error) {
 
 		Google: GoogleConfig{
 			ClientID: env("GOOGLE_CLIENT_ID", ""),
+		},
+
+		FCM: FCMConfig{
+			ProjectID:   env("FCM_PROJECT_ID", ""),
+			ClientEmail: env("FCM_CLIENT_EMAIL", ""),
+			PrivateKey:  env("FCM_PRIVATE_KEY", ""),
 		},
 
 		Storage: StorageConfig{

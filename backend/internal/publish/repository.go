@@ -254,6 +254,44 @@ func (r *Repository) Reschedule(ctx context.Context, id string, at time.Time, ca
 	return r.exec(ctx, q, id, at, b)
 }
 
+// RescheduleOwned updates a user's scheduled job without allowing a caller to
+// mutate jobs owned by another account.
+func (r *Repository) RescheduleOwned(ctx context.Context, userID, id string, at time.Time) error {
+	const q = `
+		UPDATE publish_jobs
+		   SET status = 'scheduled', scheduled_at = $3, next_run_at = $3,
+		       last_error = NULL, locked_at = NULL, locked_by = NULL
+		 WHERE id = $1 AND user_id = $2 AND status IN ('scheduled','queued')`
+	tag, err := r.db.Exec(ctx, q, id, userID, at)
+	if err != nil {
+		return fmt.Errorf("publish: reschedule failed: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// Restore reactivates a cancelled job. A past schedule is moved to now so the
+// worker can pick it up immediately instead of leaving it stranded in history.
+func (r *Repository) Restore(ctx context.Context, userID, id string) error {
+	const q = `
+		UPDATE publish_jobs
+		   SET status = 'scheduled',
+		       scheduled_at = GREATEST(scheduled_at, now()),
+		       next_run_at = GREATEST(scheduled_at, now()),
+		       last_error = NULL, locked_at = NULL, locked_by = NULL
+		 WHERE id = $1 AND user_id = $2 AND status = 'cancelled'`
+	tag, err := r.db.Exec(ctx, q, id, userID)
+	if err != nil {
+		return fmt.Errorf("publish: restore failed: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // SetNextPoll เลื่อนเวลาถามสถานะรอบถัดไป และปลดล็อก
 func (r *Repository) SetNextPoll(ctx context.Context, id string, at time.Time) error {
 	const q = `
@@ -322,10 +360,10 @@ type scanner interface{ Scan(dest ...any) error }
 
 func scanRow(s scanner) (*Job, error) {
 	var (
-		j        Job
-		optsRaw  []byte
-		errRaw   []byte
-		nextRun  *time.Time
+		j       Job
+		optsRaw []byte
+		errRaw  []byte
+		nextRun *time.Time
 	)
 
 	if err := s.Scan(

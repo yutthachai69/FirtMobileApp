@@ -29,6 +29,8 @@ func (h *Handler) RegisterRoutes(v1 gin.IRouter, requireAuth gin.HandlerFunc) {
 	g.GET("/:id", h.get)
 	g.POST("/:id/cancel", h.cancel)
 	g.POST("/:id/retry", h.retry)
+	g.POST("/:id/reschedule", h.reschedule)
+	g.POST("/:id/restore", h.restore)
 }
 
 type createRequest struct {
@@ -36,6 +38,10 @@ type createRequest struct {
 	ConnectionID string            `json:"connection_id"`
 	ScheduledAt  *time.Time        `json:"scheduled_at"`
 	Options      publisher.Options `json:"platform_options"`
+}
+
+type rescheduleRequest struct {
+	ScheduledAt *time.Time `json:"scheduled_at" binding:"required"`
 }
 
 func (h *Handler) create(c *gin.Context) {
@@ -93,6 +99,33 @@ func (h *Handler) cancel(c *gin.Context) {
 
 func (h *Handler) retry(c *gin.Context) {
 	job, err := h.svc.Retry(c.Request.Context(), auth.UserID(c), c.Param("id"))
+	if err != nil {
+		apierror.Respond(c, h.log, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"job": job})
+}
+
+func (h *Handler) reschedule(c *gin.Context) {
+	var req rescheduleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		apierror.Respond(c, h.log, apierror.ErrValidation.WithCause(err))
+		return
+	}
+	if req.ScheduledAt == nil {
+		apierror.Respond(c, h.log, apierror.ErrValidation)
+		return
+	}
+	job, err := h.svc.Reschedule(c.Request.Context(), auth.UserID(c), c.Param("id"), *req.ScheduledAt)
+	if err != nil {
+		apierror.Respond(c, h.log, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"job": job})
+}
+
+func (h *Handler) restore(c *gin.Context) {
+	job, err := h.svc.Restore(c.Request.Context(), auth.UserID(c), c.Param("id"))
 	if err != nil {
 		apierror.Respond(c, h.log, err)
 		return

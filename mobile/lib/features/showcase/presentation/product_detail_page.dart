@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
@@ -54,8 +55,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       appBar: AppBar(
         title: const Text('รายละเอียดสินค้า'),
         actions: [
-          IconButton(
+          IconButton.outlined(
             onPressed: () {
+              HapticFeedback.selectionClick();
               _saved.toggle(widget.product.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -65,9 +67,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               );
             },
+            style: IconButton.styleFrom(
+              foregroundColor: saved
+                  ? context.t.warning
+                  : context.t.textSecondary,
+              backgroundColor: saved
+                  ? context.t.warning.withValues(alpha: .1)
+                  : context.t.surfaceElevated,
+              side: BorderSide(
+                color: saved
+                    ? context.t.warning.withValues(alpha: .35)
+                    : context.t.border,
+              ),
+            ),
             tooltip: saved ? 'เลิกบันทึก' : 'บันทึกสินค้า',
-            icon: Icon(
-              saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Icon(
+                saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                key: ValueKey(saved),
+              ),
             ),
           ),
         ],
@@ -158,39 +177,157 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             Spacing.md,
           ),
           child: p.inStock
-              ? FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: context.t.creative,
-                    foregroundColor: Colors.white,
-                  ),
+              ? _ProductDetailCta(
+                  product: p,
                   onPressed: () => context.go('/create', extra: p),
-                  icon: const Icon(Icons.movie_creation_outlined),
-                  label: const Text('สร้างคอนเทนต์จากสินค้านี้'),
                 )
               : Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => context.go('/showcase'),
-                        child: const Text('เลือกสินค้าอื่น'),
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.t.textPrimary,
+                          side: BorderSide(color: context.t.border),
+                        ),
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          context.go('/showcase');
+                        },
+                        icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                        label: const Text('เลือกสินค้าอื่น'),
                       ),
                     ),
                     const SizedBox(width: Spacing.sm),
                     Expanded(
-                      child: FilledButton(
-                        onPressed: () => ScaffoldMessenger.of(context)
-                            .showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'ตรวจสอบข้อมูลสินค้าอีกครั้งแล้ว',
-                                ),
-                              ),
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: context.t.warning.withValues(
+                            alpha: .13,
+                          ),
+                          foregroundColor: context.t.warning,
+                          side: BorderSide(
+                            color: context.t.warning.withValues(alpha: .4),
+                          ),
+                        ),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('ตรวจสอบข้อมูลสินค้าอีกครั้งแล้ว'),
                             ),
-                        child: const Text('ตรวจอีกครั้ง'),
+                          );
+                        },
+                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        label: const Text('ตรวจอีกครั้ง'),
                       ),
                     ),
                   ],
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductDetailCta extends StatefulWidget {
+  const _ProductDetailCta({required this.product, required this.onPressed});
+
+  final ShowcaseProduct product;
+  final VoidCallback onPressed;
+
+  @override
+  State<_ProductDetailCta> createState() => _ProductDetailCtaState();
+}
+
+class _ProductDetailCtaState extends State<_ProductDetailCta> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = Theme.of(context).brightness == Brightness.dark
+        ? context.t.textPrimary
+        : context.t.surfaceContainer;
+    return Listener(
+      onPointerDown: (_) => setState(() => _pressed = true),
+      onPointerUp: (_) => setState(() => _pressed = false),
+      onPointerCancel: (_) => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? .97 : 1,
+        duration: const Duration(milliseconds: 90),
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                context.t.creative,
+                Color.lerp(context.t.creative, context.t.primary, .22)!,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(Radii.md),
+            boxShadow: _pressed
+                ? null
+                : [
+                    BoxShadow(
+                      color: context.t.creative.withValues(alpha: .2),
+                      blurRadius: 18,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned(
+                right: 14,
+                top: 11,
+                child: Icon(
+                  Icons.movie_filter_outlined,
+                  size: 38,
+                  color: foreground.withValues(alpha: .18),
+                ),
+              ),
+              FilledButton(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  widget.onPressed();
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.t.creative.withValues(alpha: 0),
+                  foregroundColor: foreground,
+                  shadowColor: context.t.creative.withValues(alpha: 0),
+                  minimumSize: const Size.fromHeight(60),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.movie_creation_outlined),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'สร้างคอนเทนต์จากสินค้านี้',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            '${widget.product.name} · คอม ฿${widget.product.commissionBaht}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: foreground.withValues(alpha: .72),
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_rounded, size: 19),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

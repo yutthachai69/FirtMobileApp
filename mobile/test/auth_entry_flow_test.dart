@@ -10,6 +10,28 @@ import 'package:relaycontent/features/auth/presentation/auth_page.dart';
 import 'support/fakes.dart';
 
 void main() {
+  testWidgets('แตะ segmented control เพื่อสลับ login และ register', (
+    tester,
+  ) async {
+    final auth = AuthController(FakeAuthApi(), MemoryTokenStore());
+    addTearDown(auth.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: appTheme(Brightness.dark),
+        home: AuthPage(auth: auth),
+      ),
+    );
+
+    expect(find.byKey(const Key('display-name')), findsNothing);
+    await tester.tap(find.byKey(const Key('auth-register-tab')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('display-name')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('auth-login-tab')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('display-name')), findsNothing);
+  });
+
   testWidgets('ลืมรหัสผ่านตรวจอีเมลและแสดง success state', (tester) async {
     final auth = AuthController(FakeAuthApi(), MemoryTokenStore());
     await tester.pumpWidget(
@@ -51,7 +73,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ยังไม่มีบัญชี? สมัครสมาชิก'));
+    await tester.tap(find.byKey(const Key('auth-register-tab')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('display-name')), 'Creator');
     await tester.enterText(

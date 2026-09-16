@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../app/widgets/skeleton.dart';
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/config/app_config.dart';
 import '../domain/content_store.dart';
 import '../domain/home_data.dart';
 import 'content_artwork.dart';
 import 'home_controller.dart';
+import 'notifications_controller.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -15,22 +18,63 @@ class HomePage extends StatefulWidget {
     required this.auth,
     required this.controller,
     this.store,
+    this.notifications,
   });
   final AuthController auth;
   final HomeController controller;
 
   /// เมื่อ backend ยังไม่มีข้อมูล หน้าหลักจะแสดงงานจากแหล่งกลางนี้แทนหน้าว่าง
   final ContentStore? store;
+  final NotificationsController? notifications;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _entrance;
+
   @override
   void initState() {
     super.initState();
+    final reduced = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+    _entrance = AnimationController(
+      vsync: this,
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 620),
+    )..forward();
+    widget.controller.addListener(_syncStore);
     widget.controller.load();
+    widget.controller.startPolling();
+    if (AppConfig.isLive) {
+      widget.notifications?.load();
+      widget.notifications?.startPolling();
+    }
+  }
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    widget.controller.removeListener(_syncStore);
+    widget.controller.stopPolling();
+    widget.notifications?.stopPolling();
+    super.dispose();
+  }
+
+  void _syncStore() {
+    final data = widget.controller.data;
+    final store = widget.store;
+    if (data == null || store == null) return;
+    // In demo mode an empty backend response intentionally leaves the rich
+    // fixture visible. Any real response, including an empty live account,
+    // becomes the single snapshot shared by Home and Content.
+    if (data.jobs.isNotEmpty || AppConfig.isLive) {
+      store.replaceAll(data.jobs);
+    }
   }
 
   @override
@@ -39,6 +83,7 @@ class _HomePageState extends State<HomePage> {
       widget.auth,
       widget.controller,
       widget.store,
+      if (widget.notifications != null) widget.notifications!,
     ]),
     builder: (context, _) {
       final rawName = widget.auth.account?.name.trim();
@@ -48,22 +93,46 @@ class _HomePageState extends State<HomePage> {
       final backend = c.data;
       final data = (backend != null && !backend.isEmpty)
           ? backend
-          : widget.store?.homeData() ?? backend;
+          : AppConfig.isDemo
+          ? widget.store?.homeData() ?? backend
+          : backend;
+      final titleMotion = CurvedAnimation(
+        parent: _entrance,
+        curve: const Interval(0, .55, curve: Curves.easeOutCubic),
+      );
+      final bodyMotion = CurvedAnimation(
+        parent: _entrance,
+        curve: const Interval(.16, 1, curve: Curves.easeOutCubic),
+      );
       return Scaffold(
         appBar: AppBar(
           toolbarHeight: 72,
           titleSpacing: Spacing.md,
-          title: _CreatorTitle(
-            name: name,
-            subtitle: data == null || data.isEmpty
-                ? 'พร้อมรับคอนเทนต์ชิ้นแรก'
-                : data.needAction.isNotEmpty
-                ? 'มี ${data.needAction.length} งานรอคุณตรวจ'
-                : 'ทุกงานกำลังเดินตามแผน',
+          title: FadeTransition(
+            opacity: titleMotion,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(-.08, 0),
+                end: Offset.zero,
+              ).animate(titleMotion),
+              child: _CreatorTitle(
+                name: name,
+                subtitle: data == null || data.isEmpty
+                    ? 'พร้อมรับคอนเทนต์ชิ้นแรก'
+                    : data.needAction.isNotEmpty
+                    ? 'มี ${data.needAction.length} งานรอคุณตรวจ'
+                    : 'ทุกงานกำลังเดินตามแผน',
+              ),
+            ),
           ),
           actions: [
             Badge(
-              isLabelVisible: data?.needAction.isNotEmpty ?? false,
+              label: Text(
+                '${AppConfig.isLive ? widget.notifications?.unreadCount ?? 0 : data?.needAction.length ?? 0}',
+              ),
+              isLabelVisible: AppConfig.isLive
+                  ? (widget.notifications?.unreadCount ?? 0) > 0
+                  : data?.needAction.isNotEmpty ?? false,
               child: IconButton.filledTonal(
                 onPressed: () => context.push('/notifications'),
                 icon: const Icon(Icons.notifications_none_rounded),
@@ -73,11 +142,23 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 12),
           ],
         ),
-        body: SafeArea(
-          top: false,
-          child: RefreshIndicator(
-            onRefresh: c.load,
-            child: _body(context, c, data),
+        body: FadeTransition(
+          opacity: bodyMotion,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, .035),
+              end: Offset.zero,
+            ).animate(bodyMotion),
+            child: SafeArea(
+              top: false,
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await c.load();
+                  if (AppConfig.isLive) await widget.notifications?.load();
+                },
+                child: _body(context, c, data),
+              ),
+            ),
           ),
         ),
       );
@@ -88,7 +169,9 @@ class _HomePageState extends State<HomePage> {
     final hasData = data != null && !data.isEmpty;
     if (!hasData) {
       if (!c.loaded && c.loading) return const SkeletonList();
-      if (c.error != null && !c.loaded && widget.store == null) {
+      if (c.error != null &&
+          !c.loaded &&
+          (widget.store == null || AppConfig.isLive)) {
         return _ErrorView(message: c.error!, onRetry: c.load);
       }
       return _EmptyState(
@@ -160,7 +243,10 @@ class _HomePageState extends State<HomePage> {
             color: context.t.primary,
             title: 'กำลังสร้าง',
             count: data.working.length,
-            children: [for (final job in data.working) JobCard(job: job)],
+            children: [
+              for (final entry in data.working.asMap().entries)
+                JobCard(job: entry.value, animationIndex: entry.key),
+            ],
           ),
         if (data.scheduled.isNotEmpty)
           _Section(
@@ -168,7 +254,10 @@ class _HomePageState extends State<HomePage> {
             color: context.t.warning,
             title: 'ตั้งเวลาไว้',
             count: data.scheduled.length,
-            children: [for (final job in data.scheduled) JobCard(job: job)],
+            children: [
+              for (final entry in data.scheduled.asMap().entries)
+                JobCard(job: entry.value, animationIndex: entry.key),
+            ],
           ),
         if (data.publishedToday.isNotEmpty)
           _Section(
@@ -177,7 +266,8 @@ class _HomePageState extends State<HomePage> {
             title: 'โพสต์แล้ววันนี้',
             count: data.publishedToday.length,
             children: [
-              for (final job in data.publishedToday) JobCard(job: job),
+              for (final entry in data.publishedToday.asMap().entries)
+                JobCard(job: entry.value, animationIndex: entry.key),
             ],
           ),
       ],
@@ -306,36 +396,241 @@ class _QuickRelayBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(10),
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       color: context.t.surfaceContainer,
       borderRadius: BorderRadius.circular(Radii.lg),
       border: Border.all(color: context.t.border),
     ),
-    child: Row(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: FilledButton.icon(
-            key: const Key('home-quick-import-ai'),
-            onPressed: onImportAi,
-            icon: const Icon(Icons.auto_awesome_rounded, size: 19),
-            label: const Text('รับจาก AI'),
-          ),
+        Row(
+          children: [
+            const Text(
+              'เริ่มงานใหม่',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+            const Spacer(),
+            Text(
+              'เลือกเส้นทาง',
+              style: TextStyle(color: context.t.textSecondary, fontSize: 10),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        IconButton.filledTonal(
-          key: const Key('home-quick-upload'),
-          tooltip: 'อัปโหลดคลิป',
-          onPressed: onUpload,
-          icon: const Icon(Icons.upload_file_rounded),
-        ),
-        const SizedBox(width: 5),
-        IconButton.filledTonal(
-          tooltip: 'เลือกสินค้า',
-          onPressed: onShowcase,
-          icon: const Icon(Icons.shopping_bag_outlined),
+        const SizedBox(height: 9),
+        Row(
+          children: [
+            Expanded(
+              child: _AiRelayAction(
+                key: const Key('home-quick-import-ai'),
+                onTap: onImportAi,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _CompactHomeAction(
+              key: const Key('home-quick-upload'),
+              tooltip: 'อัปโหลดคลิป',
+              icon: Icons.upload_file_rounded,
+              color: context.t.success,
+              signature: _QuickSignature.upload,
+              onTap: onUpload,
+            ),
+            const SizedBox(width: 7),
+            _CompactHomeAction(
+              tooltip: 'เลือกสินค้า',
+              icon: Icons.shopping_bag_outlined,
+              color: context.t.warning,
+              signature: _QuickSignature.product,
+              onTap: onShowcase,
+            ),
+          ],
         ),
       ],
+    ),
+  );
+}
+
+class _AiRelayAction extends StatefulWidget {
+  const _AiRelayAction({super.key, required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  State<_AiRelayAction> createState() => _AiRelayActionState();
+}
+
+class _AiRelayActionState extends State<_AiRelayAction> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) => AnimatedScale(
+    scale: _pressed ? .97 : 1,
+    duration: const Duration(milliseconds: 90),
+    child: Container(
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            context.t.primary,
+            Color.lerp(context.t.primary, context.t.creative, .22)!,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(Radii.md),
+        boxShadow: _pressed
+            ? null
+            : [
+                BoxShadow(
+                  color: context.t.primary.withValues(alpha: .16),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+      ),
+      child: Material(
+        color: context.t.primary.withValues(alpha: 0),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Radii.md),
+          onHighlightChanged: (value) {
+            if (mounted) setState(() => _pressed = value);
+          },
+          onTap: () {
+            HapticFeedback.selectionClick();
+            widget.onTap();
+          },
+          child: Stack(
+            children: [
+              Positioned(
+                right: 9,
+                top: 8,
+                child: Icon(
+                  Icons.hub_outlined,
+                  color: context.t.onPrimary.withValues(alpha: .2),
+                  size: 37,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 13),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      color: context.t.onPrimary,
+                      size: 19,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'รับจาก AI',
+                            style: TextStyle(
+                              color: context.t.onPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            'Relay เข้า Inbox',
+                            style: TextStyle(
+                              color: context.t.onPrimary.withValues(alpha: .72),
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 17,
+                      color: context.t.onPrimary,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+enum _QuickSignature { upload, product }
+
+class _CompactHomeAction extends StatelessWidget {
+  const _CompactHomeAction({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.signature,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final _QuickSignature signature;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Material(
+      color: color.withValues(alpha: .1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.md),
+        side: BorderSide(color: color.withValues(alpha: .28)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: SizedBox(
+          width: 54,
+          height: 54,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(icon, color: color, size: 23),
+              if (signature == _QuickSignature.upload)
+                Positioned(
+                  bottom: 8,
+                  child: Container(
+                    width: 20,
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: .45),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                )
+              else
+                Positioned(
+                  right: 9,
+                  top: 9,
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: .5),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     ),
   );
 }
@@ -502,10 +797,17 @@ class _Section extends StatelessWidget {
   );
 }
 
-class _ActionCard extends StatelessWidget {
+class _ActionCard extends StatefulWidget {
   const _ActionCard({required this.item, required this.onTap});
   final ActionItem item;
   final VoidCallback onTap;
+
+  @override
+  State<_ActionCard> createState() => _ActionCardState();
+}
+
+class _ActionCardState extends State<_ActionCard> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -522,14 +824,38 @@ class _ActionCard extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: context.t.error.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(10),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: MediaQuery.of(context).disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 620),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) => Container(
+                padding: EdgeInsets.all(8 + (value * 2)),
+                decoration: BoxDecoration(
+                  color: context.t.error.withValues(alpha: .1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: context.t.error.withValues(
+                      alpha: .16 + (.28 * value),
+                    ),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.t.error.withValues(
+                        alpha: .12 * (1 - value),
+                      ),
+                      blurRadius: 16 * value,
+                      spreadRadius: 3 * value,
+                    ),
+                  ],
+                ),
+                child: child,
               ),
               child: Icon(
-                Icons.priority_high_rounded,
+                widget.item.kind == ActionKind.needsReauth
+                    ? Icons.link_off_rounded
+                    : Icons.priority_high_rounded,
                 color: context.t.error,
                 size: 18,
               ),
@@ -540,12 +866,12 @@ class _ActionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    widget.item.title,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: Spacing.xs),
                   Text(
-                    item.detail,
+                    widget.item.detail,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -556,13 +882,36 @@ class _ActionCard extends StatelessWidget {
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
-          child: FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: context.t.error,
-              foregroundColor: Colors.white,
+          child: Listener(
+            onPointerDown: (_) => setState(() => _pressed = true),
+            onPointerUp: (_) => setState(() => _pressed = false),
+            onPointerCancel: (_) => setState(() => _pressed = false),
+            child: AnimatedScale(
+              scale: _pressed ? .975 : 1,
+              duration: const Duration(milliseconds: 90),
+              child: FilledButton.icon(
+                key: Key('resolve-${widget.item.kind.name}'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.t.error.withValues(alpha: .13),
+                  foregroundColor: context.t.error,
+                  side: BorderSide(
+                    color: context.t.error.withValues(alpha: .45),
+                  ),
+                  shadowColor: context.t.error.withValues(alpha: 0),
+                ),
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  widget.onTap();
+                },
+                icon: Icon(
+                  widget.item.kind == ActionKind.needsReauth
+                      ? Icons.link_rounded
+                      : Icons.troubleshoot_rounded,
+                  size: 19,
+                ),
+                label: Text(widget.item.actionLabel),
+              ),
             ),
-            onPressed: onTap,
-            child: Text(item.actionLabel),
           ),
         ),
       ],
@@ -570,58 +919,190 @@ class _ActionCard extends StatelessWidget {
   );
 }
 
-class JobCard extends StatelessWidget {
-  const JobCard({super.key, required this.job, this.onTap});
+class JobCard extends StatefulWidget {
+  const JobCard({
+    super.key,
+    required this.job,
+    this.onTap,
+    this.animationIndex = 0,
+  });
   final PublishJob job;
   final VoidCallback? onTap;
+  final int animationIndex;
+
+  @override
+  State<JobCard> createState() => _JobCardState();
+}
+
+class _JobCardState extends State<JobCard> with SingleTickerProviderStateMixin {
+  late final AnimationController _entrance;
+  bool _pressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final reduced = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+    _entrance = AnimationController(
+      vsync: this,
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 420),
+    );
+    if (reduced || widget.animationIndex == 0) {
+      _entrance.forward();
+    } else {
+      Future<void>.delayed(
+        Duration(milliseconds: widget.animationIndex * 70),
+        () {
+          if (mounted) _entrance.forward();
+        },
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final job = widget.job;
     final color = contentStatusColor(context, job.status);
-    return Card(
-      margin: const EdgeInsets.only(bottom: Spacing.sm),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap ?? () => context.go('/content/${job.id}', extra: job),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            children: [
-              ContentArtwork(
-                job: job,
-                status: job.status,
-                width: 66,
-                height: 82,
-                compact: true,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    final slide = CurvedAnimation(
+      parent: _entrance,
+      curve: Curves.easeOutCubic,
+    );
+    return FadeTransition(
+      opacity: slide,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, .08),
+          end: Offset.zero,
+        ).animate(slide),
+        child: AnimatedScale(
+          scale: _pressed ? .985 : 1,
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOut,
+          child: Card(
+            margin: const EdgeInsets.only(bottom: Spacing.sm),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onHighlightChanged: (value) {
+                if (mounted) setState(() => _pressed = value);
+              },
+              onTap:
+                  widget.onTap ??
+                  () => context.go('/content/${job.id}', extra: job),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Row(
                   children: [
-                    Text(
-                      job.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    ContentArtwork(
+                      job: job,
+                      status: job.status,
+                      width: 66,
+                      height: 82,
+                      compact: true,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${_when(job.scheduledAt)} · ${job.status.label}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: color, fontSize: 12),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            job.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${_when(job.scheduledAt)} · ${job.status.label}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: color, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    _JobStatusSignal(status: job.status, color: color),
+                    const SizedBox(width: 6),
+                    IconButton.outlined(
+                      tooltip: 'จัดการคอนเทนต์',
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(38, 38),
+                        side: BorderSide(color: color.withValues(alpha: .3)),
+                        foregroundColor: color,
+                        backgroundColor: color.withValues(alpha: .07),
+                      ),
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        showJobActions(context, job);
+                      },
+                      icon: const Icon(Icons.more_horiz_rounded, size: 20),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 4),
-              IconButton(
-                tooltip: 'จัดการคอนเทนต์',
-                onPressed: () => showJobActions(context, job),
-                icon: const Icon(Icons.more_vert_rounded),
-              ),
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _JobStatusSignal extends StatelessWidget {
+  const _JobStatusSignal({required this.status, required this.color});
+  final JobStatus status;
+  final Color color;
+
+  double get _progress => switch (status) {
+    JobStatus.queued => .28,
+    JobStatus.uploading => .55,
+    JobStatus.processing => .78,
+    JobStatus.awaitingReview => .92,
+    _ => 1,
+  };
+
+  IconData get _icon => switch (status) {
+    JobStatus.scheduled => Icons.schedule_rounded,
+    JobStatus.published => Icons.check_rounded,
+    JobStatus.failed => Icons.priority_high_rounded,
+    JobStatus.draft => Icons.edit_outlined,
+    _ => Icons.auto_awesome_rounded,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = MediaQuery.of(context).disableAnimations;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: _progress),
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 780),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, _) => SizedBox(
+        width: 34,
+        height: 34,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                value: progress,
+                strokeWidth: status == JobStatus.published ? 2.6 : 2,
+                color: color,
+                backgroundColor: color.withValues(alpha: .12),
+                strokeCap: StrokeCap.round,
+              ),
+            ),
+            Icon(_icon, color: color, size: 16),
+          ],
         ),
       ),
     );
@@ -651,38 +1132,149 @@ void showJobActions(BuildContext context, PublishJob job) {
       (Icons.visibility_outlined, 'ดูความคืบหน้า'),
     ],
   };
+  final statusColor = contentStatusColor(context, job.status);
   showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     builder: (sheetContext) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            title: Text(
-              job.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.md,
+          2,
+          Spacing.md,
+          Spacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: .11),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: statusColor.withValues(alpha: .28),
+                    ),
+                  ),
+                  child: Icon(
+                    job.status == JobStatus.scheduled
+                        ? Icons.schedule_rounded
+                        : job.status == JobStatus.published
+                        ? Icons.check_rounded
+                        : job.status == JobStatus.failed
+                        ? Icons.priority_high_rounded
+                        : Icons.auto_awesome_rounded,
+                    color: statusColor,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        job.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        job.status.label,
+                        style: TextStyle(color: statusColor, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            subtitle: Text(job.status.label),
-          ),
-          for (final action in actions)
-            ListTile(
-              leading: Icon(action.$1),
-              title: Text(action.$2),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                if (action == actions.first) {
-                  context.go('/content/${job.id}', extra: job);
-                } else {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('${action.$2}แล้ว')));
-                }
-              },
+            const SizedBox(height: Spacing.md),
+            for (final entry in actions.asMap().entries) ...[
+              _JobActionTile(
+                icon: entry.value.$1,
+                label: entry.value.$2,
+                color: entry.key == 0
+                    ? statusColor
+                    : sheetContext.t.textSecondary,
+                prominent: entry.key == 0,
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  HapticFeedback.selectionClick();
+                  if (entry.key == 0) {
+                    context.go('/content/${job.id}', extra: job);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${entry.value.$2}แล้ว')),
+                    );
+                  }
+                },
+              ),
+              if (entry.key != actions.length - 1) const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _JobActionTile extends StatelessWidget {
+  const _JobActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.prominent,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool prominent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: prominent ? color.withValues(alpha: .1) : context.t.surfaceContainer,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Radii.md),
+      side: BorderSide(
+        color: prominent ? color.withValues(alpha: .32) : context.t.border,
+      ),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        child: Row(
+          children: [
+            Container(
+              width: 35,
+              height: 35,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: .1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 19),
             ),
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: prominent ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_forward_rounded, size: 18, color: color),
+          ],
+        ),
       ),
     ),
   );

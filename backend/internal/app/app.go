@@ -174,7 +174,20 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, runMigrati
 
 	// pusher เป็น nil = บันทึกการแจ้งเตือนอย่างเดียว ยังไม่ส่ง push
 	// (รอตั้งค่า Firebase — ดู README)
-	d.Notifications = notification.NewService(db, nil, log)
+	var pusher notification.Pusher
+	if cfg.FCM.Enabled() {
+		pusher, err = notification.NewFCMPusher(notification.FCMConfig{
+			ProjectID:   cfg.FCM.ProjectID,
+			ClientEmail: cfg.FCM.ClientEmail,
+			PrivateKey:  cfg.FCM.PrivateKey,
+		}, log)
+		if err != nil {
+			d.Close()
+			return nil, err
+		}
+		log.Info("เปิดใช้ FCM push notifications")
+	}
+	d.Notifications = notification.NewService(db, pusher, log)
 	if !d.Notifications.PushEnabled() {
 		log.Warn("ยังไม่ได้ตั้งค่า FCM — จะบันทึกการแจ้งเตือนไว้แต่ยังไม่ส่ง push")
 	}

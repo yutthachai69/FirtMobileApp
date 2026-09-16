@@ -251,3 +251,24 @@ func (s *Service) Retry(ctx context.Context, userID, id string) (*Job, error) {
 	}
 	return s.repo.Get(ctx, userID, id)
 }
+
+func (s *Service) Reschedule(ctx context.Context, userID, id string, at time.Time) (*Job, error) {
+	if err := s.validateSchedule(at); err != nil {
+		return nil, err
+	}
+	if err := s.repo.RescheduleOwned(ctx, userID, id, at); errors.Is(err, ErrNotFound) {
+		return nil, apierror.ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	return s.repo.Get(ctx, userID, id)
+}
+
+func (s *Service) Restore(ctx context.Context, userID, id string) (*Job, error) {
+	if err := s.repo.Restore(ctx, userID, id); errors.Is(err, ErrNotFound) {
+		return nil, apierror.ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	return s.repo.Get(ctx, userID, id)
+}

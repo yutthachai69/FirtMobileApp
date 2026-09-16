@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.relaycontent.relaycontent"
-    compileSdk = flutter.compileSdkVersion
+    // Firebase Messaging and the current secure-storage plugin require SDK 37.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

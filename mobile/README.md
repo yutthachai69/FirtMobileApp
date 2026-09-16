@@ -1,5 +1,16 @@
 # relaycontent
 
+## Push notifications
+
+Push registration is optional and never blocks login. For Android/iOS, add the
+Firebase native config files (`google-services.json` / `GoogleService-Info.plist`)
+or provide these build-time defines:
+
+`FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`, and
+`FIREBASE_PROJECT_ID` (with optional `FIREBASE_STORAGE_BUCKET` and
+`FIREBASE_IOS_BUNDLE_ID`). The app requests permission, registers the FCM token
+at `/v1/devices`, and refreshes it when Firebase rotates the token.
+
 A new Flutter project.
 
 ## Getting Started

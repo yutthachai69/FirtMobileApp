@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../app/widgets/skeleton.dart';
+import '../../../core/config/app_config.dart';
 import '../domain/content_store.dart';
 import '../domain/home_data.dart';
 import 'content_planner.dart';
@@ -15,11 +16,7 @@ import 'home_page.dart' show JobCard;
 /// เพราะข้อมูลชุดเดียวกัน (publish_jobs + contents) แค่มุมมองต่างกัน:
 /// หน้าหลักจัดกลุ่มตามความเร่งด่วน หน้านี้กรองแบบ flat ตามสถานะ
 class ContentLibraryPage extends StatefulWidget {
-  const ContentLibraryPage({
-    super.key,
-    required this.controller,
-    this.store,
-  });
+  const ContentLibraryPage({super.key, required this.controller, this.store});
   final HomeController controller;
 
   /// แหล่งงานกลาง — ถ้าไม่มีข้อมูลจาก backend หน้านี้จะแสดงงานจาก store
@@ -45,15 +42,10 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
   }
 
   /// true = กำลังแสดงงานจาก store (prototype) ไม่ใช่ข้อมูล backend
-  bool _usingStore(HomeData data) {
-    final real = [...data.working, ...data.scheduled, ...data.publishedToday];
-    return real.isEmpty && data.needAction.isEmpty && widget.store != null;
-  }
+  bool _usingStore() => AppConfig.isDemo && widget.store != null;
 
   List<PublishJob> _sourceJobs(HomeData data) {
-    final real = [...data.working, ...data.scheduled, ...data.publishedToday];
-    if (real.isNotEmpty || data.needAction.isNotEmpty) return real;
-    return widget.store?.jobs ?? const [];
+    return widget.store?.jobs ?? data.jobs;
   }
 
   List<PublishJob> _jobsFor(HomeData data) {
@@ -97,9 +89,7 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
             if (widget.store != null)
               SegmentedButton<_ViewMode>(
                 showSelectedIcon: false,
-                style: const ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                ),
+                style: const ButtonStyle(visualDensity: VisualDensity.compact),
                 segments: const [
                   ButtonSegment(
                     value: _ViewMode.list,
@@ -196,7 +186,7 @@ class _ContentLibraryPageState extends State<ContentLibraryPage> {
           ),
         ),
         const SizedBox(height: Spacing.lg),
-        if (_usingStore(data)) ...[
+        if (_usingStore()) ...[
           _PreviewBanner(),
           const SizedBox(height: Spacing.md),
         ],

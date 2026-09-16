@@ -15,40 +15,64 @@ class AuthPage extends StatefulWidget {
   State<AuthPage> createState() => _AuthPageState();
 }
 
-class _AuthPageState extends State<AuthPage>
-    with SingleTickerProviderStateMixin {
+class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _name = TextEditingController();
+  final _nameFocus = FocusNode();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   late final AnimationController _entrance;
+  late final AnimationController _modeMotion;
+  late final AnimationController _modeSweep;
+  late final AnimationController _signalMotion;
+  late final AnimationController _submitPulse;
   bool _register = false;
+  bool _sweepToRegister = true;
   bool _obscure = true;
+  double _signalDestination = .06;
 
   @override
   void initState() {
     super.initState();
     _entrance = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 850),
+      duration: const Duration(milliseconds: 520),
     )..forward();
-    _emailFocus.addListener(_refreshJourney);
-    _passwordFocus.addListener(_refreshJourney);
+    _modeMotion = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+      value: 1,
+    );
+    _modeSweep = AnimationController(vsync: this, value: 1);
+    _signalMotion = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+      value: .06,
+    );
+    _submitPulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+      lowerBound: .96,
+      upperBound: 1,
+      value: 1,
+    );
+    _nameFocus.addListener(_refreshFormState);
+    _emailFocus.addListener(_refreshFormState);
+    _passwordFocus.addListener(_refreshFormState);
   }
-
-  void _refreshJourney() => setState(() {});
 
   @override
   void dispose() {
     _entrance.dispose();
-    _emailFocus
-      ..removeListener(_refreshJourney)
-      ..dispose();
-    _passwordFocus
-      ..removeListener(_refreshJourney)
-      ..dispose();
+    _modeMotion.dispose();
+    _modeSweep.dispose();
+    _signalMotion.dispose();
+    _submitPulse.dispose();
+    _nameFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     _email.dispose();
     _password.dispose();
     _name.dispose();
@@ -58,6 +82,8 @@ class _AuthPageState extends State<AuthPage>
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
+    _playSubmitPulse();
+    _moveSignalTo(1);
     await widget.auth.authenticate(
       _email.text,
       _password.text,
@@ -68,11 +94,90 @@ class _AuthPageState extends State<AuthPage>
     }
   }
 
-  double _journeyProgress(bool busy) {
-    if (busy) return 1;
-    if (_passwordFocus.hasFocus || _password.text.isNotEmpty) return .68;
-    if (_emailFocus.hasFocus || _email.text.isNotEmpty) return .34;
-    return .08;
+  void _playSubmitPulse() {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return;
+    _submitPulse
+      ..animateTo(.96, duration: const Duration(milliseconds: 70))
+      ..forward(from: .96);
+  }
+
+  void _refreshFormState([String? _]) {
+    if (!mounted) return;
+    final emailValid = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+        .hasMatch(_email.text.trim());
+    final passwordLength = utf8.encode(_password.text).length;
+    final complete =
+        emailValid &&
+        (_register
+            ? _name.text.trim().isNotEmpty && passwordLength >= 8
+            : _password.text.isNotEmpty);
+
+    final target = complete
+        ? .93
+        : _nameFocus.hasFocus
+        ? .12
+        : _emailFocus.hasFocus
+        ? (_register ? .34 : .18)
+        : _passwordFocus.hasFocus
+        ? .62
+        : .06;
+    _moveSignalTo(target);
+  }
+
+  void _onPasswordChanged(String _) {
+    if (_register) setState(() {});
+    _refreshFormState();
+  }
+
+  void _moveSignalTo(double target) {
+    if ((_signalDestination - target).abs() < .001) return;
+    _signalDestination = target;
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      _signalMotion.value = target;
+      return;
+    }
+    final distance = (_signalMotion.value - target).abs();
+    _signalMotion.animateTo(
+      target,
+      duration: Duration(milliseconds: 190 + (distance * 180).round()),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  Future<void> _toggleMode() async {
+    if (_modeSweep.isAnimating) return;
+    if (MediaQuery.of(context).disableAnimations) {
+      _applyModeToggle();
+      _modeMotion.value = 1;
+      return;
+    }
+
+    _sweepToRegister = !_register;
+    _modeSweep.value = 0;
+    await _modeSweep.animateTo(
+      .42,
+      duration: const Duration(milliseconds: 190),
+      curve: Curves.easeInCubic,
+    );
+    if (!mounted) return;
+    _applyModeToggle();
+    _modeMotion.forward(from: 0);
+    await _modeSweep.animateTo(
+      1,
+      duration: const Duration(milliseconds: 270),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _applyModeToggle() {
+    setState(() {
+      _register = !_register;
+      widget.auth.error = null;
+      _password.clear();
+      _signalDestination = .06;
+      _signalMotion.value = .06;
+      _form.currentState?.reset();
+    });
   }
 
   @override
@@ -110,7 +215,7 @@ class _AuthPageState extends State<AuthPage>
                       child: SlideTransition(
                         position:
                             Tween(
-                              begin: const Offset(0, .035),
+                              begin: const Offset(0, .02),
                               end: Offset.zero,
                             ).animate(
                               CurvedAnimation(
@@ -124,239 +229,404 @@ class _AuthPageState extends State<AuthPage>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const _Brand(),
-                                const SizedBox(height: Spacing.lg),
-                                if (MediaQuery.sizeOf(context).height >
-                                    700) ...[
-                                  _RelayJourney(
-                                    progress: _journeyProgress(auth.busy),
-                                    busy: auth.busy,
-                                  ),
-                                  const SizedBox(height: Spacing.lg),
-                                ],
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 240),
-                                  child: Column(
-                                    key: ValueKey(_register),
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _register
-                                            ? 'เริ่มส่งต่อไอเดียของคุณ'
-                                            : 'กลับมาส่งไอเดียต่อ',
-                                        style: const TextStyle(
-                                          fontSize: 29,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.35,
-                                        ),
-                                      ),
-                                      const SizedBox(height: Spacing.sm),
-                                      Text(
-                                        _register
-                                            ? 'สร้างบัญชี แล้วให้ทุกโพสต์เดินทางตรงเวลา'
-                                            : 'งานที่ตั้งเวลาไว้ยังเดินหน้าต่อ แม้คุณปิดแอป',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          height: 1.5,
-                                          color: context.t.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                _AnimatedBrand(
+                                  animation: _modeSweep,
+                                  toRegister: _sweepToRegister,
                                 ),
                                 const SizedBox(height: Spacing.lg),
-                                AnimatedSize(
-                                  duration: const Duration(milliseconds: 260),
-                                  curve: Curves.easeOutCubic,
-                                  alignment: Alignment.topCenter,
-                                  child: _register
-                                      ? Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: Spacing.md,
-                                          ),
-                                          child: TextFormField(
-                                            key: const Key('display-name'),
-                                            controller: _name,
-                                            enabled: !auth.busy,
-                                            decoration: const InputDecoration(
-                                              labelText: 'ชื่อที่ใช้แสดง',
-                                              prefixIcon: Icon(
-                                                Icons.person_outline_rounded,
-                                              ),
-                                              counterText: '',
-                                            ),
-                                            autofillHints: const [
-                                              AutofillHints.name,
-                                            ],
-                                            textInputAction:
-                                                TextInputAction.next,
-                                            maxLength: 100,
-                                            validator: (value) =>
-                                                value?.trim().isNotEmpty == true
-                                                ? null
-                                                : 'กรุณากรอกชื่อที่ใช้แสดง',
-                                          ),
-                                        )
-                                      : const SizedBox.shrink(),
-                                ),
-                                TextFormField(
-                                  key: const Key('email'),
-                                  controller: _email,
-                                  focusNode: _emailFocus,
-                                  enabled: !auth.busy,
-                                  decoration: const InputDecoration(
-                                    labelText: 'อีเมล',
-                                    prefixIcon: Icon(
-                                      Icons.mail_outline_rounded,
-                                    ),
-                                  ),
-                                  keyboardType: TextInputType.emailAddress,
-                                  textInputAction: TextInputAction.next,
-                                  autofillHints: const [AutofillHints.email],
-                                  autocorrect: false,
-                                  onChanged: (_) => setState(() {}),
-                                  validator: (value) =>
-                                      RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                                          .hasMatch(value?.trim() ?? '')
+                                _AuthWelcome(register: _register),
+                                const SizedBox(height: Spacing.lg),
+                                _AuthModeSwitch(
+                                  register: _register,
+                                  onChanged: auth.busy
                                       ? null
-                                      : 'กรุณากรอกอีเมลให้ถูกต้อง',
-                                ),
-                                const SizedBox(height: Spacing.md),
-                                TextFormField(
-                                  key: const Key('password'),
-                                  controller: _password,
-                                  focusNode: _passwordFocus,
-                                  enabled: !auth.busy,
-                                  decoration: InputDecoration(
-                                    labelText: 'รหัสผ่าน',
-                                    prefixIcon: const Icon(
-                                      Icons.lock_outline_rounded,
-                                    ),
-                                    suffixIcon: IconButton(
-                                      onPressed: auth.busy
-                                          ? null
-                                          : () => setState(
-                                              () => _obscure = !_obscure,
-                                            ),
-                                      tooltip: _obscure
-                                          ? 'แสดงรหัสผ่าน'
-                                          : 'ซ่อนรหัสผ่าน',
-                                      icon: Icon(
-                                        _obscure
-                                            ? Icons.visibility_outlined
-                                            : Icons.visibility_off_outlined,
-                                      ),
-                                    ),
-                                  ),
-                                  obscureText: _obscure,
-                                  autocorrect: false,
-                                  enableSuggestions: false,
-                                  autofillHints: [
-                                    _register
-                                        ? AutofillHints.newPassword
-                                        : AutofillHints.password,
-                                  ],
-                                  textInputAction: TextInputAction.done,
-                                  onChanged: (_) => setState(() {}),
-                                  onFieldSubmitted: (_) {
-                                    if (!auth.busy) _submit();
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'กรุณากรอกรหัสผ่าน';
-                                    }
-                                    if (_register &&
-                                        utf8.encode(value).length < 8) {
-                                      return 'รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร';
-                                    }
-                                    if (_register &&
-                                        utf8.encode(value).length > 72) {
-                                      return 'รหัสผ่านยาวเกินไป กรุณาลดจำนวนตัวอักษร';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                if (_register)
-                                  _PasswordChecks(value: _password.text)
-                                else
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton(
-                                      key: const Key('forgot-password'),
-                                      onPressed: auth.busy
-                                          ? null
-                                          : _showForgotPassword,
-                                      child: const Text('ลืมรหัสผ่าน?'),
-                                    ),
-                                  ),
-                                AnimatedSize(
-                                  duration: const Duration(milliseconds: 220),
-                                  child: auth.error == null
-                                      ? const SizedBox.shrink()
-                                      : Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: Spacing.md,
-                                          ),
-                                          child: _ErrorNotice(auth.error!),
-                                        ),
+                                      : (register) {
+                                          if (register != _register) {
+                                            _toggleMode();
+                                          }
+                                        },
                                 ),
                                 const SizedBox(height: Spacing.lg),
-                                FilledButton(
-                                  key: const Key('submit'),
-                                  onPressed: auth.busy ? null : _submit,
-                                  child: AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 180),
-                                    child: auth.busy
-                                        ? const Row(
-                                            key: ValueKey('sending'),
-                                            mainAxisSize: MainAxisSize.min,
+                                FadeTransition(
+                                  opacity: CurvedAnimation(
+                                    parent: _modeMotion,
+                                    curve: const Interval(
+                                      .12,
+                                      1,
+                                      curve: Curves.easeOut,
+                                    ),
+                                  ),
+                                  child: ScaleTransition(
+                                    alignment: Alignment.topCenter,
+                                    scale: Tween(begin: .99, end: 1.0).animate(
+                                      CurvedAnimation(
+                                        parent: _modeMotion,
+                                        curve: Curves.easeOutCubic,
+                                      ),
+                                    ),
+                                    child: SlideTransition(
+                                      position:
+                                          Tween(
+                                            begin: Offset(
+                                              _register ? .055 : -.055,
+                                              0,
+                                            ),
+                                            end: Offset.zero,
+                                          ).animate(
+                                            CurvedAnimation(
+                                              parent: _modeMotion,
+                                              curve: Curves.easeOutCubic,
+                                            ),
+                                          ),
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          Positioned(
+                                            left: -18,
+                                            top: 2,
+                                            bottom: 2,
+                                            width: 12,
+                                            child: IgnorePointer(
+                                              child: RepaintBoundary(
+                                                child: AnimatedBuilder(
+                                                  animation: _signalMotion,
+                                                  builder: (context, _) =>
+                                                      CustomPaint(
+                                                        painter:
+                                                            _SignalTrailPainter(
+                                                              progress:
+                                                                  _signalMotion
+                                                                      .value,
+                                                              color: context
+                                                                  .t
+                                                                  .primary,
+                                                            ),
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
+                                              _ModeReveal(
+                                                animation: _modeMotion,
+                                                index: 0,
+                                                forward: _register,
+                                                child: AnimatedSize(
+                                                  duration: const Duration(
+                                                    milliseconds: 260,
+                                                  ),
+                                                  curve: Curves.easeOutCubic,
+                                                  alignment:
+                                                      Alignment.topCenter,
+                                                  child: _register
+                                                      ? Padding(
+                                                          padding:
+                                                              const EdgeInsets.only(
+                                                                bottom:
+                                                                    Spacing.md,
+                                                              ),
+                                                          child: TextFormField(
+                                                            key: const Key(
+                                                              'display-name',
+                                                            ),
+                                                            controller: _name,
+                                                            focusNode:
+                                                                _nameFocus,
+                                                            enabled: !auth.busy,
+                                                            decoration:
+                                                                const InputDecoration(
+                                                                  labelText: 'ชื่อที่ใช้แสดง',
+                                                                  prefixIcon: Icon(
+                                                                    Icons
+                                                                        .person_outline_rounded,
+                                                                  ),
+                                                                  counterText:
+                                                                      '',
+                                                                ),
+                                                            autofillHints:
+                                                                const [
+                                                                  AutofillHints
+                                                                      .name,
+                                                                ],
+                                                            textInputAction:
+                                                                TextInputAction
+                                                                    .next,
+                                                            maxLength: 100,
+                                                            onChanged:
+                                                                _refreshFormState,
+                                                            validator: (value) =>
+                                                                value
+                                                                        ?.trim()
+                                                                        .isNotEmpty ==
+                                                                    true
+                                                                ? null
+                                                                : 'กรุณากรอกชื่อที่ใช้แสดง',
+                                                          ),
+                                                        )
+                                                      : const SizedBox.shrink(),
+                                                ),
+                                              ),
+                                              _ModeReveal(
+                                                animation: _modeMotion,
+                                                index: 1,
+                                                forward: _register,
+                                                child: TextFormField(
+                                                  key: const Key('email'),
+                                                  controller: _email,
+                                                  focusNode: _emailFocus,
+                                                  enabled: !auth.busy,
+                                                  decoration: const InputDecoration(
+                                                    labelText: 'อีเมล',
+                                                    prefixIcon: Icon(
+                                                      Icons
+                                                          .mail_outline_rounded,
                                                     ),
+                                                  ),
+                                                  keyboardType: TextInputType
+                                                      .emailAddress,
+                                                  textInputAction:
+                                                      TextInputAction.next,
+                                                  autofillHints: const [
+                                                    AutofillHints.email,
+                                                  ],
+                                                  autocorrect: false,
+                                                  onChanged: _refreshFormState,
+                                                  validator: (value) =>
+                                                      RegExp(
+                                                        r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                                                      ).hasMatch(
+                                                        value?.trim() ?? '',
+                                                      )
+                                                      ? null
+                                                      : 'กรุณากรอกอีเมลให้ถูกต้อง',
+                                                ),
                                               ),
-                                              SizedBox(width: Spacing.sm),
-                                              Text('กำลังส่งต่อ…'),
-                                            ],
-                                          )
-                                        : Row(
-                                            key: const ValueKey('ready'),
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                _register
-                                                    ? 'สร้างบัญชี'
-                                                    : 'เข้าสู่ระบบ',
+                                              const SizedBox(
+                                                height: Spacing.md,
                                               ),
-                                              const SizedBox(width: Spacing.sm),
-                                              const Icon(
-                                                Icons.arrow_forward_rounded,
-                                                size: 19,
+                                              _ModeReveal(
+                                                animation: _modeMotion,
+                                                index: 2,
+                                                forward: _register,
+                                                child: TextFormField(
+                                                  key: const Key('password'),
+                                                  controller: _password,
+                                                  focusNode: _passwordFocus,
+                                                  enabled: !auth.busy,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'รหัสผ่าน',
+                                                    prefixIcon: const Icon(
+                                                      Icons
+                                                          .lock_outline_rounded,
+                                                    ),
+                                                    suffixIcon: IconButton(
+                                                      onPressed: auth.busy
+                                                          ? null
+                                                          : () => setState(
+                                                              () => _obscure =
+                                                                  !_obscure,
+                                                            ),
+                                                      tooltip: _obscure
+                                                          ? 'แสดงรหัสผ่าน'
+                                                          : 'ซ่อนรหัสผ่าน',
+                                                      icon: Icon(
+                                                        _obscure
+                                                            ? Icons
+                                                                  .visibility_outlined
+                                                            : Icons
+                                                                  .visibility_off_outlined,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  obscureText: _obscure,
+                                                  autocorrect: false,
+                                                  enableSuggestions: false,
+                                                  autofillHints: [
+                                                    _register
+                                                        ? AutofillHints
+                                                              .newPassword
+                                                        : AutofillHints
+                                                              .password,
+                                                  ],
+                                                  textInputAction:
+                                                      TextInputAction.done,
+                                                  onChanged: _onPasswordChanged,
+                                                  onFieldSubmitted: (_) {
+                                                    if (!auth.busy) _submit();
+                                                  },
+                                                  validator: (value) {
+                                                    if (value == null ||
+                                                        value.isEmpty) {
+                                                      return 'กรุณากรอกรหัสผ่าน';
+                                                    }
+                                                    if (_register &&
+                                                        utf8
+                                                                .encode(value)
+                                                                .length <
+                                                            8) {
+                                                      return 'รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร';
+                                                    }
+                                                    if (_register &&
+                                                        utf8
+                                                                .encode(value)
+                                                                .length >
+                                                            72) {
+                                                      return 'รหัสผ่านยาวเกินไป กรุณาลดจำนวนตัวอักษร';
+                                                    }
+                                                    return null;
+                                                  },
+                                                ),
                                               ),
+                                              _ModeReveal(
+                                                animation: _modeMotion,
+                                                index: 3,
+                                                forward: _register,
+                                                child: _register
+                                                    ? _PasswordChecks(
+                                                        value: _password.text,
+                                                      )
+                                                    : Align(
+                                                        alignment: Alignment
+                                                            .centerRight,
+                                                        child: TextButton(
+                                                          key: const Key(
+                                                            'forgot-password',
+                                                          ),
+                                                          onPressed: auth.busy
+                                                              ? null
+                                                              : _showForgotPassword,
+                                                          child: const Text(
+                                                            'ลืมรหัสผ่าน?',
+                                                          ),
+                                                        ),
+                                                      ),
+                                              ),
+                                              AnimatedSize(
+                                                duration: const Duration(
+                                                  milliseconds: 220,
+                                                ),
+                                                child: auth.error == null
+                                                    ? const SizedBox.shrink()
+                                                    : Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              top: Spacing.md,
+                                                            ),
+                                                        child: _ErrorNotice(
+                                                          auth.error!,
+                                                        ),
+                                                      ),
+                                              ),
+                                              const SizedBox(
+                                                height: Spacing.lg,
+                                              ),
+                                              _ModeReveal(
+                                                animation: _modeMotion,
+                                                index: 4,
+                                                forward: _register,
+                                                child: SizedBox(
+                                                  height: 52,
+                                                  width: double.infinity,
+                                                  child: ScaleTransition(
+                                                    scale: _submitPulse,
+                                                    child: FilledButton(
+                                                      key: const Key('submit'),
+                                                      onPressed: auth.busy
+                                                          ? null
+                                                          : _submit,
+                                                      child: AnimatedSwitcher(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 180,
+                                                            ),
+                                                        child: auth.busy
+                                                            ? const Row(
+                                                                key: ValueKey(
+                                                                  'sending',
+                                                                ),
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                children: [
+                                                                  SizedBox(
+                                                                    width: 18,
+                                                                    height: 18,
+                                                                    child: CircularProgressIndicator(
+                                                                      strokeWidth:
+                                                                          2,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(
+                                                                    width:
+                                                                        Spacing
+                                                                            .sm,
+                                                                  ),
+                                                                  Text(
+                                                                    'กำลังส่งต่อ…',
+                                                                  ),
+                                                                ],
+                                                              )
+                                                            : Row(
+                                                                key:
+                                                                    const ValueKey(
+                                                                      'ready',
+                                                                    ),
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                children: [
+                                                                  Text(
+                                                                    _register
+                                                                        ? 'สร้างบัญชี'
+                                                                        : 'เข้าสู่ระบบ',
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    width:
+                                                                        Spacing
+                                                                            .sm,
+                                                                  ),
+                                                                  _RelayArrow(
+                                                                    animation:
+                                                                        _modeMotion,
+                                                                    size: 19,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              if (MediaQuery.sizeOf(context)
+                                                          .height >
+                                                      700 &&
+                                                  MediaQuery.viewInsetsOf(
+                                                        context,
+                                                      ).bottom ==
+                                                      0) ...[
+                                                const SizedBox(
+                                                  height: Spacing.lg,
+                                                ),
+                                                Center(
+                                                  child: Text(
+                                                    'สร้าง  •  ตั้งเวลา  •  เผยแพร่',
+                                                    style: TextStyle(
+                                                      color: context
+                                                          .t
+                                                          .textSecondary,
+                                                      fontSize: 12,
+                                                      letterSpacing: .4,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           ),
-                                  ),
-                                ),
-                                const SizedBox(height: Spacing.md),
-                                Center(
-                                  child: TextButton(
-                                    onPressed: auth.busy
-                                        ? null
-                                        : () => setState(() {
-                                            _register = !_register;
-                                            widget.auth.error = null;
-                                            _password.clear();
-                                            _form.currentState?.reset();
-                                          }),
-                                    child: Text(
-                                      _register
-                                          ? 'มีบัญชีแล้ว? เข้าสู่ระบบ'
-                                          : 'ยังไม่มีบัญชี? สมัครสมาชิก',
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -364,6 +634,22 @@ class _AuthPageState extends State<AuthPage>
                             ),
                           ),
                         ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: RepaintBoundary(
+                  child: AnimatedBuilder(
+                    animation: _modeSweep,
+                    builder: (context, _) => CustomPaint(
+                      painter: _AuthModeSweepPainter(
+                        progress: _modeSweep.value,
+                        toRegister: _sweepToRegister,
+                        color: context.t.primary,
                       ),
                     ),
                   ),
@@ -382,6 +668,422 @@ class _AuthPageState extends State<AuthPage>
     showDragHandle: true,
     builder: (_) => _ForgotPasswordSheet(initialEmail: _email.text),
   );
+}
+
+class _ModeReveal extends StatelessWidget {
+  const _ModeReveal({
+    required this.animation,
+    required this.index,
+    required this.forward,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final int index;
+  final bool forward;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) return child;
+
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final start = index * .085;
+        final end = math.min(1.0, .64 + index * .085);
+        final raw = ((animation.value - start) / (end - start)).clamp(0.0, 1.0);
+        final progress = Curves.easeOutCubic.transform(raw);
+        final direction = forward ? 1.0 : -1.0;
+
+        return Opacity(
+          opacity: progress,
+          child: Transform.translate(
+            offset: Offset(
+              direction * (1 - progress) * (12 + index * 2.5),
+              (1 - progress) * 3,
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RelayArrow extends StatelessWidget {
+  const _RelayArrow({required this.animation, required this.size});
+
+  final Animation<double> animation;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) {
+      return Icon(Icons.arrow_forward_rounded, size: size);
+    }
+
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        final raw = ((animation.value - .66) / .34).clamp(0.0, 1.0);
+        final handoff = math.sin(math.pi * raw);
+        return Transform.translate(
+          offset: Offset(5 * handoff, 0),
+          child: Icon(Icons.arrow_forward_rounded, size: size),
+        );
+      },
+    );
+  }
+}
+
+class _AuthWelcome extends StatelessWidget {
+  const _AuthWelcome({required this.register});
+
+  final bool register;
+
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+    duration: MediaQuery.of(context).disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 280),
+    switchInCurve: Curves.easeOutCubic,
+    switchOutCurve: Curves.easeInCubic,
+    transitionBuilder: (child, animation) => FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween(
+          begin: Offset(register ? .06 : -.06, 0),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
+      ),
+    ),
+    child: Column(
+      key: ValueKey(register),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          register ? 'สร้างบัญชีของคุณ' : 'ยินดีต้อนรับกลับ',
+          style: const TextStyle(
+            fontSize: 28,
+            height: 1.3,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: Spacing.xs),
+        Text(
+          register
+              ? 'เริ่มจัดการและวางแผนคอนเทนต์ได้ในที่เดียว'
+              : 'เข้าสู่ระบบเพื่อจัดการคอนเทนต์ของคุณ',
+          style: TextStyle(
+            color: context.t.textSecondary,
+            fontSize: 14,
+            height: 1.45,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _AuthModeSwitch extends StatelessWidget {
+  const _AuthModeSwitch({required this.register, required this.onChanged});
+
+  final bool register;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.t;
+    final duration = MediaQuery.of(context).disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 340);
+
+    return Semantics(
+      label: 'เลือกเข้าสู่ระบบหรือสมัครสมาชิก',
+      child: Container(
+        key: const Key('auth-mode-switch'),
+        height: 52,
+        padding: const EdgeInsets.all(Spacing.xs),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: tokens.surfaceContainer,
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(color: tokens.border),
+        ),
+        child: Stack(
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween(end: register ? 1 : 0),
+              duration: duration,
+              curve: Curves.easeInOutCubic,
+              builder: (context, progress, _) => CustomPaint(
+                painter: _AuthModeIndicatorPainter(
+                  progress: progress,
+                  color: tokens.primary,
+                  glow: tokens.primary.withValues(alpha: .18),
+                ),
+                child: const SizedBox.expand(),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _ModeTab(
+                    key: const Key('auth-login-tab'),
+                    icon: Icons.login_rounded,
+                    label: 'เข้าสู่ระบบ',
+                    selected: !register,
+                    onTap: onChanged == null ? null : () => onChanged!(false),
+                  ),
+                ),
+                Expanded(
+                  child: _ModeTab(
+                    key: const Key('auth-register-tab'),
+                    icon: Icons.person_add_alt_1_rounded,
+                    label: 'สมัครสมาชิก',
+                    selected: register,
+                    onTap: onChanged == null ? null : () => onChanged!(true),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeTab extends StatelessWidget {
+  const _ModeTab({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(Radii.sm),
+      child: Center(
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutBack,
+          scale: selected ? 1 : .96,
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 160),
+            style: TextStyle(
+              color: selected ? context.t.onPrimary : context.t.textSecondary,
+              fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+              fontWeight: FontWeight.w600,
+            ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconTheme(
+                    data: IconThemeData(
+                      color: selected
+                          ? context.t.onPrimary
+                          : context.t.textSecondary,
+                      size: 17,
+                    ),
+                    child: Icon(icon),
+                  ),
+                  const SizedBox(width: Spacing.xs),
+                  Text(label),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _AuthModeIndicatorPainter extends CustomPainter {
+  const _AuthModeIndicatorPainter({
+    required this.progress,
+    required this.color,
+    required this.glow,
+  });
+
+  final double progress;
+  final Color color;
+  final Color glow;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double x(double from, double to) =>
+        size.width * (from + (to - from) * progress);
+
+    final path = Path()
+      ..moveTo(x(0, .52), 0)
+      ..lineTo(x(.56, 1), 0)
+      ..lineTo(x(.48, 1), size.height)
+      ..lineTo(x(0, .44), size.height)
+      ..close();
+    canvas.clipRRect(
+      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(8)),
+    );
+    canvas.drawShadow(path, glow, 8, false);
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_AuthModeIndicatorPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.glow != glow;
+}
+
+class _SignalTrailPainter extends CustomPainter {
+  const _SignalTrailPainter({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final x = size.width / 2;
+    final top = 3.0;
+    final bottom = size.height - 3;
+    final y = top + (bottom - top) * progress;
+
+    canvas.drawLine(
+      Offset(x, top),
+      Offset(x, bottom),
+      Paint()
+        ..color = color.withValues(alpha: .18)
+        ..strokeWidth = 1
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawLine(
+      Offset(x, top),
+      Offset(x, y),
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: .12), color.withValues(alpha: .86)],
+        ).createShader(Rect.fromLTRB(0, top, size.width, math.max(top + 1, y)))
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawCircle(
+      Offset(x, y),
+      10,
+      Paint()..color = color.withValues(alpha: .14),
+    );
+    canvas.drawCircle(Offset(x, y), 3.1, Paint()..color = color);
+    canvas.drawCircle(
+      Offset(x, y),
+      5.5,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = color.withValues(alpha: .56),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SignalTrailPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
+}
+
+class _AuthModeSweepPainter extends CustomPainter {
+  const _AuthModeSweepPainter({
+    required this.progress,
+    required this.toRegister,
+    required this.color,
+  });
+
+  final double progress;
+  final bool toRegister;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress >= .999) return;
+
+    final forwardCenter = progress <= .42
+        ? -.45 + .95 * (progress / .42)
+        : .5 + (progress - .42) / .58;
+    final center =
+        size.width * (toRegister ? forwardCenter : 1 - forwardCenter);
+    final halfBand = size.width * .36;
+    final slant = math.min(size.width * .32, size.height * .14);
+    final path = Path()
+      ..moveTo(center - halfBand - slant, 0)
+      ..lineTo(center + halfBand - slant, 0)
+      ..lineTo(center + halfBand + slant, size.height)
+      ..lineTo(center - halfBand + slant, size.height)
+      ..close();
+    final strength = math.sin(math.pi * progress);
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          color.withValues(alpha: .025 * strength),
+          color.withValues(alpha: .19 * strength),
+          color.withValues(alpha: .055 * strength),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(path, paint);
+
+    canvas.drawLine(
+      Offset(center - slant, 0),
+      Offset(center + slant, size.height),
+      Paint()
+        ..color = color.withValues(alpha: .32 * strength)
+        ..strokeWidth = 1.5,
+    );
+
+    final packet = Offset(center, size.height * .5);
+    canvas.drawCircle(
+      packet,
+      18,
+      Paint()..color = color.withValues(alpha: .12 * strength),
+    );
+    canvas.drawCircle(
+      packet,
+      5,
+      Paint()..color = color.withValues(alpha: .72 * strength),
+    );
+    final trail = Offset(center + (toRegister ? -34 : 34), size.height * .5);
+    canvas.drawCircle(
+      trail,
+      10,
+      Paint()..color = color.withValues(alpha: .08 * strength),
+    );
+    canvas.drawCircle(
+      trail,
+      2.5,
+      Paint()..color = color.withValues(alpha: .42 * strength),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_AuthModeSweepPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.toRegister != toRegister ||
+      oldDelegate.color != color;
 }
 
 class _PasswordChecks extends StatelessWidget {
@@ -537,6 +1239,30 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
   );
 }
 
+class _AnimatedBrand extends StatelessWidget {
+  const _AnimatedBrand({required this.animation, required this.toRegister});
+
+  final Animation<double> animation;
+  final bool toRegister;
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: animation,
+    child: const _Brand(),
+    builder: (context, child) {
+      final pulse = math.sin(math.pi * animation.value);
+      final direction = toRegister ? 1.0 : -1.0;
+      return Transform.translate(
+        offset: Offset(direction * 5 * pulse, 0),
+        child: Transform.rotate(
+          angle: direction * .055 * pulse,
+          child: Transform.scale(scale: 1 + .035 * pulse, child: child),
+        ),
+      );
+    },
+  );
+}
+
 class _Brand extends StatelessWidget {
   const _Brand();
 
@@ -565,133 +1291,6 @@ class _Brand extends StatelessWidget {
         style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
       ),
     ],
-  );
-}
-
-class _RelayJourney extends StatelessWidget {
-  const _RelayJourney({required this.progress, required this.busy});
-  final double progress;
-  final bool busy;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: 'เส้นทางคอนเทนต์ จากไอเดียไปสู่การเผยแพร่',
-    child: ExcludeSemantics(
-      child: Container(
-        height: 112,
-        padding: const EdgeInsets.fromLTRB(18, 15, 18, 12),
-        decoration: BoxDecoration(
-          color: context.t.surfaceContainer.withValues(alpha: .88),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: context.t.border),
-        ),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(end: progress),
-          duration: const Duration(milliseconds: 520),
-          curve: Curves.easeOutCubic,
-          builder: (context, value, _) => Column(
-            children: [
-              Expanded(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _JourneyPainter(
-                          progress: value,
-                          primary: context.t.primary,
-                          border: context.t.border,
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _JourneyNode(
-                          icon: Icons.edit_rounded,
-                          active: value >= 0,
-                        ),
-                        _JourneyNode(
-                          icon: Icons.schedule_rounded,
-                          active: value >= .48,
-                        ),
-                        _JourneyNode(
-                          icon: busy
-                              ? Icons.bolt_rounded
-                              : Icons.rocket_launch_rounded,
-                          active: value >= .9,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const _JourneyLabel('ไอเดีย', active: true),
-                  _JourneyLabel('ตั้งเวลา', active: progress >= .48),
-                  _JourneyLabel('เผยแพร่', active: progress >= .9),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class _JourneyNode extends StatelessWidget {
-  const _JourneyNode({required this.icon, required this.active});
-  final IconData icon;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) => AnimatedContainer(
-    duration: const Duration(milliseconds: 280),
-    width: 38,
-    height: 38,
-    decoration: BoxDecoration(
-      color: active ? context.t.primary : context.t.surface,
-      shape: BoxShape.circle,
-      border: Border.all(
-        color: active ? context.t.primary : context.t.border,
-        width: 2,
-      ),
-      boxShadow: active
-          ? [
-              BoxShadow(
-                color: context.t.primary.withValues(alpha: .2),
-                blurRadius: 14,
-              ),
-            ]
-          : null,
-    ),
-    child: Icon(
-      icon,
-      size: 18,
-      color: active ? context.t.onPrimary : context.t.textSecondary,
-    ),
-  );
-}
-
-class _JourneyLabel extends StatelessWidget {
-  const _JourneyLabel(this.text, {required this.active});
-  final String text;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) => AnimatedDefaultTextStyle(
-    duration: const Duration(milliseconds: 280),
-    style: TextStyle(
-      color: active ? context.t.primary : context.t.textSecondary,
-      fontSize: 11,
-      fontFamily: Theme.of(context).textTheme.bodySmall?.fontFamily,
-      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-    ),
-    child: Text(text),
   );
 }
 
@@ -725,54 +1324,6 @@ class _ErrorNotice extends StatelessWidget {
       ),
     ),
   );
-}
-
-class _JourneyPainter extends CustomPainter {
-  const _JourneyPainter({
-    required this.progress,
-    required this.primary,
-    required this.border,
-  });
-  final double progress;
-  final Color primary;
-  final Color border;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const inset = 19.0;
-    final y = size.height / 2;
-    final start = Offset(inset, y);
-    final end = Offset(size.width - inset, y);
-    canvas.drawLine(
-      start,
-      end,
-      Paint()
-        ..color = border
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawLine(
-      start,
-      Offset(inset + (size.width - inset * 2) * progress, y),
-      Paint()
-        ..color = primary
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round,
-    );
-    final packetX = inset + (size.width - inset * 2) * progress;
-    canvas.drawCircle(
-      Offset(packetX, y),
-      6,
-      Paint()..color = primary.withValues(alpha: .2),
-    );
-    canvas.drawCircle(Offset(packetX, y), 3, Paint()..color = primary);
-  }
-
-  @override
-  bool shouldRepaint(_JourneyPainter oldDelegate) =>
-      progress != oldDelegate.progress ||
-      primary != oldDelegate.primary ||
-      border != oldDelegate.border;
 }
 
 class _RelayLogoPainter extends CustomPainter {

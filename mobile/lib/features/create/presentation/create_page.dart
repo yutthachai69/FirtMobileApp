@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../core/config/app_config.dart';
 import '../../composer/domain/composer_state.dart';
 import '../../showcase/domain/showcase_product.dart';
 import '../../showcase/presentation/product_artwork.dart';
@@ -147,6 +148,43 @@ class _CreatePageState extends State<CreatePage> {
 
     await _player?.pause();
     if (!context.mounted) return;
+
+    // The upload flow has a real media asset, so production goes through the
+    // server-backed TikTok Composer. Demo mode keeps the richer local review
+    // screen used by the preview and widget tests.
+    if (AppConfig.isLive) {
+      if (c.contentId == null && !await c.saveContent()) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(c.error ?? 'บันทึกคอนเทนต์ไม่สำเร็จ')),
+          );
+        }
+        return;
+      }
+      if (!c.connectionsLoaded) await c.loadConnections();
+      final connection = c.target;
+      if (connection == null || c.contentId == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('กรุณาเชื่อมต่อ TikTok ก่อนเริ่มเผยแพร่'),
+            ),
+          );
+        }
+        return;
+      }
+      if (!context.mounted) return;
+      context.go(
+        '/composer',
+        extra: ComposerArgs(
+          contentId: c.contentId!,
+          connectionId: connection.id,
+          videoDurationSec: _trimmedDuration,
+          isAigc: false,
+        ),
+      );
+      return;
+    }
 
     context.go(
       '/create/publish',

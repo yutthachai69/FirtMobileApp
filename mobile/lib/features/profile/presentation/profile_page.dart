@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/motion/motion_tokens.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../core/auth/auth_controller.dart';
 
@@ -46,22 +48,24 @@ class _ProfilePageState extends State<ProfilePage> {
               email: account?.email ?? '',
               onEdit: () => _editProfile(context, name),
             ),
-            const SizedBox(height: Spacing.lg),
+            const SizedBox(height: Spacing.md),
             const _SectionLabel('การเชื่อมต่อ'),
-            _SettingsCard(
+            _IntegrationPanel(
               children: [
-                _SettingsTile(
+                _IntegrationTile(
                   icon: Icons.music_note_rounded,
                   title: 'TikTok Shop Creator',
                   subtitle: 'ตรวจบัญชี สิทธิ์ และการซิงก์สินค้า',
                   color: context.t.primary,
+                  status: 'พร้อมเผยแพร่',
                   onTap: () => context.go('/connections'),
                 ),
-                _SettingsTile(
+                _IntegrationTile(
                   icon: Icons.hub_outlined,
                   title: 'แหล่งคอนเทนต์ AI',
                   subtitle: 'Google Flow เชื่อมแล้ว · เพิ่มแหล่งอื่น',
                   color: context.t.success,
+                  status: 'เชื่อมแล้ว 1',
                   onTap: () => context.go('/create/import-ai'),
                 ),
               ],
@@ -110,16 +114,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
             const SizedBox(height: Spacing.lg),
-            OutlinedButton.icon(
+            _SignOutAction(
               key: const Key('profile-sign-out'),
-              onPressed: widget.auth.busy
-                  ? null
-                  : () => _confirmSignOut(context),
-              icon: Icon(Icons.logout_rounded, color: context.t.error),
-              label: Text(
-                'ออกจากระบบ',
-                style: TextStyle(color: context.t.error),
-              ),
+              onTap: widget.auth.busy ? null : () => _confirmSignOut(context),
             ),
           ],
         ),
@@ -393,6 +390,10 @@ class _ProfilePageState extends State<ProfilePage> {
             child: const Text('ยกเลิก'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: context.t.error,
+              foregroundColor: context.t.onPrimary,
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('ออกจากระบบ'),
           ),
@@ -420,7 +421,7 @@ class _ProfileHeader extends StatelessWidget {
   final VoidCallback onEdit;
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(Spacing.lg),
+    padding: const EdgeInsets.all(Spacing.md),
     decoration: BoxDecoration(
       gradient: LinearGradient(
         colors: [
@@ -434,8 +435,8 @@ class _ProfileHeader extends StatelessWidget {
     child: Column(
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 64,
+          height: 64,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -452,33 +453,45 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Text(name, style: Theme.of(context).textTheme.titleLarge),
         if (email.isNotEmpty)
           Text(
             email,
             style: TextStyle(color: context.t.textSecondary, fontSize: 12),
           ),
-        TextButton.icon(
-          onPressed: onEdit,
-          icon: const Icon(Icons.edit_outlined, size: 16),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            onEdit();
+          },
+          icon: const Icon(Icons.tune_rounded, size: 16),
           label: const Text('แก้ไขโปรไฟล์'),
         ),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.verified_rounded, color: context.t.success, size: 17),
-            const SizedBox(width: 5),
-            const Flexible(
-              child: Text(
-                'Relay Creator พร้อมใช้งาน',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.t.success.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(color: context.t.success.withValues(alpha: .28)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.verified_rounded, color: context.t.success, size: 16),
+              const SizedBox(width: 5),
+              const Flexible(
+                child: Text(
+                  'Relay Creator พร้อมใช้งาน',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     ),
@@ -543,25 +556,286 @@ class _SettingsCard extends StatelessWidget {
   );
 }
 
-class _SettingsTile extends StatelessWidget {
+class _SettingsTile extends StatefulWidget {
   const _SettingsTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.color,
   });
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  final Color? color;
+
   @override
-  Widget build(BuildContext context) => ListTile(
-    onTap: onTap,
-    leading: Icon(icon, color: color ?? context.t.textSecondary),
-    title: Text(title),
-    subtitle: Text(subtitle, style: const TextStyle(fontSize: 11)),
-    trailing: const Icon(Icons.chevron_right_rounded),
+  State<_SettingsTile> createState() => _SettingsTileState();
+}
+
+class _SettingsTileState extends State<_SettingsTile> {
+  bool pressed = false;
+
+  @override
+  Widget build(BuildContext context) => AnimatedScale(
+    scale: pressed ? .985 : 1,
+    duration: context.motion(RelayMotion.fast),
+    child: Listener(
+      onPointerDown: (_) => setState(() => pressed = true),
+      onPointerUp: (_) => setState(() => pressed = false),
+      onPointerCancel: (_) => setState(() => pressed = false),
+      child: ListTile(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          widget.onTap();
+        },
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: context.t.textSecondary.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(Radii.md),
+          ),
+          child: Icon(widget.icon, size: 20, color: context.t.textSecondary),
+        ),
+        title: Text(
+          widget.title,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(widget.subtitle, style: const TextStyle(fontSize: 11)),
+        trailing: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: context.t.border),
+          ),
+          child: const Icon(Icons.chevron_right_rounded, size: 18),
+        ),
+      ),
+    ),
+  );
+}
+
+class _IntegrationPanel extends StatelessWidget {
+  const _IntegrationPanel({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => IntrinsicHeight(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          Expanded(child: children[i]),
+          if (i < children.length - 1) const SizedBox(width: 10),
+        ],
+      ],
+    ),
+  );
+}
+
+class _IntegrationTile extends StatefulWidget {
+  const _IntegrationTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.status,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String status;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  State<_IntegrationTile> createState() => _IntegrationTileState();
+}
+
+class _IntegrationTileState extends State<_IntegrationTile> {
+  bool pressed = false;
+
+  @override
+  Widget build(BuildContext context) => AnimatedScale(
+    scale: pressed ? .98 : 1,
+    duration: context.motion(RelayMotion.fast),
+    child: Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          widget.onTap();
+        },
+        onHighlightChanged: (value) => setState(() => pressed = value),
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Ink(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                widget.color.withValues(alpha: .12),
+                context.t.surfaceContainer,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(Radii.lg),
+            border: Border.all(color: widget.color.withValues(alpha: .34)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: widget.color.withValues(alpha: .14),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(widget.icon, color: widget.color, size: 21),
+                      ),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 13,
+                          height: 13,
+                          decoration: BoxDecoration(
+                            color: context.t.surface,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: widget.color, width: 2),
+                          ),
+                          child: Icon(
+                            Icons.check,
+                            size: 7,
+                            color: widget.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Icon(Icons.north_east_rounded, color: widget.color, size: 18),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                widget.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.t.textSecondary,
+                  fontSize: 10,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: widget.color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      widget.status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: widget.color,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _SignOutAction extends StatefulWidget {
+  const _SignOutAction({super.key, required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  State<_SignOutAction> createState() => _SignOutActionState();
+}
+
+class _SignOutActionState extends State<_SignOutAction> {
+  bool pressed = false;
+
+  @override
+  Widget build(BuildContext context) => AnimatedScale(
+    scale: pressed ? .98 : 1,
+    duration: context.motion(RelayMotion.fast),
+    child: Material(
+      color: context.t.error.withValues(alpha: .045),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.md),
+        side: BorderSide(color: context.t.error.withValues(alpha: .42)),
+      ),
+      child: InkWell(
+        onTap: widget.onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                widget.onTap!();
+              },
+        onHighlightChanged: (value) => setState(() => pressed = value),
+        borderRadius: BorderRadius.circular(Radii.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          child: Row(
+            children: [
+              Icon(Icons.logout_rounded, color: context.t.error, size: 19),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'ออกจากระบบ',
+                  style: TextStyle(
+                    color: context.t.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: context.t.error.withValues(alpha: .8),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
   );
 }

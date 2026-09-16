@@ -120,4 +120,37 @@ void main() {
 
     expect(find.text(store.jobs.first.title), findsWidgets);
   });
+
+  test(
+    'HomeController hydrates the shared store from the API snapshot',
+    () async {
+      final job = PublishJob(
+        id: 'server-job',
+        contentId: 'server-content',
+        platform: 'tiktok',
+        status: JobStatus.scheduled,
+        scheduledAt: DateTime(2026, 9, 15, 19),
+        caption: 'จาก backend',
+      );
+      final store = ContentStore(jobs: const []);
+      final auth = AuthController(FakeAuthApi(), MemoryTokenStore());
+      final home = HomeController(
+        auth,
+        FakeHomeApi(HomeData(jobs: [job])),
+        store: store,
+      );
+      addTearDown(() {
+        home.dispose();
+        auth.dispose();
+        store.dispose();
+      });
+
+      await auth.authenticate('user@example.com', 'password');
+      await home.load();
+
+      expect(store.jobs, hasLength(1));
+      expect(store.byId('server-job')?.caption, 'จาก backend');
+      expect(home.data?.jobs.single.id, 'server-job');
+    },
+  );
 }

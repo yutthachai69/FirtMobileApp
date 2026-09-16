@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
@@ -7,6 +10,7 @@ import '../../showcase/presentation/product_artwork.dart';
 import '../domain/ai_source.dart';
 import 'ai_sources_controller.dart';
 import 'publish_review_page.dart';
+import 'widgets/synaptic_beam_connect_tile.dart';
 
 class AiSourcesPage extends StatefulWidget {
   const AiSourcesPage({super.key, this.product, this.controller});
@@ -25,10 +29,24 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
       widget.controller ?? AiSourcesController();
   final Set<String> _selectedItems = {};
   bool _selecting = false;
+  int _relayRun = 0;
+  int _sourceRelayRun = 0;
+  String? _arrivingSource;
+  Timer? _arrivalDismissTimer;
+  late ShowcaseProduct? _selectedProduct = widget.product;
   bool get _ownsController => widget.controller == null;
 
   @override
+  void didUpdateWidget(covariant AiSourcesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product?.id != widget.product?.id) {
+      _selectedProduct = widget.product;
+    }
+  }
+
+  @override
   void dispose() {
+    _arrivalDismissTimer?.cancel();
     if (_ownsController) _c.dispose();
     super.dispose();
   }
@@ -40,7 +58,7 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
       actions: [
         IconButton(
           tooltip: 'วิธีส่งเข้า RelayContent',
-          onPressed: () => _showImportHelp(context),
+          onPressed: _showImportHelp,
           icon: const Icon(Icons.help_outline_rounded),
         ),
       ],
@@ -61,19 +79,62 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
               style: TextStyle(color: context.t.textSecondary, height: 1.45),
             ),
             const SizedBox(height: Spacing.md),
-            if (widget.product != null)
-              _ProductContext(product: widget.product!)
-            else
-              _NeedProduct(onTap: () => context.go('/showcase')),
+            _RelayFlowPanel(
+              run: _relayRun,
+              syncing: _c.syncing,
+              importingCount: _c.importingItems.length,
+              readyCount: _c.readyItems.length,
+            ),
+            const SizedBox(height: Spacing.md),
+            AnimatedSwitcher(
+              duration: MediaQuery.of(context).disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 320),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween(begin: .97, end: 1.0).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: _selectedProduct != null
+                  ? _ProductContext(
+                      key: ValueKey(_selectedProduct!.id),
+                      product: _selectedProduct!,
+                      onTap: _showProductPicker,
+                    )
+                  : _NeedProduct(
+                      key: const ValueKey('no-product'),
+                      onTap: _showProductPicker,
+                    ),
+            ),
             const SizedBox(height: Spacing.lg),
             _SourcesSection(
               controller: _c,
               onManage: () => _showConnections(context),
+              onConnect: _connect,
+            ),
+            AnimatedSwitcher(
+              duration: MediaQuery.of(context).disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 240),
+              transitionBuilder: (child, animation) => SizeTransition(
+                sizeFactor: animation,
+                alignment: Alignment.topCenter,
+                child: FadeTransition(opacity: animation, child: child),
+              ),
+              child: _arrivingSource == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      key: ValueKey(_sourceRelayRun),
+                      padding: const EdgeInsets.only(top: 10),
+                      child: _SourceArrivalBanner(sourceName: _arrivingSource!),
+                    ),
             ),
             const SizedBox(height: Spacing.lg),
             _InboxSection(
               controller: _c,
-              product: widget.product,
+              product: _selectedProduct,
               onOpen: _openPreview,
               selecting: _selecting,
               selectedItems: _selectedItems,
@@ -91,10 +152,11 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
                   ..addAll(_c.readyItems.map((item) => item.id));
               }),
               onDeleteSelected: _deleteSelected,
+              onSync: _syncInbox,
             ),
             const SizedBox(height: Spacing.lg),
             OutlinedButton.icon(
-              onPressed: () => _showImportHelp(context),
+              onPressed: _showImportHelp,
               icon: const Icon(Icons.ios_share_rounded),
               label: const Text('ส่งคลิปเข้า RelayContent ด้วย Share'),
             ),
@@ -104,12 +166,11 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
     ),
   );
 
-  void _openContent(BuildContext context, InboxItem item) {
-    final product = widget.product;
+  Future<void> _openContent(InboxItem item) async {
+    var product = _selectedProduct;
     if (product == null) {
-      _toast('เลือกสินค้าที่ต้องการปักตะกร้าก่อน');
-      context.go('/showcase');
-      return;
+      product = await _showProductPicker();
+      if (product == null || !mounted) return;
     }
     context.go(
       '/create/publish',
@@ -128,9 +189,24 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.black,
-      builder: (_) => _InboxPreviewSheet(item: item, product: widget.product),
+      builder: (_) => _InboxPreviewSheet(item: item, product: _selectedProduct),
     );
-    if (useContent == true && mounted) _openContent(context, item);
+    if (useContent == true && mounted) await _openContent(item);
+  }
+
+  Future<ShowcaseProduct?> _showProductPicker() async {
+    final product = await showModalBottomSheet<ShowcaseProduct>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => _ProductPickerSheet(current: _selectedProduct),
+    );
+    if (product == null || !mounted) return null;
+    HapticFeedback.mediumImpact();
+    setState(() => _selectedProduct = product);
+    return product;
   }
 
   Future<void> _deleteSelected() async {
@@ -169,14 +245,74 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
   }
 
   Future<void> _connect(String id) async {
+    if (_c.busySourceId != null || _c.sourceById(id).isConnected) return;
+    HapticFeedback.selectionClick();
     await _c.connect(id);
     if (!mounted) return;
     final source = _c.sourceById(id);
+    final run = ++_sourceRelayRun;
+    setState(() => _arrivingSource = source.name);
+    HapticFeedback.mediumImpact();
     _toast(
       source.status == SourceStatus.needsAttention
           ? 'เชื่อม ${source.name} แล้ว — ตรวจข้อจำกัดก่อนใช้งาน'
           : 'เชื่อม ${source.name} แล้ว',
     );
+    _arrivalDismissTimer?.cancel();
+    _arrivalDismissTimer = Timer(const Duration(milliseconds: 2400), () {
+      if (!mounted || run != _sourceRelayRun) return;
+      setState(() => _arrivingSource = null);
+    });
+  }
+
+  /// ยืนยันก่อนเริ่มแอนิเมชันตัดการเชื่อม — ไม่แตะสถานะจริง
+  Future<bool> _confirmDisconnect(AiSource source) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      builder: (dialogContext) => AlertDialog(
+        icon: Icon(Icons.link_off_rounded, color: context.t.error),
+        title: Text('ตัดการเชื่อม ${source.name}?'),
+        content: const Text(
+          'ระบบจะหยุดรับงานใหม่จากแหล่งนี้ แต่งานที่เข้ามาแล้วจะยังอยู่ใน Inbox',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('เชื่อมไว้ก่อน'),
+          ),
+          FilledButton.icon(
+            key: const Key('confirm-disconnect-source'),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.t.error,
+              foregroundColor: context.t.surface,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.link_off_rounded),
+            label: const Text('ตัดการเชื่อม'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true && mounted;
+  }
+
+  /// เรียกหลังแอนิเมชันตัดการเชื่อมของ [SynapticBeamConnectTile] เล่นจบ
+  /// เพื่อผลักสถานะจริงและแจ้งผลลัพธ์
+  Future<void> _disconnect(AiSource source) async {
+    if (!mounted) return;
+    HapticFeedback.mediumImpact();
+    _c.disconnect(source.id);
+    _toast('ตัดการเชื่อม ${source.name} แล้ว · งานเดิมยังอยู่ใน Inbox');
+  }
+
+  Future<void> _syncInbox() async {
+    if (_c.syncing) return;
+    HapticFeedback.selectionClick();
+    setState(() => _relayRun++);
+    await _c.sync();
+    if (!mounted) return;
+    HapticFeedback.lightImpact();
   }
 
   void _toast(String text) {
@@ -188,6 +324,8 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
 
   void _showConnections(BuildContext context) => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
+    isScrollControlled: true,
     showDragHandle: true,
     builder: (_) => ListenableBuilder(
       listenable: _c,
@@ -207,80 +345,650 @@ class _AiSourcesPageState extends State<AiSourcesPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: Spacing.md),
-            for (final source in _c.sources)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.hub_outlined),
-                title: Text(source.name),
-                subtitle: source.note != null
-                    ? Text(source.note!, style: const TextStyle(fontSize: 12))
-                    : null,
-                trailing: source.isConnected
-                    ? TextButton(
-                        onPressed: () {
-                          _c.disconnect(source.id);
-                          _toast('ตัดการเชื่อม ${source.name} แล้ว');
-                        },
-                        child: const Text('ตัดการเชื่อม'),
-                      )
-                    : _c.busySourceId == source.id
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : FilledButton(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(72, 40),
-                        ),
-                        onPressed: () => _connect(source.id),
-                        child: const Text('เชื่อม'),
-                      ),
+            for (final source in _c.sources) ...[
+              SynapticBeamConnectTile(
+                key: ValueKey('beam-source-${source.id}'),
+                sourceId: source.id,
+                name: source.name,
+                icon: Icons.hub_outlined,
+                isConnected: source.isConnected,
+                constraintNote: source.note,
+                onConnect: () => _connect(source.id),
+                confirmDisconnect: () => _confirmDisconnect(source),
+                onDisconnect: () => _disconnect(source),
               ),
+              const SizedBox(height: Spacing.sm),
+            ],
           ],
         ),
       ),
     ),
   );
 
-  void _showImportHelp(BuildContext context) => showModalBottomSheet<void>(
+  Future<void> _showImportHelp() async {
+    final method = await showModalBottomSheet<_ImportMethod>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _ImportActionSheet(),
+    );
+    if (!mounted || method == null) return;
+    HapticFeedback.selectionClick();
+
+    switch (method) {
+      case _ImportMethod.connect:
+        _showConnections(context);
+      case _ImportMethod.share:
+        _showShareGuide();
+      case _ImportMethod.file:
+        context.go('/create/upload', extra: _selectedProduct);
+    }
+  }
+
+  void _showShareGuide() => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
+    isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => const Padding(
-      padding: EdgeInsets.fromLTRB(Spacing.lg, 4, Spacing.lg, 28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'นำเข้าได้ 3 ทาง',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          SizedBox(height: 12),
-          ListTile(
-            leading: Icon(Icons.link_rounded),
-            title: Text('เชื่อมบัญชี AI'),
-            subtitle: Text('ดึงเฉพาะงานที่ผู้ใช้เลือก'),
-          ),
-          ListTile(
-            leading: Icon(Icons.ios_share_rounded),
-            title: Text('Share to RelayContent'),
-            subtitle: Text('แชร์คลิปจากแอปต้นทางเข้ามาโดยตรง'),
-          ),
-          ListTile(
-            leading: Icon(Icons.upload_file_outlined),
-            title: Text('เลือกไฟล์จากเครื่อง'),
-            subtitle: Text('ทางสำรองเมื่อผู้ให้บริการยังเชื่อมตรงไม่ได้'),
-          ),
-        ],
+    builder: (_) => const _ShareGuideSheet(),
+  );
+}
+
+enum _ImportMethod { connect, share, file }
+
+class _ImportActionSheet extends StatelessWidget {
+  const _ImportActionSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.md,
+          2,
+          Spacing.md,
+          Spacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: t.primary.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(Icons.move_to_inbox_rounded, color: t.primary),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'เลือกวิธีนำเข้าคอนเทนต์',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text('แต่ละวิธีพาคุณไปทำต่อได้ทันที'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Spacing.md),
+            _ImportActionTile(
+              actionKey: const Key('import-via-ai-connection'),
+              icon: Icons.hub_outlined,
+              color: t.primary,
+              eyebrow: 'AUTO SYNC',
+              title: 'เชื่อมบัญชี AI',
+              subtitle: 'ตั้งค่าแหล่งสร้าง แล้วดึงงานที่คุณเลือกเข้ามา',
+              onTap: () => Navigator.pop(context, _ImportMethod.connect),
+            ),
+            const SizedBox(height: 10),
+            _ImportActionTile(
+              actionKey: const Key('import-via-share'),
+              icon: Icons.ios_share_rounded,
+              color: t.success,
+              eyebrow: 'FASTEST',
+              title: 'Share to RelayContent',
+              subtitle: 'แชร์คลิปจากแอปต้นทางเข้ากล่องนี้โดยตรง',
+              onTap: () => Navigator.pop(context, _ImportMethod.share),
+            ),
+            const SizedBox(height: 10),
+            _ImportActionTile(
+              actionKey: const Key('import-via-file'),
+              icon: Icons.upload_file_rounded,
+              color: t.warning,
+              eyebrow: 'MANUAL',
+              title: 'เลือกไฟล์จากเครื่อง',
+              subtitle: 'เปิดขั้นตอนเลือกวิดีโอและอัปโหลดด้วยตัวเอง',
+              onTap: () => Navigator.pop(context, _ImportMethod.file),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                'ไฟล์ต้นฉบับจะไม่ถูกลบออกจากแอปต้นทาง',
+                style: TextStyle(color: t.textSecondary, fontSize: 11),
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _ImportActionTile extends StatelessWidget {
+  const _ImportActionTile({
+    required this.actionKey,
+    required this.icon,
+    required this.color,
+    required this.eyebrow,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final Key actionKey;
+  final IconData icon;
+  final Color color;
+  final String eyebrow;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return Material(
+      color: t.surfaceContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        side: BorderSide(color: color.withValues(alpha: .28)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: actionKey,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .11),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: color.withValues(alpha: .2)),
+                ),
+                child: Icon(icon, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      eyebrow,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(color: t.textSecondary, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.arrow_forward_rounded, size: 19, color: color),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareGuideSheet extends StatelessWidget {
+  const _ShareGuideSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.lg,
+          2,
+          Spacing.lg,
+          Spacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: t.success.withValues(alpha: .12),
+                ),
+                child: Icon(
+                  Icons.ios_share_rounded,
+                  color: t.success,
+                  size: 27,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Center(
+              child: Text(
+                'แชร์จากแอปต้นทาง',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Center(
+              child: Text(
+                'ส่งคลิปเข้ากล่อง RelayContent ได้ใน 3 ขั้นตอน',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: t.textSecondary),
+              ),
+            ),
+            const SizedBox(height: Spacing.lg),
+            const _ShareStep(
+              number: '1',
+              text: 'เปิดคลิปในแอป AI ที่คุณใช้อยู่',
+            ),
+            const _ShareStep(
+              number: '2',
+              text: 'แตะ Share แล้วเลือก RelayContent',
+            ),
+            const _ShareStep(
+              number: '3',
+              text: 'กลับมาดูสถานะนำเข้าใน AI Content Inbox',
+            ),
+            const SizedBox(height: Spacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('close-share-guide'),
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.check_rounded),
+                label: const Text('เข้าใจแล้ว'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareStep extends StatelessWidget {
+  const _ShareStep({required this.number, required this.text});
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: context.t.primary.withValues(alpha: .12),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            number,
+            style: TextStyle(
+              color: context.t.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Text(text)),
+      ],
     ),
   );
 }
 
+class _RelayFlowPanel extends StatefulWidget {
+  const _RelayFlowPanel({
+    required this.run,
+    required this.syncing,
+    required this.importingCount,
+    required this.readyCount,
+  });
+
+  final int run;
+  final bool syncing;
+  final int importingCount;
+  final int readyCount;
+
+  @override
+  State<_RelayFlowPanel> createState() => _RelayFlowPanelState();
+}
+
+class _RelayFlowPanelState extends State<_RelayFlowPanel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _motion;
+  late final Animation<double> _progress;
+
+  bool get _reduced => WidgetsBinding
+      .instance
+      .platformDispatcher
+      .accessibilityFeatures
+      .disableAnimations;
+
+  @override
+  void initState() {
+    super.initState();
+    _motion = AnimationController(
+      vsync: this,
+      duration: _reduced ? Duration.zero : const Duration(milliseconds: 1900),
+    );
+    _progress = CurvedAnimation(parent: _motion, curve: Curves.easeInOutCubic);
+    _motion.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RelayFlowPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.run != widget.run) {
+      if (_reduced) {
+        _motion.value = 1;
+      } else {
+        _motion.forward(from: 0);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
+
+  String _status(double progress) {
+    if (progress < .34) return 'กำลังรับลิงก์และไฟล์';
+    if (progress < .72) return 'AI กำลังตรวจรูปแบบคอนเทนต์';
+    if (widget.syncing) return 'กำลังจัดคิวเข้ากล่องของคุณ';
+    return 'พร้อมเลือกไปสร้างโพสต์';
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _progress,
+    builder: (context, _) {
+      final progress = _progress.value;
+      return Container(
+        key: const Key('ai-relay-flow'),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              context.t.surfaceElevated,
+              context.t.primary.withValues(alpha: .055),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(Radii.lg),
+          border: Border.all(
+            color: context.t.primary.withValues(alpha: .25 + progress * .15),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: context.t.primary.withValues(alpha: .03 + progress * .04),
+              blurRadius: 14,
+              spreadRadius: -4,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: context.t.success,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.t.success.withValues(alpha: .6),
+                        blurRadius: 7,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 7),
+                const Text(
+                  'RELAY FLOW',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${widget.readyCount} พร้อมใช้',
+                  style: TextStyle(
+                    color: context.t.textSecondary,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 68,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _RelayPathPainter(
+                        color: context.t.primary,
+                        progress: progress,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _RelayStage(
+                          icon: Icons.move_to_inbox_rounded,
+                          label: 'รับเข้ามา',
+                          active: progress >= .06,
+                        ),
+                      ),
+                      Expanded(
+                        child: _RelayStage(
+                          icon: Icons.auto_awesome_rounded,
+                          label: 'AI วิเคราะห์',
+                          active: progress >= .4,
+                        ),
+                      ),
+                      Expanded(
+                        child: _RelayStage(
+                          icon: Icons.rocket_launch_rounded,
+                          label: 'พร้อมโพสต์',
+                          active: progress >= .78,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: _reduced
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
+              child: Text(
+                _status(progress),
+                key: ValueKey(_status(progress)),
+                style: TextStyle(
+                  color: progress >= .78
+                      ? context.t.success
+                      : context.t.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+class _RelayStage extends StatelessWidget {
+  const _RelayStage({
+    required this.icon,
+    required this.label,
+    required this.active,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      AnimatedContainer(
+        duration: MediaQuery.of(context).disableAnimations
+            ? Duration.zero
+            : const Duration(milliseconds: 240),
+        width: active ? 33 : 29,
+        height: active ? 33 : 29,
+        decoration: BoxDecoration(
+          color: active
+              ? context.t.primary.withValues(alpha: .16)
+              : context.t.surfaceContainer,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: active ? context.t.primary : context.t.border,
+            width: active ? 1.6 : 1,
+          ),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: context.t.primary.withValues(alpha: .23),
+                    blurRadius: 12,
+                  ),
+                ]
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: active ? context.t.primary : context.t.textSecondary,
+        ),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        label,
+        style: TextStyle(
+          color: active ? context.t.textPrimary : context.t.textSecondary,
+          fontSize: 9.5,
+          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+    ],
+  );
+}
+
+class _RelayPathPainter extends CustomPainter {
+  const _RelayPathPainter({required this.color, required this.progress});
+
+  final Color color;
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final y = 17.5;
+    final start = Offset(size.width / 6, y);
+    final end = Offset(size.width * 5 / 6, y);
+    final base = Paint()
+      ..color = color.withValues(alpha: .16)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(start, end, base);
+
+    final activeEnd = Offset(start.dx + (end.dx - start.dx) * progress, y);
+    canvas.drawLine(
+      start,
+      activeEnd,
+      Paint()
+        ..shader = LinearGradient(colors: [color.withValues(alpha: .35), color])
+            .createShader(Rect.fromPoints(start, end))
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round,
+    );
+    if (progress > .02 && progress < .99) {
+      canvas.drawCircle(
+        activeEnd,
+        9,
+        Paint()
+          ..color = color.withValues(alpha: .2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+      canvas.drawCircle(activeEnd, 3, Paint()..color = color);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RelayPathPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
+}
+
 class _SourcesSection extends StatelessWidget {
-  const _SourcesSection({required this.controller, required this.onManage});
+  const _SourcesSection({
+    required this.controller,
+    required this.onManage,
+    required this.onConnect,
+  });
   final AiSourcesController controller;
   final VoidCallback onManage;
+  final ValueChanged<String> onConnect;
 
   @override
   Widget build(BuildContext context) {
@@ -299,7 +1007,11 @@ class _SourcesSection extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
-            TextButton(onPressed: onManage, child: const Text('จัดการ')),
+            TextButton(
+              key: const Key('manage-ai-sources'),
+              onPressed: onManage,
+              child: const Text('จัดการ'),
+            ),
           ],
         ),
         SizedBox(
@@ -309,11 +1021,11 @@ class _SourcesSection extends StatelessWidget {
             children: [
               for (final source in controller.sources)
                 _SourceChip(
+                  key: Key('ai-source-${source.id}'),
                   source: source,
                   busy: controller.busySourceId == source.id,
-                  onTap: () => source.isConnected
-                      ? onManage()
-                      : controller.connect(source.id),
+                  onTap: () =>
+                      source.isConnected ? onManage() : onConnect(source.id),
                 ),
             ],
           ),
@@ -325,6 +1037,100 @@ class _SourcesSection extends StatelessWidget {
       ],
     );
   }
+}
+
+class _SourceArrivalBanner extends StatelessWidget {
+  const _SourceArrivalBanner({required this.sourceName});
+
+  final String sourceName;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0, end: 1),
+    duration: MediaQuery.of(context).disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 680),
+    curve: Curves.easeOutCubic,
+    builder: (context, progress, _) => Container(
+      key: const Key('source-arrival-banner'),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: context.t.success.withValues(alpha: .07),
+        borderRadius: BorderRadius.circular(Radii.md),
+        border: Border.all(
+          color: context.t.success.withValues(alpha: .25 + progress * .2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.hub_outlined, size: 18, color: context.t.primary),
+          const SizedBox(width: 5),
+          SizedBox(
+            width: 38,
+            height: 12,
+            child: LayoutBuilder(
+              builder: (context, constraints) => Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  Container(
+                    height: 1.5,
+                    color: context.t.primary.withValues(alpha: .2),
+                  ),
+                  Container(
+                    width: constraints.maxWidth * progress,
+                    height: 1.5,
+                    color: context.t.primary,
+                  ),
+                  Align(
+                    alignment: Alignment(-1 + progress * 2, 0),
+                    child: Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: context.t.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: context.t.primary.withValues(alpha: .7),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 5),
+          Icon(Icons.move_to_inbox_rounded, size: 18, color: context.t.success),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'รับงานใหม่จาก $sourceName เข้ากล่องแล้ว',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  'พร้อมเปิดตัวอย่างและส่งต่อไปสร้างโพสต์',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: context.t.textSecondary, fontSize: 9),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _InboxSection extends StatelessWidget {
@@ -339,6 +1145,7 @@ class _InboxSection extends StatelessWidget {
     required this.onToggle,
     required this.onSelectAll,
     required this.onDeleteSelected,
+    required this.onSync,
   });
   final AiSourcesController controller;
   final ShowcaseProduct? product;
@@ -350,6 +1157,7 @@ class _InboxSection extends StatelessWidget {
   final ValueChanged<String> onToggle;
   final VoidCallback onSelectAll;
   final VoidCallback onDeleteSelected;
+  final VoidCallback onSync;
 
   @override
   Widget build(BuildContext context) {
@@ -387,8 +1195,9 @@ class _InboxSection extends StatelessWidget {
               )
             else
               IconButton(
+                key: const Key('sync-ai-inbox'),
                 tooltip: 'ซิงก์ใหม่',
-                onPressed: controller.sync,
+                onPressed: onSync,
                 icon: const Icon(Icons.sync_rounded),
               ),
           ],
@@ -418,16 +1227,19 @@ class _InboxSection extends StatelessWidget {
             _ImportingItem(item: item),
             const SizedBox(height: 10),
           ],
-          for (final item in ready) ...[
+          for (var index = 0; index < ready.length; index++) ...[
             _ReadyItem(
-              item: item,
+              key: ValueKey('ready-${ready[index].id}'),
+              item: ready[index],
+              index: index,
               product: product,
               selecting: selecting,
-              selected: selectedItems.contains(item.id),
-              onTap: () => selecting ? onToggle(item.id) : onOpen(item),
+              selected: selectedItems.contains(ready[index].id),
+              onTap: () =>
+                  selecting ? onToggle(ready[index].id) : onOpen(ready[index]),
               onLongPress: () {
                 if (!selecting) onStartSelecting();
-                onToggle(item.id);
+                onToggle(ready[index].id);
               },
             ),
             const SizedBox(height: 10),
@@ -439,8 +1251,13 @@ class _InboxSection extends StatelessWidget {
 }
 
 class _ProductContext extends StatelessWidget {
-  const _ProductContext({required this.product});
+  const _ProductContext({
+    super.key,
+    required this.product,
+    required this.onTap,
+  });
   final ShowcaseProduct product;
+  final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => _Panel(
     child: Row(
@@ -455,7 +1272,8 @@ class _ProductContext extends StatelessWidget {
           ),
         ),
         TextButton(
-          onPressed: () => context.go('/showcase'),
+          key: const Key('open-product-picker'),
+          onPressed: onTap,
           child: const Text('เปลี่ยน'),
         ),
       ],
@@ -464,7 +1282,7 @@ class _ProductContext extends StatelessWidget {
 }
 
 class _NeedProduct extends StatelessWidget {
-  const _NeedProduct({required this.onTap});
+  const _NeedProduct({super.key, required this.onTap});
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => _Panel(
@@ -473,8 +1291,271 @@ class _NeedProduct extends StatelessWidget {
         Icon(Icons.add_shopping_cart_rounded, color: context.t.warning),
         const SizedBox(width: 10),
         const Expanded(child: Text('เลือกสินค้าที่จะปักตะกร้ากับคอนเทนต์')),
-        TextButton(onPressed: onTap, child: const Text('เลือก')),
+        TextButton(
+          key: const Key('open-product-picker'),
+          onPressed: onTap,
+          child: const Text('เลือก'),
+        ),
       ],
+    ),
+  );
+}
+
+class _ProductPickerSheet extends StatefulWidget {
+  const _ProductPickerSheet({required this.current});
+
+  final ShowcaseProduct? current;
+
+  @override
+  State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
+}
+
+class _ProductPickerSheetState extends State<_ProductPickerSheet> {
+  final _search = TextEditingController();
+  ShowcaseProduct? _selected;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.current;
+    _search.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    final next = _search.text;
+    if (_query == next || !mounted) return;
+    setState(() => _query = next);
+  }
+
+  @override
+  void dispose() {
+    _search.removeListener(_onSearchChanged);
+    _search.dispose();
+    super.dispose();
+  }
+
+  List<ShowcaseProduct> get _products {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return ShowcaseProduct.mock;
+    return ShowcaseProduct.mock
+        .where(
+          (product) =>
+              product.name.toLowerCase().contains(query) ||
+              product.shopName.toLowerCase().contains(query),
+        )
+        .toList();
+  }
+
+  void _select(ShowcaseProduct product) {
+    if (!product.inStock || _selected?.id == product.id) return;
+    HapticFeedback.selectionClick();
+    setState(() => _selected = product);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final products = _products;
+    final reduced = MediaQuery.of(context).disableAnimations;
+    return FractionallySizedBox(
+      heightFactor: .76,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          Spacing.md,
+          0,
+          Spacing.md,
+          12 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'เลือกสินค้าที่จะปักตะกร้า',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        'เลือกได้ 1 ชิ้นสำหรับคอนเทนต์นี้',
+                        style: TextStyle(
+                          color: context.t.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'ปิด',
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('product-picker-search'),
+              controller: _search,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search_rounded),
+                hintText: 'ค้นหาชื่อสินค้า หรือร้านค้า',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: products.isEmpty
+                  ? Center(
+                      child: Text(
+                        'ไม่พบสินค้าที่ค้นหา',
+                        style: TextStyle(color: context.t.textSecondary),
+                      ),
+                    )
+                  : ListView(
+                      children: [
+                        for (
+                          var index = 0;
+                          index < products.length;
+                          index++
+                        ) ...[
+                          _ProductPickerTile(
+                            product: products[index],
+                            selected: _selected?.id == products[index].id,
+                            reduced: reduced,
+                            onTap: () => _select(products[index]),
+                          ),
+                          if (index != products.length - 1)
+                            const SizedBox(height: 9),
+                        ],
+                      ],
+                    ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('confirm-product-selection'),
+                onPressed: _selected == null
+                    ? null
+                    : () => Navigator.pop(context, _selected),
+                icon: const Icon(Icons.shopping_bag_outlined),
+                label: Text(
+                  _selected == null
+                      ? 'เลือกสินค้าเพื่อดำเนินการต่อ'
+                      : 'ใช้สินค้านี้กับคอนเทนต์',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductPickerTile extends StatelessWidget {
+  const _ProductPickerTile({
+    required this.product,
+    required this.selected,
+    required this.reduced,
+    required this.onTap,
+  });
+
+  final ShowcaseProduct product;
+  final bool selected;
+  final bool reduced;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    key: Key('product-picker-${product.id}'),
+    onTap: product.inStock ? onTap : null,
+    borderRadius: BorderRadius.circular(Radii.lg),
+    child: AnimatedContainer(
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 220),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: selected
+            ? context.t.primary.withValues(alpha: .08)
+            : context.t.surfaceContainer,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(
+          color: selected ? context.t.primary : context.t.border,
+          width: selected ? 1.5 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          ProductArtwork(
+            product: product,
+            width: 56,
+            height: 64,
+            borderRadius: Radii.md,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '฿${product.priceBaht} · คอม ฿${product.commissionBaht}/ชิ้น',
+                  style: TextStyle(
+                    color: product.inStock
+                        ? context.t.primary
+                        : context.t.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+                Text(
+                  product.inStock
+                      ? product.shopName
+                      : 'สินค้าหมด · ยังเลือกไม่ได้',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: product.inStock
+                        ? context.t.textSecondary
+                        : context.t.error,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          AnimatedSwitcher(
+            duration: reduced
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
+            child: Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : product.inStock
+                  ? Icons.radio_button_unchecked_rounded
+                  : Icons.block_rounded,
+              key: ValueKey('$selected-${product.inStock}'),
+              color: selected
+                  ? context.t.primary
+                  : product.inStock
+                  ? context.t.textSecondary
+                  : context.t.error,
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -500,8 +1581,9 @@ class _CapabilityNote extends StatelessWidget {
   );
 }
 
-class _SourceChip extends StatelessWidget {
+class _SourceChip extends StatefulWidget {
   const _SourceChip({
+    super.key,
     required this.source,
     required this.busy,
     required this.onTap,
@@ -511,72 +1593,143 @@ class _SourceChip extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_SourceChip> createState() => _SourceChipState();
+}
+
+class _SourceChipState extends State<_SourceChip> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (!mounted || _pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final connected = source.isConnected;
-    final attention = source.status == SourceStatus.needsAttention;
-    final accent = attention
+    final connected = widget.source.isConnected;
+    final attention = widget.source.status == SourceStatus.needsAttention;
+    final accent = widget.busy
+        ? context.t.primary
+        : attention
         ? context.t.warning
         : connected
         ? context.t.primary
         : context.t.textSecondary;
+    final reduced = MediaQuery.of(context).disableAnimations;
 
     return Padding(
       padding: const EdgeInsets.only(right: 9),
-      child: InkWell(
-        onTap: busy ? null : onTap,
-        borderRadius: BorderRadius.circular(Radii.md),
-        child: Container(
-          width: 122,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: context.t.surfaceContainer,
+      child: Listener(
+        onPointerDown: widget.busy ? null : (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: AnimatedScale(
+          scale: reduced || !_pressed ? 1 : .96,
+          duration: const Duration(milliseconds: 90),
+          child: InkWell(
+            onTap: widget.busy ? null : widget.onTap,
             borderRadius: BorderRadius.circular(Radii.md),
-            border: Border.all(color: connected ? accent : context.t.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+            child: AnimatedContainer(
+              duration: reduced
+                  ? Duration.zero
+                  : const Duration(milliseconds: 240),
+              width: 122,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: widget.busy
+                    ? context.t.primary.withValues(alpha: .07)
+                    : context.t.surfaceContainer,
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(
+                  color: widget.busy || connected ? accent : context.t.border,
+                  width: widget.busy ? 1.5 : 1,
+                ),
+                boxShadow: widget.busy
+                    ? [
+                        BoxShadow(
+                          color: context.t.primary.withValues(alpha: .16),
+                          blurRadius: 14,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.hub_outlined, size: 19, color: accent),
+                  Row(
+                    children: [
+                      AnimatedRotation(
+                        turns: widget.busy ? .125 : 0,
+                        duration: reduced
+                            ? Duration.zero
+                            : const Duration(milliseconds: 220),
+                        child: Icon(
+                          Icons.hub_outlined,
+                          size: 19,
+                          color: accent,
+                        ),
+                      ),
+                      const Spacer(),
+                      AnimatedSwitcher(
+                        duration: reduced
+                            ? Duration.zero
+                            : const Duration(milliseconds: 180),
+                        transitionBuilder: (child, animation) =>
+                            ScaleTransition(scale: animation, child: child),
+                        child: widget.busy
+                            ? SizedBox(
+                                key: const ValueKey('busy'),
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: context.t.primary,
+                                ),
+                              )
+                            : Icon(
+                                attention
+                                    ? Icons.error_outline_rounded
+                                    : connected
+                                    ? Icons.check_circle
+                                    : Icons.add_circle_outline,
+                                key: ValueKey(widget.source.status),
+                                size: 16,
+                                color: attention
+                                    ? context.t.warning
+                                    : connected
+                                    ? context.t.success
+                                    : context.t.textSecondary,
+                              ),
+                      ),
+                    ],
+                  ),
                   const Spacer(),
-                  if (busy)
-                    const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  else
-                    Icon(
-                      attention
-                          ? Icons.error_outline_rounded
-                          : connected
-                          ? Icons.check_circle
-                          : Icons.add_circle_outline,
-                      size: 16,
-                      color: attention
-                          ? context.t.warning
-                          : connected
-                          ? context.t.success
-                          : context.t.textSecondary,
+                  Text(
+                    widget.source.name,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: reduced
+                        ? Duration.zero
+                        : const Duration(milliseconds: 180),
+                    child: Text(
+                      widget.busy
+                          ? 'กำลัง handshake…'
+                          : connected
+                          ? (attention ? 'เชื่อมแล้ว · ต้องตรวจ' : 'เชื่อมแล้ว')
+                          : 'แตะเพื่อเชื่อม',
+                      key: ValueKey('${widget.busy}-${widget.source.status}'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 10, color: accent),
+                    ),
+                  ),
                 ],
               ),
-              const Spacer(),
-              Text(
-                source.name,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                connected
-                    ? (attention ? 'ต้องตรวจ' : 'เชื่อมแล้ว')
-                    : 'แตะเพื่อเชื่อม',
-                style: TextStyle(fontSize: 10, color: accent),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -584,9 +1737,11 @@ class _SourceChip extends StatelessWidget {
   }
 }
 
-class _ReadyItem extends StatelessWidget {
+class _ReadyItem extends StatefulWidget {
   const _ReadyItem({
+    super.key,
     required this.item,
+    required this.index,
     required this.product,
     required this.selecting,
     required this.selected,
@@ -594,61 +1749,225 @@ class _ReadyItem extends StatelessWidget {
     required this.onLongPress,
   });
   final InboxItem item;
+  final int index;
   final ShowcaseProduct? product;
   final bool selecting;
   final bool selected;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+
   @override
-  Widget build(BuildContext context) => _Panel(
-    child: InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Row(
-        children: [
-          if (selecting) ...[
-            Checkbox(
-              key: Key('select-inbox-${item.id}'),
-              value: selected,
-              onChanged: (_) => onTap(),
-            ),
-            const SizedBox(width: 4),
-          ],
-          _InboxArtwork(item: item, product: product, width: 64, height: 82),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  item.sourceName,
-                  style: TextStyle(color: context.t.primary, fontSize: 11),
-                ),
-                Text(
-                  'พร้อมใช้ · ${item.durationSec} วินาที'
-                  '${item.vertical ? '' : ' · 16:9 ต้องครอป'}',
-                  style: TextStyle(
-                    color: context.t.textSecondary,
-                    fontSize: 11,
+  State<_ReadyItem> createState() => _ReadyItemState();
+}
+
+class _ReadyItemState extends State<_ReadyItem>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _entrance;
+  Timer? _entranceDelay;
+  bool _pressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final reduced = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+    _entrance = AnimationController(
+      vsync: this,
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 420),
+    );
+    if (reduced) {
+      _entrance.value = 1;
+    } else {
+      final delay = 65 * widget.index.clamp(0, 4);
+      if (delay == 0) {
+        _entrance.forward();
+      } else {
+        _entranceDelay = Timer(Duration(milliseconds: delay), () {
+          if (mounted) _entrance.forward();
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _entranceDelay?.cancel();
+    _entrance.dispose();
+    super.dispose();
+  }
+
+  void _setPressed(bool value) {
+    if (!mounted || _pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = MediaQuery.of(context).disableAnimations;
+    return AnimatedBuilder(
+      animation: _entrance,
+      child: Listener(
+        onPointerDown: (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: AnimatedScale(
+          scale: reduced || !_pressed ? 1 : .982,
+          duration: const Duration(milliseconds: 90),
+          child: _Panel(
+            child: InkWell(
+              onTap: widget.onTap,
+              onLongPress: widget.onLongPress,
+              child: Row(
+                children: [
+                  if (widget.selecting) ...[
+                    Checkbox(
+                      key: Key('select-inbox-${widget.item.id}'),
+                      value: widget.selected,
+                      onChanged: (_) => widget.onTap(),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      _InboxArtwork(
+                        item: widget.item,
+                        product: widget.product,
+                        width: 64,
+                        height: 82,
+                      ),
+                      const Positioned.fill(child: _PreviewHalo()),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.item.sourceName,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: context.t.primary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            if (widget.item.progress >= 1) ...[
+                              const SizedBox(width: 6),
+                              _ImportSuccessBadge(entrance: _entrance),
+                            ],
+                          ],
+                        ),
+                        Text(
+                          'พร้อมใช้ · ${widget.item.durationSec} วินาที'
+                          '${widget.item.vertical ? '' : ' · 16:9 ต้องครอป'}',
+                          style: TextStyle(
+                            color: context.t.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    widget.selecting
+                        ? (widget.selected
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked_rounded)
+                        : Icons.chevron_right_rounded,
+                    color: widget.selected ? context.t.primary : null,
+                  ),
+                ],
+              ),
             ),
           ),
-          Icon(
-            selecting
-                ? (selected
-                      ? Icons.check_circle_rounded
-                      : Icons.radio_button_unchecked_rounded)
-                : Icons.chevron_right_rounded,
-            color: selected ? context.t.primary : null,
+        ),
+      ),
+      builder: (context, child) {
+        final progress = Curves.easeOutCubic.transform(_entrance.value);
+        return Opacity(
+          opacity: progress,
+          child: Transform.translate(
+            offset: Offset(0, (1 - progress) * 12),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PreviewHalo extends StatelessWidget {
+  const _PreviewHalo();
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    child: TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: MediaQuery.of(context).disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 720),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, _) => Center(
+        child: Container(
+          width: 34 + progress * 20,
+          height: 34 + progress * 20,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: context.t.primary.withValues(alpha: .5 * (1 - progress)),
+              width: 1.4,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _ImportSuccessBadge extends StatelessWidget {
+  const _ImportSuccessBadge({required this.entrance});
+
+  final Animation<double> entrance;
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(
+    scale: CurvedAnimation(
+      parent: entrance,
+      curve: const Interval(.55, 1, curve: Curves.easeOutBack),
+    ),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: context.t.success.withValues(alpha: .12),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_rounded, size: 10, color: context.t.success),
+          const SizedBox(width: 2),
+          Text(
+            'รับสำเร็จ',
+            style: TextStyle(
+              color: context.t.success,
+              fontSize: 8,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -791,8 +2110,29 @@ class _InboxPreviewSheet extends StatefulWidget {
   State<_InboxPreviewSheet> createState() => _InboxPreviewSheetState();
 }
 
-class _InboxPreviewSheetState extends State<_InboxPreviewSheet> {
+class _InboxPreviewSheetState extends State<_InboxPreviewSheet>
+    with SingleTickerProviderStateMixin {
   bool playing = false;
+  late final AnimationController _playback = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 8),
+  );
+
+  @override
+  void dispose() {
+    _playback.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayback() {
+    HapticFeedback.selectionClick();
+    setState(() => playing = !playing);
+    if (playing) {
+      _playback.repeat();
+    } else {
+      _playback.stop();
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -842,12 +2182,27 @@ class _InboxPreviewSheetState extends State<_InboxPreviewSheet> {
           ),
         ),
         Center(
-          child: IconButton.filled(
-            key: const Key('inbox-preview-play-pause'),
-            onPressed: () => setState(() => playing = !playing),
-            iconSize: 40,
-            icon: Icon(
-              playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+          child: AnimatedScale(
+            scale: playing ? .88 : 1,
+            duration: MediaQuery.of(context).disableAnimations
+                ? Duration.zero
+                : const Duration(milliseconds: 220),
+            curve: Curves.easeOutBack,
+            child: IconButton.filled(
+              key: const Key('inbox-preview-play-pause'),
+              onPressed: _togglePlayback,
+              iconSize: 40,
+              icon: AnimatedSwitcher(
+                duration: MediaQuery.of(context).disableAnimations
+                    ? Duration.zero
+                    : const Duration(milliseconds: 180),
+                transitionBuilder: (child, animation) =>
+                    ScaleTransition(scale: animation, child: child),
+                child: Icon(
+                  playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  key: ValueKey(playing),
+                ),
+              ),
             ),
           ),
         ),
@@ -872,6 +2227,22 @@ class _InboxPreviewSheetState extends State<_InboxPreviewSheet> {
               Text(
                 '${widget.item.sourceName} · ${widget.item.durationSec} วินาที',
                 style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 10),
+              AnimatedBuilder(
+                animation: _playback,
+                builder: (context, _) => ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    key: const Key('inbox-preview-progress'),
+                    value: _playback.value,
+                    minHeight: 3,
+                    backgroundColor: context.t.textPrimary.withValues(
+                      alpha: .24,
+                    ),
+                    color: context.t.primary,
+                  ),
+                ),
               ),
               if (widget.product != null) ...[
                 const SizedBox(height: 7),
@@ -911,39 +2282,89 @@ class _InboxPreviewSheetState extends State<_InboxPreviewSheet> {
 class _ImportingItem extends StatelessWidget {
   const _ImportingItem({required this.item});
   final InboxItem item;
+
+  String _stage(double progress) {
+    if (progress < .34) return 'กำลังรับไฟล์';
+    if (progress < .67) return 'AI กำลังตรวจสัดส่วน';
+    return 'กำลังเตรียมพร้อมใช้';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final percent = (item.progress * 100).round();
     return _Panel(
-      child: Row(
-        children: [
-          SizedBox(
-            width: 52,
-            height: 52,
-            child: CircularProgressIndicator(
-              value: item.progress,
-              color: context.t.warning,
-              backgroundColor: context.t.warning.withValues(alpha: .12),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: item.progress),
+        duration: MediaQuery.of(context).disableAnimations
+            ? Duration.zero
+            : const Duration(milliseconds: 520),
+        curve: Curves.easeOutCubic,
+        builder: (context, progress, _) => Row(
+          children: [
+            SizedBox(
+              width: 52,
+              height: 52,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 3,
+                    color: context.t.warning,
+                    backgroundColor: context.t.warning.withValues(alpha: .12),
+                  ),
+                  Center(
+                    child: Icon(
+                      progress < .34
+                          ? Icons.download_rounded
+                          : progress < .67
+                          ? Icons.auto_awesome_rounded
+                          : Icons.inventory_2_outlined,
+                      size: 20,
+                      color: context.t.warning,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'กำลังรับไฟล์จาก ${item.sourceName} · $percent%',
-                  style: const TextStyle(fontSize: 11),
-                ),
-              ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 5),
+                  AnimatedSwitcher(
+                    duration: MediaQuery.of(context).disableAnimations
+                        ? Duration.zero
+                        : const Duration(milliseconds: 180),
+                    child: Text(
+                      '${_stage(progress)} · ${(progress * 100).round()}%',
+                      key: ValueKey(_stage(progress)),
+                      style: TextStyle(
+                        color: context.t.warning,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'กำลังรับไฟล์จาก ${item.sourceName}',
+                    style: TextStyle(
+                      color: context.t.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -992,12 +2413,28 @@ class _FailedItem extends StatelessWidget {
             Expanded(
               child: FilledButton.tonalIcon(
                 onPressed: onRetry,
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.t.primary.withValues(alpha: .12),
+                  foregroundColor: context.t.primary,
+                  side: BorderSide(
+                    color: context.t.primary.withValues(alpha: .3),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('ลองใหม่'),
               ),
             ),
             const SizedBox(width: 8),
-            TextButton(onPressed: onDismiss, child: const Text('ลบออก')),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onDismiss,
+                icon: const Icon(Icons.delete_outline_rounded, size: 17),
+                label: const Text('ลบออก'),
+              ),
+            ),
           ],
         ),
       ],

@@ -18,8 +18,7 @@ class ApiClient {
     String path, {
     required String access,
     Map<String, dynamic>? query,
-  }) =>
-      _send(path, method: 'GET', access: access, query: query);
+  }) => _send(path, method: 'GET', access: access, query: query);
 
   Future<Map<String, dynamic>> post(
     String path, {
@@ -33,11 +32,13 @@ class ApiClient {
     String path, {
     required String access,
     Object? body,
-  }) =>
-      _send(path, method: 'PATCH', access: access, body: body);
+  }) => _send(path, method: 'PATCH', access: access, body: body);
 
-  Future<Map<String, dynamic>> delete(String path, {required String access}) =>
-      _send(path, method: 'DELETE', access: access);
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    required String access,
+    Object? body,
+  }) => _send(path, method: 'DELETE', access: access, body: body);
 
   Future<Map<String, dynamic>> _send(
     String path, {
@@ -83,10 +84,11 @@ AuthFailure failureFrom(DioException error) {
   final message = switch (status) {
     null => 'เชื่อมต่อไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่',
     429 => 'ลองหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่',
-    _ => reason ??
-        (detail is Map && detail['message'] is String
-            ? detail['message'] as String
-            : 'ระบบขัดข้องชั่วคราว กรุณาลองใหม่'),
+    _ =>
+      reason ??
+          (detail is Map && detail['message'] is String
+              ? detail['message'] as String
+              : 'ระบบขัดข้องชั่วคราว กรุณาลองใหม่'),
   };
 
   return AuthFailure(message, status: status, code: code);

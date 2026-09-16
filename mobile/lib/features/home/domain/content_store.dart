@@ -5,9 +5,8 @@ import 'home_data.dart';
 
 /// จำนวนออเดอร์จำลองต่อคลิปที่โพสต์แล้ว — คงที่ต่อ id เดียวกัน
 /// มาแทนด้วยเลขจริงจาก TikTok เมื่อต่อ backend
-int mockOrdersFor(PublishJob job) => job.status == JobStatus.published
-    ? (job.id.hashCode.abs() % 34) + 12
-    : 0;
+int mockOrdersFor(PublishJob job) =>
+    job.status == JobStatus.published ? (job.id.hashCode.abs() % 34) + 12 : 0;
 
 /// แหล่งข้อมูล "งานคอนเทนต์" ตัวเดียวของทั้งแอปในโหมด prototype
 ///
@@ -27,6 +26,45 @@ class ContentStore extends ChangeNotifier {
 
   bool get isEmpty => _jobs.isEmpty;
 
+  /// Replaces the in-memory snapshot with the latest repository response.
+  /// Keeping this operation at the store boundary lets existing screens share
+  /// one source while the API-backed repository is introduced incrementally.
+  void replaceAll(Iterable<PublishJob> jobs) {
+    final next = List<PublishJob>.of(jobs);
+    if (_sameIdsAndStates(next)) return;
+    _jobs
+      ..clear()
+      ..addAll(next);
+    notifyListeners();
+  }
+
+  /// Replaces one item after a server mutation, preserving the rest of the
+  /// current snapshot. Also useful for rolling back an optimistic update.
+  void replace(PublishJob job) {
+    final index = _jobs.indexWhere((item) => item.id == job.id);
+    if (index < 0 || _sameJob(_jobs[index], job)) return;
+    _jobs[index] = job;
+    notifyListeners();
+  }
+
+  bool _sameIdsAndStates(List<PublishJob> next) {
+    if (_jobs.length != next.length) return false;
+    for (var i = 0; i < _jobs.length; i++) {
+      final current = _jobs[i];
+      final incoming = next[i];
+      if (!_sameJob(current, incoming)) return false;
+    }
+    return true;
+  }
+
+  bool _sameJob(PublishJob a, PublishJob b) =>
+      a.id == b.id &&
+      a.status == b.status &&
+      a.scheduledAt == b.scheduledAt &&
+      a.caption == b.caption &&
+      a.errorMessage == b.errorMessage &&
+      a.permalink == b.permalink;
+
   PublishJob? byId(String id) {
     for (final j in _jobs) {
       if (j.id == id) return j;
@@ -45,12 +83,10 @@ class ContentStore extends ChangeNotifier {
         ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
   /// อนุมัติงานที่รอตรวจ → เข้าคิวตั้งเวลา
-  void approveReview(String id) =>
-      updateStatus(id, JobStatus.scheduled);
+  void approveReview(String id) => updateStatus(id, JobStatus.scheduled);
 
   /// ส่งกลับไปเป็นฉบับร่างเพื่อแก้
-  void sendBackToDraft(String id) =>
-      updateStatus(id, JobStatus.draft);
+  void sendBackToDraft(String id) => updateStatus(id, JobStatus.draft);
 
   /// มุมมองจัดกลุ่มตามความเร่งด่วน สำหรับหน้าหลัก
   HomeData homeData({List<Connection> connections = const []}) =>
@@ -73,8 +109,10 @@ class ContentStore extends ChangeNotifier {
   void restore(String id) =>
       _mutate(id, (j) => j.copyWith(status: JobStatus.scheduled));
 
-  void retry(String id) =>
-      _mutate(id, (j) => j.copyWith(status: JobStatus.queued, errorMessage: ''));
+  void retry(String id) => _mutate(
+    id,
+    (j) => j.copyWith(status: JobStatus.queued, errorMessage: ''),
+  );
 
   void updateStatus(String id, JobStatus status) =>
       _mutate(id, (j) => j.copyWith(status: status));

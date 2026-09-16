@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/auth/auth_controller.dart';
+import '../core/config/app_config.dart';
 import '../features/auth/presentation/auth_page.dart';
 import '../features/auth/presentation/onboarding_page.dart';
 import '../features/composer/data/composer_api.dart';
@@ -28,8 +29,12 @@ import '../features/showcase/domain/showcase_product.dart';
 import '../features/showcase/presentation/product_detail_page.dart';
 import '../features/showcase/presentation/showcase_page.dart';
 import 'main_shell.dart';
+import 'motion/motion_tokens.dart';
+import 'navigation/relay_page.dart';
 import 'providers.dart';
 import 'theme/app_theme.dart';
+import 'theme/tokens.dart';
+import 'widgets/relay_state_panel.dart';
 
 class RelayApp extends ConsumerStatefulWidget {
   const RelayApp({super.key});
@@ -48,6 +53,9 @@ class _RelayAppState extends ConsumerState<RelayApp> {
     super.initState();
     auth = ref.read(authProvider);
     contentStore = ref.read(contentStoreProvider);
+    // Starts optional FCM token registration; it is a no-op until Firebase is
+    // configured for the current mobile build.
+    ref.read(pushNotificationsProvider);
     router = GoRouter(
       initialLocation: '/session',
       refreshListenable: auth,
@@ -93,15 +101,26 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                     auth: auth,
                     controller: ref.read(homeProvider),
                     store: contentStore,
+                    notifications: ref.read(notificationsProvider),
                   ),
                 ),
                 GoRoute(
                   path: '/notifications',
-                  builder: (_, _) => const NotificationsPage(),
+                  pageBuilder: (_, state) => relayPage(
+                    state,
+                    NotificationsPage(
+                      controller: ref.read(notificationsProvider),
+                    ),
+                    motion: RelayPageMotion.detail,
+                  ),
                 ),
                 GoRoute(
                   path: '/review',
-                  builder: (_, _) => ReviewQueuePage(store: contentStore),
+                  pageBuilder: (_, state) => relayPage(
+                    state,
+                    ReviewQueuePage(store: contentStore),
+                    motion: RelayPageMotion.detail,
+                  ),
                 ),
               ],
             ),
@@ -113,15 +132,18 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                   routes: [
                     GoRoute(
                       path: 'import-ai',
-                      builder: (_, state) => AiSourcesPage(
-                        product: state.extra is ShowcaseProduct
-                            ? state.extra! as ShowcaseProduct
-                            : null,
+                      pageBuilder: (_, state) => relayPage(
+                        state,
+                        AiSourcesPage(
+                          product: state.extra is ShowcaseProduct
+                              ? state.extra! as ShowcaseProduct
+                              : null,
+                        ),
                       ),
                     ),
                     GoRoute(
                       path: ':productId',
-                      builder: (_, state) {
+                      pageBuilder: (_, state) {
                         ShowcaseProduct? product;
                         for (final item in ShowcaseProduct.mock) {
                           if (item.id == state.pathParameters['productId']) {
@@ -129,12 +151,16 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                             break;
                           }
                         }
-                        return product == null
-                            ? const ShowcasePage()
-                            : ProductDetailPage(
-                                product: product,
-                                store: contentStore,
-                              );
+                        return relayPage(
+                          state,
+                          product == null
+                              ? const ShowcasePage()
+                              : ProductDetailPage(
+                                  product: product,
+                                  store: contentStore,
+                                ),
+                          motion: RelayPageMotion.detail,
+                        );
                       },
                     ),
                   ],
@@ -153,67 +179,88 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                   routes: [
                     GoRoute(
                       path: 'import-ai',
-                      builder: (_, state) => AiSourcesPage(
-                        product: state.extra is ShowcaseProduct
-                            ? state.extra! as ShowcaseProduct
-                            : null,
+                      pageBuilder: (_, state) => relayPage(
+                        state,
+                        AiSourcesPage(
+                          product: state.extra is ShowcaseProduct
+                              ? state.extra! as ShowcaseProduct
+                              : null,
+                        ),
                       ),
                     ),
                     GoRoute(
                       path: 'ai',
-                      builder: (_, state) => AiCreatePage(
-                        product: state.extra is ShowcaseProduct
-                            ? state.extra! as ShowcaseProduct
-                            : ShowcaseProduct.mock.first,
+                      pageBuilder: (_, state) => relayPage(
+                        state,
+                        AiCreatePage(
+                          product: state.extra is ShowcaseProduct
+                              ? state.extra! as ShowcaseProduct
+                              : ShowcaseProduct.mock.first,
+                        ),
                       ),
                     ),
                     GoRoute(
                       path: 'upload',
-                      builder: (_, state) => CreatePage(
-                        controller: ref.read(createProvider),
-                        selectedProduct: state.extra is ShowcaseProduct
-                            ? state.extra! as ShowcaseProduct
-                            : null,
+                      pageBuilder: (_, state) => relayPage(
+                        state,
+                        CreatePage(
+                          controller: ref.read(createProvider),
+                          selectedProduct: state.extra is ShowcaseProduct
+                              ? state.extra! as ShowcaseProduct
+                              : null,
+                        ),
                       ),
                     ),
                     GoRoute(
                       path: 'guided',
-                      builder: (_, state) => GuidedFilmPage(
-                        product: state.extra is ShowcaseProduct
-                            ? state.extra! as ShowcaseProduct
-                            : ShowcaseProduct.mock.first,
+                      pageBuilder: (_, state) => relayPage(
+                        state,
+                        GuidedFilmPage(
+                          product: state.extra is ShowcaseProduct
+                              ? state.extra! as ShowcaseProduct
+                              : ShowcaseProduct.mock.first,
+                        ),
                       ),
                     ),
                     GoRoute(
                       path: 'batch',
-                      builder: (_, state) => BatchCreatePage(
-                        products: state.extra is List<ShowcaseProduct>
-                            ? state.extra! as List<ShowcaseProduct>
-                            : const [],
-                        store: contentStore,
+                      pageBuilder: (_, state) => relayPage(
+                        state,
+                        BatchCreatePage(
+                          products: state.extra is List<ShowcaseProduct>
+                              ? state.extra! as List<ShowcaseProduct>
+                              : const [],
+                          store: contentStore,
+                        ),
                       ),
                     ),
                     GoRoute(
                       path: 'publish',
-                      builder: (_, state) {
+                      pageBuilder: (_, state) {
                         final extra = state.extra;
                         if (extra is PublishReviewArgs) {
-                          return PublishReviewPage(
-                            product: extra.product,
-                            initialCaption: extra.caption,
-                            mediaName: extra.mediaName,
-                            durationSec: extra.durationSec,
-                            sourceLabel: extra.sourceLabel,
-                            store: contentStore,
-                            remixOfId: extra.remixOfId,
-                            remixNote: extra.remixNote,
+                          return relayPage(
+                            state,
+                            PublishReviewPage(
+                              product: extra.product,
+                              initialCaption: extra.caption,
+                              mediaName: extra.mediaName,
+                              durationSec: extra.durationSec,
+                              sourceLabel: extra.sourceLabel,
+                              store: contentStore,
+                              remixOfId: extra.remixOfId,
+                              remixNote: extra.remixNote,
+                            ),
                           );
                         }
-                        return PublishReviewPage(
-                          product: extra is ShowcaseProduct
-                              ? extra
-                              : ShowcaseProduct.mock.first,
-                          store: contentStore,
+                        return relayPage(
+                          state,
+                          PublishReviewPage(
+                            product: extra is ShowcaseProduct
+                                ? extra
+                                : ShowcaseProduct.mock.first,
+                            store: contentStore,
+                          ),
                         );
                       },
                     ),
@@ -232,19 +279,80 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                   routes: [
                     GoRoute(
                       path: ':jobId',
-                      builder: (_, state) {
+                      pageBuilder: (_, state) {
                         final extra = state.extra;
                         final job = extra is home.PublishJob
                             ? extra
                             : contentStore.byId(
                                 state.pathParameters['jobId'] ?? '',
                               );
-                        return job == null
-                            ? ContentLibraryPage(
-                                controller: ref.read(homeProvider),
-                                store: contentStore,
-                              )
-                            : ContentDetailPage(job: job, store: contentStore);
+                        return relayPage(
+                          state,
+                          job == null
+                              ? ContentLibraryPage(
+                                  controller: ref.read(homeProvider),
+                                  store: contentStore,
+                                )
+                              : ContentDetailPage(
+                                  job: job,
+                                  store: contentStore,
+                                  onRetryRemote: AppConfig.isLive
+                                      ? (jobId) async {
+                                          await auth.authorized(
+                                            (access) => ref
+                                                .read(publishJobsApiProvider)
+                                                .retry(access, jobId),
+                                          );
+                                          await ref.read(homeProvider).load();
+                                        }
+                                      : null,
+                                  onCancelRemote: AppConfig.isLive
+                                      ? (jobId) async {
+                                          await auth.authorized(
+                                            (access) => ref
+                                                .read(publishJobsApiProvider)
+                                                .cancel(access, jobId),
+                                          );
+                                          await ref.read(homeProvider).load();
+                                        }
+                                      : null,
+                                  onRescheduleRemote: AppConfig.isLive
+                                      ? (jobId, scheduledAt) async {
+                                          await auth.authorized(
+                                            (access) => ref
+                                                .read(publishJobsApiProvider)
+                                                .reschedule(
+                                                  access,
+                                                  jobId,
+                                                  scheduledAt,
+                                                ),
+                                          );
+                                          final home = ref.read(homeProvider);
+                                          await home.load();
+                                          final data = home.data;
+                                          if (data != null) {
+                                            contentStore.replaceAll(data.jobs);
+                                          }
+                                        }
+                                      : null,
+                                  onRestoreRemote: AppConfig.isLive
+                                      ? (jobId) async {
+                                          await auth.authorized(
+                                            (access) => ref
+                                                .read(publishJobsApiProvider)
+                                                .restore(access, jobId),
+                                          );
+                                          final home = ref.read(homeProvider);
+                                          await home.load();
+                                          final data = home.data;
+                                          if (data != null) {
+                                            contentStore.replaceAll(data.jobs);
+                                          }
+                                        }
+                                      : null,
+                                ),
+                          motion: RelayPageMotion.detail,
+                        );
                       },
                     ),
                   ],
@@ -267,8 +375,10 @@ class _RelayAppState extends ConsumerState<RelayApp> {
                 ),
                 GoRoute(
                   path: '/connections',
-                  builder: (_, _) => ConnectionsPage(
-                    controller: ref.read(connectionsProvider),
+                  pageBuilder: (_, state) => relayPage(
+                    state,
+                    ConnectionsPage(controller: ref.read(connectionsProvider)),
+                    motion: RelayPageMotion.detail,
                   ),
                 ),
               ],
@@ -277,20 +387,36 @@ class _RelayAppState extends ConsumerState<RelayApp> {
         ),
         GoRoute(
           path: '/composer',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             // Composer ต้องรู้ว่าโพสต์คอนเทนต์ไหน ด้วยบัญชีไหน และวิดีโอยาวเท่าไหร่
             // (ความยาวใช้ตรวจกฎ R7 ของ TikTok) จึงรับผ่าน extra แทน query param
             final args = state.extra as ComposerArgs?;
-            if (args == null) return const _MissingArgs();
+            if (args == null) {
+              return relayPage(
+                state,
+                const _MissingArgs(),
+                motion: RelayPageMotion.detail,
+              );
+            }
 
-            return TikTokComposerPage(
-              controller: ComposerController(
-                auth: auth,
-                api: HttpComposerApi(ref.read(apiClientProvider)),
-                contentId: args.contentId,
-                connectionId: args.connectionId,
-                videoDurationSec: args.videoDurationSec,
-                isAigc: args.isAigc,
+            final controller = ComposerController(
+              auth: auth,
+              api: HttpComposerApi(ref.read(apiClientProvider)),
+              contentId: args.contentId,
+              connectionId: args.connectionId,
+              videoDurationSec: args.videoDurationSec,
+              isAigc: args.isAigc,
+            );
+            return relayPage(
+              state,
+              TikTokComposerPage(
+                controller: controller,
+                onSubmitted: () async {
+                  final home = ref.read(homeProvider);
+                  await home.load();
+                  final data = home.data;
+                  if (data != null) contentStore.replaceAll(data.jobs);
+                },
               ),
             );
           },
@@ -313,10 +439,22 @@ class _RelayAppState extends ConsumerState<RelayApp> {
     theme: appTheme(Brightness.light),
     darkTheme: appTheme(Brightness.dark),
     themeMode: themeMode,
+    scrollBehavior: const _MobileFirstScrollBehavior(),
     builder: (context, child) =>
         _ResponsiveAppViewport(reducedMotion: reducedMotion, child: child),
     routerConfig: router,
   );
+}
+
+class _MobileFirstScrollBehavior extends MaterialScrollBehavior {
+  const _MobileFirstScrollBehavior();
+
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
 }
 
 /// Keeps the web preview at a real mobile width without browser device
@@ -381,18 +519,14 @@ class SessionPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   if (auth.phase == SessionPhase.starting) ...[
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    const Text('กำลังเปิดบัญชีของคุณ…'),
+                    const _SessionOpening(),
                   ] else ...[
-                    Text(
-                      auth.error ?? 'เชื่อมต่อไม่ได้',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: auth.busy ? null : auth.restore,
-                      child: const Text('ลองอีกครั้ง'),
+                    RelayStatePanel(
+                      kind: RelayStateKind.offline,
+                      title: 'ยังเปิดบัญชีไม่ได้',
+                      message: auth.error ?? 'กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่',
+                      actionLabel: 'ลองเปิดบัญชีอีกครั้ง',
+                      onAction: auth.busy ? null : auth.restore,
                     ),
                     TextButton(
                       onPressed: auth.busy ? null : auth.signOut,
@@ -405,6 +539,61 @@ class SessionPage extends StatelessWidget {
           ),
         ),
       ),
+    ),
+  );
+}
+
+class _SessionOpening extends StatelessWidget {
+  const _SessionOpening();
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0, end: 1),
+    duration: context.motion(RelayMotion.journey),
+    curve: RelayMotion.enter,
+    builder: (context, progress, _) => Column(
+      children: [
+        Transform.scale(
+          scale: .9 + progress * .1,
+          child: Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: context.t.primary.withValues(alpha: .12),
+              shape: BoxShape.circle,
+              border: Border.all(color: context.t.primary),
+              boxShadow: [
+                BoxShadow(
+                  color: context.t.primary.withValues(alpha: .16 * progress),
+                  blurRadius: 20,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.sync_lock_rounded,
+              color: context.t.primary,
+              size: 28,
+            ),
+          ),
+        ),
+        const SizedBox(height: Spacing.md),
+        const Text(
+          'กำลังเปิดพื้นที่ทำงานของคุณ',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: 220,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: context.t.primary.withValues(alpha: .1),
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }

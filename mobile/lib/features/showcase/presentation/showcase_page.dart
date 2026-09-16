@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
@@ -28,14 +29,20 @@ class _ShowcasePageState extends State<ShowcasePage> {
   bool _selectMode = false;
   final _selected = <String>{};
 
-  void _toggleSelectMode() => setState(() {
-    _selectMode = !_selectMode;
-    _selected.clear();
-  });
+  void _toggleSelectMode() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectMode = !_selectMode;
+      _selected.clear();
+    });
+  }
 
-  void _toggleSelected(String id) => setState(() {
-    _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
-  });
+  void _toggleSelected(String id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
+    });
+  }
 
   void _startBatch() {
     final picked = ShowcaseProduct.mock
@@ -90,20 +97,40 @@ class _ShowcasePageState extends State<ShowcasePage> {
         title: Text(_selectMode ? 'เลือกสินค้าทำเป็นชุด' : 'สินค้า'),
         actions: [
           if (widget.store != null)
-            IconButton(
+            IconButton.outlined(
               key: const Key('toggle-batch-select'),
               tooltip: _selectMode ? 'ยกเลิกเลือกหลายชิ้น' : 'เลือกหลายชิ้น',
               onPressed: _toggleSelectMode,
+              style: IconButton.styleFrom(
+                foregroundColor: _selectMode
+                    ? context.t.creative
+                    : context.t.textSecondary,
+                backgroundColor: _selectMode
+                    ? context.t.creative.withValues(alpha: .1)
+                    : context.t.surfaceElevated,
+                side: BorderSide(
+                  color: _selectMode
+                      ? context.t.creative.withValues(alpha: .38)
+                      : context.t.border,
+                ),
+              ),
               icon: Icon(
                 _selectMode ? Icons.close_rounded : Icons.checklist_rounded,
               ),
             ),
           if (!_selectMode)
-            IconButton(
+            IconButton.outlined(
               tooltip: 'ซิงก์ข้อมูลตัวอย่าง',
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('อัปเดตข้อมูลตัวอย่างแล้ว')),
+              style: IconButton.styleFrom(
+                backgroundColor: context.t.surfaceElevated,
+                side: BorderSide(color: context.t.border),
               ),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('อัปเดตข้อมูลตัวอย่างแล้ว')),
+                );
+              },
               icon: const Icon(Icons.sync_rounded),
             ),
           const SizedBox(width: Spacing.sm),
@@ -118,11 +145,9 @@ class _ShowcasePageState extends State<ShowcasePage> {
                   Spacing.md,
                   Spacing.md,
                 ),
-                child: FilledButton.icon(
-                  key: const Key('start-batch'),
-                  onPressed: _startBatch,
-                  icon: const Icon(Icons.playlist_add_rounded),
-                  label: Text('สร้างเป็นชุด (${_selected.length})'),
+                child: _BatchSelectionTray(
+                  count: _selected.length,
+                  onStart: _startBatch,
                 ),
               ),
             )
@@ -173,9 +198,26 @@ class _ShowcasePageState extends State<ShowcasePage> {
                     Padding(
                       padding: const EdgeInsets.only(right: Spacing.sm),
                       child: ChoiceChip(
+                        avatar: Icon(
+                          _filterIcon(filter),
+                          size: 16,
+                          color: _filter == filter
+                              ? context.t.primary
+                              : context.t.textSecondary,
+                        ),
                         label: Text(_filterLabel(filter)),
                         selected: _filter == filter,
-                        onSelected: (_) => setState(() => _filter = filter),
+                        showCheckmark: false,
+                        side: BorderSide(
+                          color: _filter == filter
+                              ? context.t.primary.withValues(alpha: .55)
+                              : context.t.border,
+                        ),
+                        selectedColor: context.t.primary.withValues(alpha: .12),
+                        onSelected: (_) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _filter = filter);
+                        },
                       ),
                     ),
                 ],
@@ -203,6 +245,7 @@ class _ShowcasePageState extends State<ShowcasePage> {
             else
               for (final product in products)
                 _ProductCard(
+                  key: ValueKey(product.id),
                   product: product,
                   saved: _saved.contains(product.id),
                   onSaved: () => _saved.toggle(product.id),
@@ -228,6 +271,102 @@ class _ShowcasePageState extends State<ShowcasePage> {
     _ProductFilter.inStock => 'พร้อมขาย',
     _ProductFilter.unavailable => 'ไม่พร้อมขาย',
   };
+
+  IconData _filterIcon(_ProductFilter filter) => switch (filter) {
+    _ProductFilter.all => Icons.grid_view_rounded,
+    _ProductFilter.saved => Icons.bookmark_outline_rounded,
+    _ProductFilter.highCommission => Icons.payments_outlined,
+    _ProductFilter.inStock => Icons.inventory_2_outlined,
+    _ProductFilter.unavailable => Icons.block_outlined,
+  };
+}
+
+class _BatchSelectionTray extends StatelessWidget {
+  const _BatchSelectionTray({required this.count, required this.onStart});
+
+  final int count;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(8),
+    decoration: BoxDecoration(
+      color: context.t.surfaceElevated,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      border: Border.all(color: context.t.creative.withValues(alpha: .35)),
+      boxShadow: [
+        BoxShadow(
+          color: context.t.creative.withValues(alpha: .12),
+          blurRadius: 20,
+          offset: const Offset(0, 7),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 54,
+          height: 44,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              for (var i = 0; i < count.clamp(1, 3); i++)
+                Positioned(
+                  left: 4.0 + (i * 11),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Color.lerp(
+                        context.t.creative,
+                        context.t.primary,
+                        i / 3,
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: context.t.surfaceElevated,
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: i == count.clamp(1, 3) - 1
+                          ? Text(
+                              '$count',
+                              style: TextStyle(
+                                color: context.t.textPrimary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: FilledButton.icon(
+            key: const Key('start-batch'),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.t.creative,
+              foregroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? context.t.textPrimary
+                  : context.t.surfaceContainer,
+              minimumSize: const Size.fromHeight(48),
+            ),
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              onStart();
+            },
+            icon: const Icon(Icons.playlist_add_rounded),
+            label: Text('สร้างเป็นชุด ($count)'),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _OpportunityRadar extends StatelessWidget {
@@ -369,15 +508,19 @@ class _OpportunityCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 height: 34,
-                child: FilledButton(
+                child: FilledButton.icon(
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(0, 34),
                     backgroundColor: s.color.withValues(alpha: .16),
                     foregroundColor: s.color,
                     padding: EdgeInsets.zero,
                   ),
-                  onPressed: onCreate,
-                  child: const Text(
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    onCreate();
+                  },
+                  icon: const Icon(Icons.auto_awesome_rounded, size: 15),
+                  label: const Text(
                     'สร้างคอนเทนต์',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                   ),
@@ -415,8 +558,9 @@ class _PreviewNotice extends StatelessWidget {
   );
 }
 
-class _ProductCard extends StatelessWidget {
+class _ProductCard extends StatefulWidget {
   const _ProductCard({
+    super.key,
     required this.product,
     required this.onOpen,
     required this.onCreate,
@@ -434,114 +578,266 @@ class _ProductCard extends StatelessWidget {
   final bool selected;
 
   @override
+  State<_ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<_ProductCard> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final p = product;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      shape: selected
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Radii.lg),
-              side: BorderSide(color: context.t.primary, width: 2),
-            )
-          : null,
-      child: InkWell(
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (selectMode) ...[
-                Checkbox(
-                  value: selected,
-                  onChanged: (_) => onOpen(),
-                ),
-                const SizedBox(width: 4),
-              ],
-              ProductArtwork(product: p, width: 82, height: 106, hero: true),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            p.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          tooltip: saved ? 'เลิกบันทึก' : 'บันทึกสินค้า',
-                          onPressed: onSaved,
-                          icon: Icon(
-                            saved
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_border_rounded,
-                            size: 20,
-                          ),
-                        ),
-                      ],
+    final p = widget.product;
+    return AnimatedScale(
+      scale: _pressed ? .985 : 1,
+      duration: const Duration(milliseconds: 100),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        clipBehavior: Clip.antiAlias,
+        elevation: widget.selected ? 4 : 0,
+        shadowColor: context.t.primary.withValues(alpha: .28),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.lg),
+          side: BorderSide(
+            color: widget.selected ? context.t.primary : context.t.border,
+            width: widget.selected ? 2 : 1,
+          ),
+        ),
+        child: InkWell(
+          onHighlightChanged: (value) {
+            if (mounted) setState(() => _pressed = value);
+          },
+          onTap: () {
+            HapticFeedback.selectionClick();
+            widget.onOpen();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            color: widget.selected
+                ? context.t.primary.withValues(alpha: .055)
+                : context.t.surfaceContainer,
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.selectMode) ...[
+                  AnimatedScale(
+                    scale: widget.selected ? 1.08 : 1,
+                    duration: const Duration(milliseconds: 160),
+                    child: Checkbox(
+                      value: widget.selected,
+                      onChanged: (_) => widget.onOpen(),
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      p.shopName,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          '฿${p.priceBaht}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                ProductArtwork(product: p, width: 82, height: 106, hero: true),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              p.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          'คอม ฿${p.commissionBaht}',
-                          style: TextStyle(
-                            color: context.t.success,
-                            fontWeight: FontWeight.w700,
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            tooltip: widget.saved
+                                ? 'เลิกบันทึก'
+                                : 'บันทึกสินค้า',
+                            style: IconButton.styleFrom(
+                              foregroundColor: widget.saved
+                                  ? context.t.warning
+                                  : context.t.textSecondary,
+                              backgroundColor: widget.saved
+                                  ? context.t.warning.withValues(alpha: .1)
+                                  : context.t.surfaceElevated,
+                              side: BorderSide(
+                                color: widget.saved
+                                    ? context.t.warning.withValues(alpha: .3)
+                                    : context.t.border,
+                              ),
+                            ),
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              widget.onSaved();
+                            },
+                            icon: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              child: Icon(
+                                widget.saved
+                                    ? Icons.bookmark_rounded
+                                    : Icons.bookmark_border_rounded,
+                                key: ValueKey(widget.saved),
+                                size: 20,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    if (!selectMode) ...[
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 40,
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size(0, 40),
-                            backgroundColor: onCreate == null
-                                ? context.t.surfaceElevated
-                                : context.t.creative,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: onCreate,
-                          icon: Icon(
-                            onCreate == null
-                                ? Icons.block_rounded
-                                : Icons.movie_creation_outlined,
-                          ),
-                          label: Text(
-                            onCreate == null
-                                ? 'สินค้าหมดสต็อก'
-                                : 'สร้างคอนเทนต์',
-                          ),
-                        ),
+                        ],
                       ),
+                      const SizedBox(height: 5),
+                      Text(
+                        p.shopName,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            '฿${p.priceBaht}',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.t.success.withValues(alpha: .1),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              'คอม ฿${p.commissionBaht}',
+                              style: TextStyle(
+                                color: context.t.success,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (!widget.selectMode) ...[
+                        const SizedBox(height: 10),
+                        _ProductCreateButton(
+                          product: p,
+                          onPressed: widget.onCreate,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductCreateButton extends StatefulWidget {
+  const _ProductCreateButton({required this.product, required this.onPressed});
+
+  final ShowcaseProduct product;
+  final VoidCallback? onPressed;
+
+  @override
+  State<_ProductCreateButton> createState() => _ProductCreateButtonState();
+}
+
+class _ProductCreateButtonState extends State<_ProductCreateButton> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value || !mounted || widget.onPressed == null) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onPressed != null;
+    final foreground = Theme.of(context).brightness == Brightness.dark
+        ? context.t.textPrimary
+        : context.t.surfaceContainer;
+    return Listener(
+      onPointerDown: (_) => _setPressed(true),
+      onPointerUp: (_) => _setPressed(false),
+      onPointerCancel: (_) => _setPressed(false),
+      child: AnimatedScale(
+        scale: _pressed ? .97 : 1,
+        duration: const Duration(milliseconds: 90),
+        child: Container(
+          width: double.infinity,
+          height: 42,
+          decoration: BoxDecoration(
+            color: enabled ? null : context.t.surfaceElevated,
+            gradient: enabled
+                ? LinearGradient(
+                    colors: [
+                      context.t.creative,
+                      Color.lerp(context.t.creative, context.t.primary, .2)!,
+                    ],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(Radii.md),
+            border: Border.all(
+              color: enabled
+                  ? context.t.creative.withValues(alpha: .35)
+                  : context.t.border,
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (enabled)
+                Positioned(
+                  right: 11,
+                  top: 0,
+                  bottom: 0,
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < 3; i++) ...[
+                        Container(
+                          width: 3.0 + i,
+                          height: 3.0 + i,
+                          decoration: BoxDecoration(
+                            color: foreground.withValues(
+                              alpha: .13 + (i * .05),
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                      ],
+                    ],
+                  ),
+                ),
+              FilledButton.icon(
+                key: Key('create-product-${widget.product.id}'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(42),
+                  backgroundColor: context.t.creative.withValues(alpha: 0),
+                  disabledBackgroundColor: context.t.surfaceElevated.withValues(
+                    alpha: 0,
+                  ),
+                  foregroundColor: foreground,
+                  disabledForegroundColor: context.t.textSecondary,
+                  shadowColor: context.t.creative.withValues(alpha: 0),
+                ),
+                onPressed: enabled
+                    ? () {
+                        HapticFeedback.mediumImpact();
+                        widget.onPressed!();
+                      }
+                    : null,
+                icon: Icon(
+                  enabled ? Icons.movie_creation_outlined : Icons.block_rounded,
+                  size: 18,
+                ),
+                label: Text(enabled ? 'สร้างคอนเทนต์' : 'สินค้าหมดสต็อก'),
               ),
             ],
           ),
@@ -567,7 +863,15 @@ class _NoResults extends StatelessWidget {
         ),
         const SizedBox(height: Spacing.md),
         const Text('ไม่พบสินค้าที่ค้นหา'),
-        TextButton(onPressed: onReset, child: const Text('ล้างตัวกรอง')),
+        const SizedBox(height: 4),
+        TextButton.icon(
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            onReset();
+          },
+          icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+          label: const Text('ล้างตัวกรอง'),
+        ),
       ],
     ),
   );

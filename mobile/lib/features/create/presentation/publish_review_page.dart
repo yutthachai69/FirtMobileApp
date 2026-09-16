@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
@@ -62,7 +63,8 @@ class PublishReviewPage extends StatefulWidget {
   State<PublishReviewPage> createState() => _PublishReviewPageState();
 }
 
-class _PublishReviewPageState extends State<PublishReviewPage> {
+class _PublishReviewPageState extends State<PublishReviewPage>
+    with TickerProviderStateMixin {
   final caption = TextEditingController();
   final scrollController = ScrollController();
   final _captionKey = GlobalKey();
@@ -74,6 +76,9 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
   bool submitting = false;
   bool _acknowledgedLowScore = false;
   final tags = <String>{'#รีวิวของดี', '#TikTokป้ายยา'};
+  late final AnimationController _arrivalController;
+  late final Animation<double> _arrival;
+  late final AnimationController _launchController;
 
   ReadinessReport get _readiness => ReadinessReport.evaluate(
     caption: caption.text,
@@ -101,6 +106,23 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
   @override
   void initState() {
     super.initState();
+    final reduced = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+    _arrivalController = AnimationController(
+      vsync: this,
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 760),
+    )..forward();
+    _arrival = CurvedAnimation(
+      parent: _arrivalController,
+      curve: Curves.easeOutCubic,
+    );
+    _launchController = AnimationController(
+      vsync: this,
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 980),
+    );
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     scheduledAt = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 19, 30);
     caption.text = widget.initialCaption?.trim().isNotEmpty == true
@@ -111,6 +133,8 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
 
   @override
   void dispose() {
+    _launchController.dispose();
+    _arrivalController.dispose();
     caption.dispose();
     scrollController.dispose();
     super.dispose();
@@ -119,147 +143,155 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
   @override
   Widget build(BuildContext context) {
     if (submitted) return _Accepted(mode: mode, product: widget.product);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ตรวจสอบก่อนเผยแพร่'),
-        actions: [
-          IconButton(
-            key: const Key('open-video-preview'),
-            tooltip: 'ดูตัวอย่างวิดีโอ',
-            onPressed: _openPreview,
-            icon: const Icon(Icons.play_circle_outline_rounded),
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Text('ตรวจสอบก่อนเผยแพร่'),
+            actions: [
+              IconButton(
+                key: const Key('open-video-preview'),
+                tooltip: 'ดูตัวอย่างวิดีโอ',
+                onPressed: _openPreview,
+                icon: const Icon(Icons.play_circle_outline_rounded),
+              ),
+              const SizedBox(width: 6),
+            ],
           ),
-          const SizedBox(width: 6),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(Spacing.md, 8, Spacing.md, 24),
-          children: [
-            if (widget.remixNote != null) ...[
-              _RemixBanner(note: widget.remixNote!),
-              const SizedBox(height: Spacing.md),
-            ],
-            _VideoSummary(
-              product: widget.product,
-              mediaName: widget.mediaName,
-              durationSec: widget.durationSec,
-              sourceLabel: widget.sourceLabel,
-              onPreview: _openPreview,
-            ),
-            const SizedBox(height: Spacing.lg),
-            const _DestinationCard(),
-            const SizedBox(height: Spacing.lg),
-            _Title(
-              Icons.shopping_bag_outlined,
-              'ตะกร้าสินค้า',
-              key: _basketKey,
-            ),
-            const SizedBox(height: 10),
-            _Basket(
-              product: widget.product,
-              enabled: basket,
-              onChanged: _changeBasket,
-            ),
-            const SizedBox(height: Spacing.lg),
-            const _Title(Icons.send_outlined, 'เลือกเวลาที่เผยแพร่'),
-            const SizedBox(height: 10),
-            SegmentedButton<PublishMode>(
-              segments: const [
-                ButtonSegment(
-                  value: PublishMode.schedule,
-                  icon: Icon(Icons.schedule_rounded),
-                  label: Text('ตั้งเวลา'),
-                ),
-                ButtonSegment(
-                  value: PublishMode.now,
-                  icon: Icon(Icons.bolt_rounded),
-                  label: Text('โพสต์ทันที'),
-                ),
-              ],
-              selected: {mode},
-              onSelectionChanged: (v) => setState(() => mode = v.first),
-            ),
-            if (mode == PublishMode.schedule) ...[
-              const SizedBox(height: 12),
-              _Schedule(
-                scheduledAt: scheduledAt,
-                onChanged: (value) => setState(() => scheduledAt = value),
-                onPickDate: _pickDate,
-                onPickTime: _pickTime,
-              ),
-            ],
-            const SizedBox(height: Spacing.lg),
-            _Title(Icons.notes_rounded, 'แคปชัน', key: _captionKey),
-            const SizedBox(height: 10),
-            TextField(
-              key: const Key('publish-caption'),
-              controller: caption,
-              onChanged: (_) => setState(() {}),
-              minLines: 4,
-              maxLines: 7,
-              decoration: const InputDecoration(
-                hintText: 'เขียนข้อความดึงดูดผู้ชมและรายละเอียดสินค้า',
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 7,
-              runSpacing: 7,
+          body: SafeArea(
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(Spacing.md, 8, Spacing.md, 24),
               children: [
-                for (final tag in const [
-                  '#รีวิวของดี',
-                  '#TikTokป้ายยา',
-                  '#ของมันต้องมี',
-                  '#โปรวันนี้',
-                ])
-                  FilterChip(
-                    label: Text(tag),
-                    selected: tags.contains(tag),
-                    onSelected: (selected) => setState(
-                      () => selected ? tags.add(tag) : tags.remove(tag),
+                if (widget.remixNote != null) ...[
+                  _RemixBanner(note: widget.remixNote!),
+                  const SizedBox(height: Spacing.md),
+                ],
+                _VideoSummary(
+                  product: widget.product,
+                  mediaName: widget.mediaName,
+                  durationSec: widget.durationSec,
+                  sourceLabel: widget.sourceLabel,
+                  onPreview: _openPreview,
+                  arrival: _arrival,
+                ),
+                const SizedBox(height: Spacing.lg),
+                const _DestinationCard(),
+                const SizedBox(height: Spacing.lg),
+                _Title(
+                  Icons.shopping_bag_outlined,
+                  'ตะกร้าสินค้า',
+                  key: _basketKey,
+                ),
+                const SizedBox(height: 10),
+                _Basket(
+                  product: widget.product,
+                  enabled: basket,
+                  onChanged: _changeBasket,
+                ),
+                const SizedBox(height: Spacing.lg),
+                const _Title(Icons.send_outlined, 'เลือกเวลาที่เผยแพร่'),
+                const SizedBox(height: 10),
+                SegmentedButton<PublishMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: PublishMode.schedule,
+                      icon: Icon(Icons.schedule_rounded),
+                      label: Text('ตั้งเวลา'),
                     ),
+                    ButtonSegment(
+                      value: PublishMode.now,
+                      icon: Icon(Icons.bolt_rounded),
+                      label: Text('โพสต์ทันที'),
+                    ),
+                  ],
+                  selected: {mode},
+                  onSelectionChanged: (v) => setState(() => mode = v.first),
+                ),
+                if (mode == PublishMode.schedule) ...[
+                  const SizedBox(height: 12),
+                  _Schedule(
+                    scheduledAt: scheduledAt,
+                    onChanged: (value) => setState(() => scheduledAt = value),
+                    onPickDate: _pickDate,
+                    onPickTime: _pickTime,
                   ),
+                ],
+                const SizedBox(height: Spacing.lg),
+                _Title(Icons.notes_rounded, 'แคปชัน', key: _captionKey),
+                const SizedBox(height: 10),
+                TextField(
+                  key: const Key('publish-caption'),
+                  controller: caption,
+                  onChanged: (_) => setState(() {}),
+                  minLines: 4,
+                  maxLines: 7,
+                  decoration: const InputDecoration(
+                    hintText: 'เขียนข้อความดึงดูดผู้ชมและรายละเอียดสินค้า',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    for (final tag in const [
+                      '#รีวิวของดี',
+                      '#TikTokป้ายยา',
+                      '#ของมันต้องมี',
+                      '#โปรวันนี้',
+                    ])
+                      FilterChip(
+                        label: Text(tag),
+                        selected: tags.contains(tag),
+                        onSelected: (selected) => setState(
+                          () => selected ? tags.add(tag) : tags.remove(tag),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _PostPreview(caption: caption.text, tags: tags),
+                const SizedBox(height: Spacing.lg),
+                const _Title(Icons.verified_outlined, 'ความพร้อมก่อนเผยแพร่'),
+                const SizedBox(height: 10),
+                _ReadinessCard(report: _readiness, onJump: _jumpTo),
+                const SizedBox(height: Spacing.lg),
+                _Checklist(
+                  basket: basket,
+                  mode: mode,
+                  scheduledAt: scheduledAt,
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            _PostPreview(caption: caption.text, tags: tags),
-            const SizedBox(height: Spacing.lg),
-            const _Title(Icons.verified_outlined, 'ความพร้อมก่อนเผยแพร่'),
-            const SizedBox(height: 10),
-            _ReadinessCard(report: _readiness, onJump: _jumpTo),
-            const SizedBox(height: Spacing.lg),
-            _Checklist(basket: basket, mode: mode, scheduledAt: scheduledAt),
-          ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(Spacing.md, 8, Spacing.md, 12),
-          child: FilledButton.icon(
-            key: const Key('publish-submit'),
-            onPressed: caption.text.trim().isEmpty || submitting
-                ? null
-                : _submit,
-            icon: Icon(
-              submitting
-                  ? Icons.sync_rounded
-                  : mode == PublishMode.schedule
-                  ? Icons.event_available_rounded
-                  : Icons.rocket_launch_outlined,
-            ),
-            label: Text(
-              submitting
-                  ? 'กำลังส่งเข้าคิว…'
-                  : mode == PublishMode.schedule
-                  ? 'ยืนยัน ${_shortDate(scheduledAt)} ${_clock(scheduledAt)}'
-                  : 'ยืนยันโพสต์ทันที',
+          ),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(Spacing.md, 8, Spacing.md, 12),
+              child: _PublishCta(
+                onPressed: caption.text.trim().isEmpty || submitting
+                    ? null
+                    : _submit,
+                mode: mode,
+                submitting: submitting,
+                label: submitting
+                    ? 'กำลังส่งเข้าคิว…'
+                    : mode == PublishMode.schedule
+                    ? 'ยืนยัน ${_shortDate(scheduledAt)} ${_clock(scheduledAt)}'
+                    : 'ยืนยันโพสต์ทันที',
+              ),
             ),
           ),
         ),
-      ),
+        if (submitting)
+          Positioned.fill(
+            child: _PublishLaunchOverlay(
+              animation: _launchController,
+              scheduled: mode == PublishMode.schedule,
+            ),
+          ),
+      ],
     );
   }
 
@@ -339,8 +371,9 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
       if (proceed != true) return;
       _acknowledgedLowScore = true;
     }
+    HapticFeedback.mediumImpact();
     setState(() => submitting = true);
-    await Future<void>.delayed(const Duration(milliseconds: 650));
+    await _launchController.forward(from: 0);
     if (!mounted) return;
     final now = DateTime.now();
     widget.store?.add(
@@ -362,6 +395,7 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
       submitting = false;
       submitted = true;
     });
+    HapticFeedback.heavyImpact();
   }
 
   Future<bool?> _confirmLowReadiness() => showDialog<bool>(
@@ -396,6 +430,173 @@ class _PublishReviewPageState extends State<PublishReviewPage> {
       mediaName: widget.mediaName ?? widget.product.name,
       durationSec: widget.durationSec,
       sourceLabel: widget.sourceLabel,
+    ),
+  );
+}
+
+/// CTA ปล่อยงาน: โหมดทันทีใช้เส้นแรงส่ง ส่วนโหมดตั้งเวลาใช้หน้าปัดจับเวลา
+/// ตั้งใจไม่ใช้ visual language แบบ handshake ของปุ่มเชื่อมบัญชี
+class _PublishCta extends StatefulWidget {
+  const _PublishCta({
+    required this.onPressed,
+    required this.mode,
+    required this.submitting,
+    required this.label,
+  });
+
+  final VoidCallback? onPressed;
+  final PublishMode mode;
+  final bool submitting;
+  final String label;
+
+  @override
+  State<_PublishCta> createState() => _PublishCtaState();
+}
+
+class _PublishCtaState extends State<_PublishCta> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value || !mounted || widget.onPressed == null) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    final scheduled = widget.mode == PublishMode.schedule;
+    final accent = scheduled
+        ? Color.lerp(t.primary, t.warning, .22)!
+        : Color.lerp(t.primary, t.success, .25)!;
+    final reduced = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
+    return Listener(
+      onPointerDown: (_) => _setPressed(true),
+      onPointerUp: (_) => _setPressed(false),
+      onPointerCancel: (_) => _setPressed(false),
+      child: AnimatedScale(
+        scale: reduced || !_pressed ? 1 : .97,
+        duration: const Duration(milliseconds: 90),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 260),
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [t.primary, accent],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(Radii.md),
+            boxShadow: widget.onPressed == null || _pressed
+                ? null
+                : [
+                    BoxShadow(
+                      color: accent.withValues(alpha: .2),
+                      blurRadius: 18,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned(
+                right: 14,
+                top: 0,
+                bottom: 0,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 240),
+                  child: scheduled
+                      ? _ClockSignature(
+                          key: const ValueKey('schedule'),
+                          color: t.onPrimary,
+                        )
+                      : _LaunchSignature(
+                          key: const ValueKey('now'),
+                          color: t.onPrimary,
+                        ),
+                ),
+              ),
+              FilledButton.icon(
+                key: const Key('publish-submit'),
+                onPressed: widget.onPressed,
+                style: FilledButton.styleFrom(
+                  backgroundColor: t.primary.withValues(alpha: 0),
+                  disabledBackgroundColor: t.surfaceElevated.withValues(
+                    alpha: .82,
+                  ),
+                  foregroundColor: t.onPrimary,
+                  disabledForegroundColor: t.textSecondary,
+                  shadowColor: t.primary.withValues(alpha: 0),
+                  minimumSize: const Size.fromHeight(56),
+                ),
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: Icon(
+                    widget.submitting
+                        ? Icons.sync_rounded
+                        : scheduled
+                        ? Icons.event_available_rounded
+                        : Icons.rocket_launch_outlined,
+                    key: ValueKey('${widget.submitting}-$scheduled'),
+                  ),
+                ),
+                label: Text(widget.label),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LaunchSignature extends StatelessWidget {
+  const _LaunchSignature({super.key, required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 54,
+    child: Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        for (var i = 0; i < 3; i++)
+          Positioned(
+            right: 4.0 + (i * 9),
+            child: Container(
+              width: 16.0 - (i * 3),
+              height: 2,
+              color: color.withValues(alpha: .1 + (i * .05)),
+            ),
+          ),
+        Icon(Icons.chevron_right_rounded, color: color.withValues(alpha: .24)),
+      ],
+    ),
+  );
+}
+
+class _ClockSignature extends StatelessWidget {
+  const _ClockSignature({super.key, required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 46,
+    child: Center(
+      child: Container(
+        width: 27,
+        height: 27,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: color.withValues(alpha: .2), width: 2),
+        ),
+        child: Icon(
+          Icons.schedule_rounded,
+          size: 16,
+          color: color.withValues(alpha: .28),
+        ),
+      ),
     ),
   );
 }
@@ -482,114 +683,274 @@ class _VideoSummary extends StatelessWidget {
     required this.durationSec,
     required this.sourceLabel,
     required this.onPreview,
+    required this.arrival,
   });
   final ShowcaseProduct product;
   final String? mediaName;
   final int durationSec;
   final String sourceLabel;
   final VoidCallback onPreview;
+  final Animation<double> arrival;
+
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      key: const Key('video-preview-card'),
-      onTap: onPreview,
-      borderRadius: BorderRadius.circular(Radii.lg),
-      child: Container(
-        height: 188,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(Radii.lg),
-          border: Border.all(color: context.t.primary.withValues(alpha: .35)),
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ProductArtwork(product: product, borderRadius: Radii.lg),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x22000000), Color(0xDD00101E)],
-                  stops: [.3, 1],
-                ),
-              ),
-            ),
-            Center(
-              child: Container(
-                width: 58,
-                height: 58,
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: arrival,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const Key('video-preview-card'),
+        onTap: onPreview,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Container(
+          height: 188,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(Radii.lg),
+            border: Border.all(color: context.t.primary.withValues(alpha: .35)),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ProductArtwork(product: product, borderRadius: Radii.lg),
+              const DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: .58),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: .75),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x22000000), Color(0xDD00101E)],
+                    stops: [.3, 1],
                   ),
                 ),
-                child: const Icon(
-                  Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 36,
+              ),
+              Positioned(
+                top: 10,
+                left: 10,
+                right: 10,
+                child: _RelayHandoffStrip(
+                  animation: arrival,
+                  sourceLabel: sourceLabel,
                 ),
               ),
-            ),
-            Positioned(
-              left: 14,
-              right: 14,
-              bottom: 12,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'ตัวอย่างวิดีโอ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          mediaName ?? product.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          '$sourceLabel · ${_duration(durationSec)} · 1080P',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
+              Center(
+                child: Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: .58),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: .75),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.fullscreen_rounded, color: Colors.white),
-                ],
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 36,
+                  ),
+                ),
               ),
-            ),
-          ],
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 12,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'ตัวอย่างวิดีโอ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            mediaName ?? product.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            '$sourceLabel · ${_duration(durationSec)} · 1080P',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.fullscreen_rounded, color: Colors.white),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     ),
+    builder: (context, child) {
+      final progress = arrival.value;
+      return Opacity(
+        opacity: .35 + progress * .65,
+        child: Transform.translate(
+          offset: Offset((1 - progress) * -28, 0),
+          child: Transform.scale(
+            alignment: Alignment.centerLeft,
+            scale: .975 + progress * .025,
+            child: child,
+          ),
+        ),
+      );
+    },
   );
 
   static String _duration(int seconds) {
     final safe = seconds <= 0 ? 30 : seconds;
     return '${(safe ~/ 60).toString().padLeft(2, '0')}:${(safe % 60).toString().padLeft(2, '0')}';
   }
+}
+
+class _RelayHandoffStrip extends StatelessWidget {
+  const _RelayHandoffStrip({
+    required this.animation,
+    required this.sourceLabel,
+  });
+
+  final Animation<double> animation;
+  final String sourceLabel;
+
+  String get _source =>
+      sourceLabel.toLowerCase().contains('inbox') ? 'AI INBOX' : 'MEDIA';
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: animation,
+    builder: (context, _) {
+      final progress = animation.value;
+      final arrived = progress > .88;
+      return Container(
+        key: const Key('publish-relay-strip'),
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: context.t.surface.withValues(alpha: .84),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: context.t.primary.withValues(alpha: .45)),
+          boxShadow: [
+            BoxShadow(
+              color: context.t.primary.withValues(alpha: .13 * progress),
+              blurRadius: 12,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.move_to_inbox_rounded,
+              size: 14,
+              color: context.t.primary,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              _source,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                letterSpacing: .5,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) => Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Container(
+                      height: 2,
+                      color: context.t.primary.withValues(alpha: .18),
+                    ),
+                    Container(
+                      width: constraints.maxWidth * progress,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            context.t.primary.withValues(alpha: .3),
+                            context.t.primary,
+                          ],
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment(-1 + progress * 2, 0),
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: context.t.primary,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.t.primary.withValues(alpha: .7),
+                              blurRadius: 7,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 7),
+            AnimatedSwitcher(
+              duration: MediaQuery.of(context).disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 160),
+              child: Row(
+                key: ValueKey(arrived),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    arrived
+                        ? Icons.verified_rounded
+                        : Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: arrived
+                        ? context.t.success
+                        : context.t.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    arrived ? 'พร้อมตรวจ' : 'กำลังส่งต่อ',
+                    style: TextStyle(
+                      color: arrived
+                          ? context.t.success
+                          : context.t.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 class _ClipPreviewSheet extends StatefulWidget {
@@ -1136,10 +1497,302 @@ class _Panel extends StatelessWidget {
   );
 }
 
-class _Accepted extends StatelessWidget {
+class _PublishLaunchOverlay extends StatelessWidget {
+  const _PublishLaunchOverlay({
+    required this.animation,
+    required this.scheduled,
+  });
+
+  final Animation<double> animation;
+  final bool scheduled;
+
+  String _status(double progress) {
+    if (progress < .34) return 'กำลังตรวจความพร้อมครั้งสุดท้าย';
+    if (progress < .7) return 'กำลังส่งงานเข้าคิวคอนเทนต์';
+    return scheduled
+        ? 'ล็อกเวลาที่ตั้งไว้เรียบร้อย'
+        : 'เตรียมพร้อมเผยแพร่ทันที';
+  }
+
+  @override
+  Widget build(BuildContext context) => Material(
+    key: const Key('publish-launch-overlay'),
+    color: context.t.surface.withValues(alpha: .96),
+    child: SafeArea(
+      child: AnimatedBuilder(
+        animation: animation,
+        builder: (context, _) {
+          final progress = Curves.easeInOutCubic.transform(animation.value);
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Transform.scale(
+                    scale: .9 + progress * .1,
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: context.t.primary.withValues(alpha: .12),
+                        border: Border.all(color: context.t.primary),
+                        boxShadow: [
+                          BoxShadow(
+                            color: context.t.primary.withValues(
+                              alpha: .12 + progress * .12,
+                            ),
+                            blurRadius: 24,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        scheduled
+                            ? Icons.event_available_rounded
+                            : Icons.rocket_launch_rounded,
+                        size: 34,
+                        color: context.t.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.lg),
+                  const Text(
+                    'กำลังส่งต่อคอนเทนต์',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 6),
+                  AnimatedSwitcher(
+                    duration: MediaQuery.of(context).disableAnimations
+                        ? Duration.zero
+                        : const Duration(milliseconds: 160),
+                    child: Text(
+                      _status(progress),
+                      key: ValueKey(_status(progress)),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: progress > .7
+                            ? context.t.success
+                            : context.t.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.lg),
+                  SizedBox(
+                    width: 330,
+                    height: 70,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _LaunchPathPainter(
+                              color: context.t.primary,
+                              progress: progress,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _LaunchStage(
+                                icon: Icons.verified_outlined,
+                                label: 'ตรวจพร้อม',
+                                reached: progress >= .05,
+                              ),
+                            ),
+                            Expanded(
+                              child: _LaunchStage(
+                                icon: Icons.queue_play_next_rounded,
+                                label: 'เข้าคิว',
+                                reached: progress >= .38,
+                              ),
+                            ),
+                            Expanded(
+                              child: _LaunchStage(
+                                icon: scheduled
+                                    ? Icons.schedule_rounded
+                                    : Icons.send_rounded,
+                                label: scheduled ? 'ตั้งเวลา' : 'พร้อมส่ง',
+                                reached: progress >= .74,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.md),
+                  SizedBox(
+                    width: 260,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 4,
+                        backgroundColor: context.t.primary.withValues(
+                          alpha: .12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'โหมดสาธิต · ยังไม่ได้ส่งไป TikTok จริง',
+                    style: TextStyle(
+                      color: context.t.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
+
+class _LaunchStage extends StatelessWidget {
+  const _LaunchStage({
+    required this.icon,
+    required this.label,
+    required this.reached,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool reached;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      AnimatedContainer(
+        duration: MediaQuery.of(context).disableAnimations
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+        width: reached ? 38 : 34,
+        height: reached ? 38 : 34,
+        decoration: BoxDecoration(
+          color: reached
+              ? context.t.primary.withValues(alpha: .14)
+              : context.t.surfaceContainer,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: reached ? context.t.primary : context.t.border,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: reached ? context.t.primary : context.t.textSecondary,
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        label,
+        style: TextStyle(
+          color: reached ? context.t.textPrimary : context.t.textSecondary,
+          fontSize: 10,
+          fontWeight: reached ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+    ],
+  );
+}
+
+class _LaunchPathPainter extends CustomPainter {
+  const _LaunchPathPainter({required this.color, required this.progress});
+
+  final Color color;
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final start = Offset(size.width / 6, 19);
+    final end = Offset(size.width * 5 / 6, 19);
+    canvas.drawLine(
+      start,
+      end,
+      Paint()
+        ..color = color.withValues(alpha: .15)
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round,
+    );
+    final activeEnd = Offset(
+      start.dx + (end.dx - start.dx) * progress,
+      start.dy,
+    );
+    canvas.drawLine(
+      start,
+      activeEnd,
+      Paint()
+        ..color = color
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round,
+    );
+    if (progress < .99) {
+      canvas.drawCircle(
+        activeEnd,
+        8,
+        Paint()
+          ..color = color.withValues(alpha: .2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+      canvas.drawCircle(activeEnd, 3, Paint()..color = color);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LaunchPathPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
+}
+
+class _Accepted extends StatefulWidget {
   const _Accepted({required this.mode, required this.product});
   final PublishMode mode;
   final ShowcaseProduct product;
+
+  @override
+  State<_Accepted> createState() => _AcceptedState();
+}
+
+class _AcceptedState extends State<_Accepted>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _entrance;
+  late final Animation<double> _icon;
+  late final Animation<double> _body;
+
+  @override
+  void initState() {
+    super.initState();
+    final reduced = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+    _entrance = AnimationController(
+      vsync: this,
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 900),
+    )..forward();
+    _icon = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(0, .55, curve: Curves.easeOutBack),
+    );
+    _body = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(.25, 1, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
@@ -1149,25 +1802,62 @@ class _Accepted extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.done_all_rounded, size: 76, color: context.t.success),
-              const SizedBox(height: Spacing.lg),
-              Text(
-                mode == PublishMode.schedule
-                    ? 'ตั้งเวลาเรียบร้อย'
-                    : 'รับงานเผยแพร่แล้ว',
-                style: Theme.of(context).textTheme.headlineSmall,
+              ScaleTransition(
+                scale: _icon,
+                child: Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: context.t.success.withValues(alpha: .14),
+                    border: Border.all(color: context.t.success, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.t.success.withValues(alpha: .25),
+                        blurRadius: 28,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.done_all_rounded,
+                    size: 54,
+                    color: context.t.success,
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '${product.name}\nถูกเพิ่มในคิวคอนเทนต์แล้ว',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: context.t.textSecondary, height: 1.5),
-              ),
               const SizedBox(height: Spacing.lg),
-              FilledButton.icon(
-                onPressed: () => context.go('/content'),
-                icon: const Icon(Icons.video_library_outlined),
-                label: const Text('ติดตามสถานะคอนเทนต์'),
+              FadeTransition(
+                opacity: _body,
+                child: Column(
+                  children: [
+                    Text(
+                      widget.mode == PublishMode.schedule
+                          ? 'ตั้งเวลาเรียบร้อย'
+                          : 'รับงานเผยแพร่แล้ว',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${widget.product.name}\nถูกเพิ่มในคิวคอนเทนต์แล้ว',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: context.t.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: Spacing.xl),
+                    _DemoPublishTimeline(
+                      scheduled: widget.mode == PublishMode.schedule,
+                    ),
+                    const SizedBox(height: Spacing.xl),
+                    FilledButton.icon(
+                      onPressed: () => context.go('/content'),
+                      icon: const Icon(Icons.video_library_outlined),
+                      label: const Text('ติดตามสถานะคอนเทนต์'),
+                    ),
+                  ],
+                ),
               ),
               TextButton(
                 onPressed: () => context.go('/'),
@@ -1179,4 +1869,56 @@ class _Accepted extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _DemoPublishTimeline extends StatelessWidget {
+  const _DemoPublishTimeline({required this.scheduled});
+
+  final bool scheduled;
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = [
+      ('สร้างคอนเทนต์แล้ว', Icons.check_rounded),
+      ('เข้าคิวเผยแพร่แล้ว', Icons.hourglass_top_rounded),
+      (
+        scheduled ? 'รอถึงเวลาที่ตั้งไว้' : 'พร้อมส่งไปยัง TikTok',
+        Icons.rocket_launch_outlined,
+      ),
+    ];
+    return Column(
+      children: [
+        for (var i = 0; i < steps.length; i++) ...[
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: context.t.success.withValues(alpha: .14),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: context.t.success),
+                ),
+                child: Icon(steps[i].$2, size: 16, color: context.t.success),
+              ),
+              const SizedBox(width: Spacing.md),
+              Text(steps[i].$1),
+            ],
+          ),
+          if (i != steps.length - 1)
+            Padding(
+              padding: const EdgeInsets.only(left: 14),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  width: 2,
+                  height: 22,
+                  color: context.t.success.withValues(alpha: .4),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
 }

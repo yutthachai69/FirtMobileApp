@@ -25,6 +25,11 @@ void main() {
     );
 
     expect(find.byKey(const Key('video-preview-card')), findsOneWidget);
+    expect(find.byKey(const Key('publish-relay-strip')), findsOneWidget);
+    expect(find.text('AI INBOX'), findsOneWidget);
+    expect(find.text('กำลังส่งต่อ'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 800));
+    expect(find.text('พร้อมตรวจ'), findsOneWidget);
     await tester.tap(find.byKey(const Key('open-video-preview')));
     await tester.pumpAndSettle();
 
@@ -65,6 +70,9 @@ void main() {
     await tester.tap(find.byKey(const Key('publish-submit')));
     await tester.pump();
     expect(find.text('กำลังส่งเข้าคิว…'), findsOneWidget);
+    expect(find.byKey(const Key('publish-launch-overlay')), findsOneWidget);
+    expect(find.text('กำลังส่งต่อคอนเทนต์'), findsOneWidget);
+    expect(find.text('โหมดสาธิต · ยังไม่ได้ส่งไป TikTok จริง'), findsOneWidget);
     await tester.pumpAndSettle();
 
     expect(find.text('รับงานเผยแพร่แล้ว'), findsOneWidget);

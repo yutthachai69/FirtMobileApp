@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
@@ -14,12 +15,27 @@ import 'content_artwork.dart';
 List<PublishJob> get demoContentJobs => ContentStore.seedJobs();
 
 class ContentDetailPage extends StatefulWidget {
-  const ContentDetailPage({super.key, required this.job, this.store});
+  const ContentDetailPage({
+    super.key,
+    required this.job,
+    this.store,
+    this.onRetryRemote,
+    this.onCancelRemote,
+    this.onRescheduleRemote,
+    this.onRestoreRemote,
+  });
   final PublishJob job;
 
   /// เมื่อส่งเข้ามา การเปลี่ยนเวลา/ยกเลิก/นำกลับ จะเขียนกลับไปที่แหล่งข้อมูลกลาง
   /// รายการในแท็บคอนเทนต์จึงอัปเดตตาม
   final ContentStore? store;
+
+  /// Live routes provide these callbacks; demo routes keep instant local UX.
+  final Future<void> Function(String jobId)? onRetryRemote;
+  final Future<void> Function(String jobId)? onCancelRemote;
+  final Future<void> Function(String jobId, DateTime scheduledAt)?
+  onRescheduleRemote;
+  final Future<void> Function(String jobId)? onRestoreRemote;
 
   @override
   State<ContentDetailPage> createState() => _ContentDetailPageState();
@@ -38,9 +54,17 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       appBar: AppBar(
         title: const Text('รายละเอียดคอนเทนต์'),
         actions: [
-          IconButton(
+          IconButton.outlined(
             tooltip: 'ตัวเลือกเพิ่มเติม',
-            onPressed: () => _actions(context),
+            style: IconButton.styleFrom(
+              foregroundColor: color,
+              side: BorderSide(color: color.withValues(alpha: .32)),
+              backgroundColor: color.withValues(alpha: .07),
+            ),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              _actions(context);
+            },
             icon: const Icon(Icons.more_horiz_rounded),
           ),
         ],
@@ -107,43 +131,62 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
   }
 
   Widget _primaryAction(BuildContext context) => switch (status) {
-    JobStatus.draft => FilledButton.icon(
+    JobStatus.draft => _DetailActionButton(
+      kind: _DetailActionKind.draft,
       onPressed: () => context.go('/create'),
       icon: const Icon(Icons.edit_outlined),
-      label: const Text('ทำฉบับร่างต่อ'),
+      label: 'ทำฉบับร่างต่อ',
     ),
-    JobStatus.failed => FilledButton.icon(
+    JobStatus.failed => _DetailActionButton(
       key: const Key('retry-job'),
+      kind: _DetailActionKind.retry,
       onPressed: _retry,
       icon: const Icon(Icons.refresh_rounded),
-      label: const Text('แก้แล้วลองส่งใหม่'),
+      label: 'แก้แล้วลองส่งใหม่',
     ),
-    JobStatus.scheduled => OutlinedButton.icon(
+    JobStatus.scheduled => _DetailActionButton(
       key: const Key('reschedule-job'),
+      kind: _DetailActionKind.schedule,
       onPressed: _reschedule,
       icon: const Icon(Icons.edit_calendar_outlined),
-      label: const Text('เปลี่ยนเวลาเผยแพร่'),
+      label: 'เปลี่ยนเวลาเผยแพร่',
     ),
-    JobStatus.cancelled => FilledButton.icon(
+    JobStatus.cancelled => _DetailActionButton(
+      kind: _DetailActionKind.restore,
       onPressed: _restoreSchedule,
       icon: const Icon(Icons.restore_rounded),
-      label: const Text('นำกลับมาตั้งเวลา'),
+      label: 'นำกลับมาตั้งเวลา',
     ),
-    JobStatus.published => FilledButton.icon(
+    JobStatus.published => _DetailActionButton(
+      kind: _DetailActionKind.open,
       onPressed: () => _toast('เปิดลิงก์ผลงานตัวอย่างแล้ว'),
       icon: const Icon(Icons.open_in_new_rounded),
-      label: const Text('เปิดผลงานบน TikTok'),
+      label: 'เปิดผลงานบน TikTok',
     ),
-    _ => OutlinedButton.icon(
+    _ => _DetailActionButton(
+      kind: _DetailActionKind.notify,
       onPressed: () => context.go('/content'),
       icon: const Icon(Icons.notifications_active_outlined),
-      label: const Text('แจ้งเตือนเมื่อเสร็จ'),
+      label: 'แจ้งเตือนเมื่อเสร็จ',
     ),
   };
 
-  void _retry() {
+  Future<void> _retry() async {
+    final previous = _current;
     widget.store?.retry(widget.job.id);
     setState(() => status = JobStatus.queued);
+    final remote = widget.onRetryRemote;
+    if (remote != null) {
+      try {
+        await remote(widget.job.id);
+      } catch (_) {
+        if (!mounted) return;
+        widget.store?.replace(previous);
+        setState(() => status = previous.status);
+        _toast('ลองใหม่ไม่สำเร็จ ข้อมูลถูกคืนกลับแล้ว');
+        return;
+      }
+    }
     _toast('เพิ่มงานกลับเข้าคิวแล้ว คุณออกจากหน้านี้ได้');
   }
 
@@ -167,11 +210,27 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       time.hour,
       time.minute,
     );
+    final previous = _current;
     widget.store?.reschedule(widget.job.id, next);
     setState(() {
       scheduledAt = next;
       status = JobStatus.scheduled;
     });
+    final remote = widget.onRescheduleRemote;
+    if (remote != null) {
+      try {
+        await remote(widget.job.id, next);
+      } catch (_) {
+        if (!mounted) return;
+        widget.store?.replace(previous);
+        setState(() {
+          scheduledAt = previous.scheduledAt;
+          status = previous.status;
+        });
+        _toast('เปลี่ยนเวลาไม่สำเร็จ ข้อมูลถูกคืนกลับแล้ว');
+        return;
+      }
+    }
     _toast('เปลี่ยนเวลาเผยแพร่แล้ว');
   }
 
@@ -198,15 +257,41 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       ),
     );
     if (confirmed == true && mounted) {
+      final previous = _current;
       widget.store?.cancel(widget.job.id);
       setState(() => status = JobStatus.cancelled);
+      final remote = widget.onCancelRemote;
+      if (remote != null) {
+        try {
+          await remote(widget.job.id);
+        } catch (_) {
+          if (!mounted) return;
+          widget.store?.replace(previous);
+          setState(() => status = previous.status);
+          _toast('ยกเลิกไม่สำเร็จ ข้อมูลถูกคืนกลับแล้ว');
+          return;
+        }
+      }
       _toast('ยกเลิกการเผยแพร่แล้ว');
     }
   }
 
-  void _restoreSchedule() {
+  Future<void> _restoreSchedule() async {
+    final previous = _current;
     widget.store?.restore(widget.job.id);
     setState(() => status = JobStatus.scheduled);
+    final remote = widget.onRestoreRemote;
+    if (remote != null) {
+      try {
+        await remote(widget.job.id);
+      } catch (_) {
+        if (!mounted) return;
+        widget.store?.replace(previous);
+        setState(() => status = previous.status);
+        _toast('นำงานกลับมาไม่สำเร็จ ข้อมูลถูกคืนกลับแล้ว');
+        return;
+      }
+    }
     _toast('นำงานกลับมาตั้งเวลาแล้ว');
   }
 
@@ -283,66 +368,397 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
 
   void _actions(BuildContext context) => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
-    builder: (_) => SafeArea(
+    builder: (sheetContext) => SafeArea(
+      top: false,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.md,
+          2,
+          Spacing.md,
+          Spacing.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _statusColor(context, status).withValues(alpha: .1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.tune_rounded,
+                    color: _statusColor(context, status),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'จัดการคอนเทนต์',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        status.label,
+                        style: TextStyle(
+                          color: _statusColor(context, status),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Spacing.md),
             if (status == JobStatus.scheduled) ...[
-              ListTile(
-                leading: const Icon(Icons.edit_calendar_outlined),
-                title: const Text('เปลี่ยนเวลาเผยแพร่'),
+              _DetailMenuTile(
+                icon: Icons.edit_calendar_outlined,
+                label: 'เปลี่ยนเวลาเผยแพร่',
+                color: context.t.warning,
+                prominent: true,
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext);
                   _reschedule();
                 },
               ),
-              ListTile(
+              const SizedBox(height: 8),
+              _DetailMenuTile(
                 key: const Key('cancel-scheduled-job'),
-                leading: Icon(
-                  Icons.event_busy_outlined,
-                  color: context.t.warning,
-                ),
-                title: Text(
-                  'ยกเลิกการเผยแพร่',
-                  style: TextStyle(color: context.t.warning),
-                ),
+                icon: Icons.event_busy_outlined,
+                label: 'ยกเลิกการเผยแพร่',
+                color: context.t.warning,
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext);
                   _confirmCancel();
                 },
               ),
+              const SizedBox(height: 8),
             ],
-            ListTile(
+            _DetailMenuTile(
               key: const Key('remix-job'),
-              leading: const Icon(Icons.auto_awesome_motion_outlined),
-              title: const Text('ทำเวอร์ชันใหม่'),
-              subtitle: const Text('รีมิกซ์จากคลิปนี้'),
+              icon: Icons.auto_awesome_motion_outlined,
+              label: 'ทำเวอร์ชันใหม่',
+              detail: 'รีมิกซ์จากคลิปนี้',
+              color: context.t.creative,
+              prominent: status != JobStatus.scheduled,
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 _openRemix(context);
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.download_outlined),
-              title: const Text('บันทึกวิดีโอ'),
+            const SizedBox(height: 8),
+            _DetailMenuTile(
+              icon: Icons.download_outlined,
+              label: 'บันทึกวิดีโอ',
+              color: context.t.primary,
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 _toast('เตรียมไฟล์ตัวอย่างแล้ว');
               },
             ),
-            ListTile(
-              leading: Icon(Icons.delete_outline, color: context.t.error),
-              title: Text(
-                'ลบออกจากรายการ',
-                style: TextStyle(color: context.t.error),
-              ),
-              onTap: () => Navigator.pop(context),
+            const SizedBox(height: 8),
+            _DetailMenuTile(
+              icon: Icons.delete_outline,
+              label: 'ลบออกจากรายการ',
+              color: context.t.error,
+              onTap: () => Navigator.pop(sheetContext),
             ),
           ],
         ),
+      ),
+    ),
+  );
+}
+
+class _DetailMenuTile extends StatelessWidget {
+  const _DetailMenuTile({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.detail,
+    this.prominent = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? detail;
+  final Color color;
+  final VoidCallback onTap;
+  final bool prominent;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: prominent ? color.withValues(alpha: .1) : context.t.surfaceContainer,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Radii.md),
+      side: BorderSide(
+        color: prominent ? color.withValues(alpha: .34) : context.t.border,
+      ),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: .1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 19),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: color == context.t.error ? color : null,
+                      fontWeight: prominent ? FontWeight.w700 : FontWeight.w600,
+                    ),
+                  ),
+                  if (detail != null)
+                    Text(
+                      detail!,
+                      style: TextStyle(
+                        color: context.t.textSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_rounded, color: color, size: 18),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+enum _DetailActionKind { draft, retry, schedule, restore, open, notify }
+
+/// ปุ่มหลักของหน้ารายละเอียดใช้ interaction mechanics ร่วมกัน แต่ visual
+/// signature เปลี่ยนตาม lifecycle เพื่อไม่ให้ “ลองใหม่” ดูเหมือน “เผยแพร่สำเร็จ”
+class _DetailActionButton extends StatefulWidget {
+  const _DetailActionButton({
+    super.key,
+    required this.kind,
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+  });
+
+  final _DetailActionKind kind;
+  final VoidCallback onPressed;
+  final Widget icon;
+  final String label;
+
+  @override
+  State<_DetailActionButton> createState() => _DetailActionButtonState();
+}
+
+class _DetailActionButtonState extends State<_DetailActionButton> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value || !mounted) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    final accent = switch (widget.kind) {
+      _DetailActionKind.draft => t.creative,
+      _DetailActionKind.retry => t.error,
+      _DetailActionKind.schedule => t.warning,
+      _DetailActionKind.restore => t.primary,
+      _DetailActionKind.open => t.success,
+      _DetailActionKind.notify => t.primary,
+    };
+    final solid =
+        widget.kind == _DetailActionKind.draft ||
+        widget.kind == _DetailActionKind.open;
+    final darkFill =
+        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark;
+    final solidForeground = darkFill
+        ? (Theme.of(context).brightness == Brightness.dark
+              ? t.textPrimary
+              : t.surfaceContainer)
+        : (Theme.of(context).brightness == Brightness.dark
+              ? t.surface
+              : t.textPrimary);
+    final foreground = solid ? solidForeground : accent;
+    final reduced = MediaQuery.of(context).disableAnimations;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, reveal, child) => Transform.translate(
+        offset: Offset(0, 5 * (1 - reveal)),
+        child: Opacity(opacity: reveal, child: child),
+      ),
+      child: Listener(
+        onPointerDown: (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: AnimatedScale(
+          scale: _pressed ? .97 : 1,
+          duration: const Duration(milliseconds: 90),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 56,
+            decoration: BoxDecoration(
+              color: solid ? null : accent.withValues(alpha: .1),
+              gradient: solid
+                  ? LinearGradient(
+                      colors: [accent, Color.lerp(accent, t.primary, .2)!],
+                    )
+                  : null,
+              borderRadius: BorderRadius.circular(Radii.md),
+              border: Border.all(
+                color: solid
+                    ? accent.withValues(alpha: 0)
+                    : accent.withValues(alpha: .42),
+              ),
+              boxShadow: _pressed
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: accent.withValues(alpha: solid ? .18 : .08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned(
+                  right: 11,
+                  top: 0,
+                  bottom: 0,
+                  child: _DetailActionSignature(
+                    kind: widget.kind,
+                    color: foreground,
+                    pressed: _pressed,
+                  ),
+                ),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: accent.withValues(alpha: 0),
+                    foregroundColor: foreground,
+                    shadowColor: accent.withValues(alpha: 0),
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    widget.onPressed();
+                  },
+                  icon: AnimatedRotation(
+                    turns:
+                        _pressed &&
+                            (widget.kind == _DetailActionKind.retry ||
+                                widget.kind == _DetailActionKind.restore)
+                        ? -.12
+                        : 0,
+                    duration: const Duration(milliseconds: 140),
+                    child: widget.icon,
+                  ),
+                  label: Text(widget.label),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailActionSignature extends StatelessWidget {
+  const _DetailActionSignature({
+    required this.kind,
+    required this.color,
+    required this.pressed,
+  });
+
+  final _DetailActionKind kind;
+  final Color color;
+  final bool pressed;
+
+  IconData get _icon => switch (kind) {
+    _DetailActionKind.draft => Icons.edit_note_rounded,
+    _DetailActionKind.retry => Icons.replay_circle_filled_outlined,
+    _DetailActionKind.schedule => Icons.schedule_rounded,
+    _DetailActionKind.restore => Icons.history_rounded,
+    _DetailActionKind.open => Icons.arrow_forward_rounded,
+    _DetailActionKind.notify => Icons.graphic_eq_rounded,
+  };
+
+  @override
+  Widget build(BuildContext context) => AnimatedScale(
+    scale: pressed ? .86 : 1,
+    duration: const Duration(milliseconds: 130),
+    child: SizedBox(
+      width: 54,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (kind == _DetailActionKind.open)
+            for (var i = 0; i < 3; i++)
+              Positioned(
+                right: 7.0 + (i * 8),
+                child: Container(
+                  width: 13.0 - (i * 2),
+                  height: 2,
+                  color: color.withValues(alpha: .09 + (i * .05)),
+                ),
+              )
+          else if (kind == _DetailActionKind.schedule)
+            Container(
+              width: 31,
+              height: 31,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: color.withValues(alpha: .18),
+                  width: 2,
+                ),
+              ),
+            )
+          else if (kind == _DetailActionKind.retry)
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: color.withValues(alpha: .17)),
+              ),
+            ),
+          Icon(_icon, size: 24, color: color.withValues(alpha: .24)),
+        ],
       ),
     ),
   );
