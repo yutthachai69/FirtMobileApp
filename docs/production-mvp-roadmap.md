@@ -2,7 +2,7 @@
 
 Updated: 16 September 2026
 
-Current progress: **approximately 70% production-MVP ready** — Milestone 0 and
+Current progress: **approximately 72% production-MVP ready** — Milestone 0 and
 the shared live-data slice of Milestone 1 are complete, and the first parts of
 Milestone 2 are already wired. The backend job snapshot now feeds the shared
 app repository.
@@ -47,6 +47,10 @@ states. Lifecycle mutations on the detail route use that same repository.
 Upload-to-publish now carries a stable `PublishIntent` id through the media
 and content checkpoints. The Composer reuses it as `Idempotency-Key` on retry,
 while a fresh upload starts a new intent.
+
+Accepted publish jobs now poll their server status from the Composer and stop
+on `published`, `failed`, or `cancelled`. A status-read failure preserves the
+accepted state so the dashboard can continue recovery on its next refresh.
 
 ## แผนดำเนินงานถัดไปจาก 65% ไป Internal Beta
 

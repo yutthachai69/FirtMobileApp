@@ -39,6 +39,10 @@ class FakeComposerApi implements ComposerApi {
     lastOptions = platformOptions;
     return const PublishJob(id: 'job_1', status: 'scheduled');
   }
+
+  @override
+  Future<PublishJob> get(String access, String jobId) async =>
+      const PublishJob(id: 'job_1', status: 'scheduled');
 }
 
 CreatorInfo _info({
@@ -47,17 +51,16 @@ CreatorInfo _info({
     PrivacyLevel.selfOnly,
   ],
   bool commentDisabled = false,
-}) =>
-    CreatorInfo(
-      username: 'tester',
-      nickname: 'Tester',
-      avatarUrl: '',
-      privacyLevelOptions: options,
-      commentDisabled: commentDisabled,
-      duetDisabled: false,
-      stitchDisabled: false,
-      maxVideoDurationSec: 600,
-    );
+}) => CreatorInfo(
+  username: 'tester',
+  nickname: 'Tester',
+  avatarUrl: '',
+  privacyLevelOptions: options,
+  commentDisabled: commentDisabled,
+  duetDisabled: false,
+  stitchDisabled: false,
+  maxVideoDurationSec: 600,
+);
 
 Future<ComposerController> _openPage(
   WidgetTester tester, {
@@ -115,8 +118,9 @@ void main() {
     expect(find.text('เลือก'), findsOneWidget);
   });
 
-  testWidgets('R2 — ตัวเลือกมีเท่าที่ creator_info ส่งมาเท่านั้น',
-      (tester) async {
+  testWidgets('R2 — ตัวเลือกมีเท่าที่ creator_info ส่งมาเท่านั้น', (
+    tester,
+  ) async {
     // บัญชีส่วนตัวไม่มี "ทุกคน" ให้เลือก
     await _openPage(
       tester,
@@ -179,8 +183,11 @@ void main() {
         .dy;
     final buttonY = tester.getTopLeft(find.byType(FilledButton)).dy;
 
-    expect(consentY, lessThan(buttonY),
-        reason: 'TikTok กำหนดให้ข้อความยินยอมอยู่เหนือปุ่ม');
+    expect(
+      consentY,
+      lessThan(buttonY),
+      reason: 'TikTok กำหนดให้ข้อความยินยอมอยู่เหนือปุ่ม',
+    );
   });
 
   testWidgets('R8 — วิดีโอจาก AI ต้องขึ้นข้อความแจ้ง', (tester) async {

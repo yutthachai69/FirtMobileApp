@@ -64,6 +64,7 @@ class _TikTokComposerPageState extends State<TikTokComposerPage> {
       if (_accepted) {
         return _PublishAcceptedView(
           job: c.result,
+          onPoll: c.pollUntilTerminal,
           onDone: () => Navigator.of(context).pop(true),
         );
       }
@@ -764,10 +765,15 @@ class _PostSignature extends StatelessWidget {
 }
 
 class _PublishAcceptedView extends StatefulWidget {
-  const _PublishAcceptedView({required this.job, required this.onDone});
+  const _PublishAcceptedView({
+    required this.job,
+    required this.onDone,
+    this.onPoll,
+  });
 
   final PublishJob? job;
   final VoidCallback onDone;
+  final Future<PublishJob?> Function()? onPoll;
 
   @override
   State<_PublishAcceptedView> createState() => _PublishAcceptedViewState();
@@ -787,6 +793,14 @@ class _PublishAcceptedViewState extends State<_PublishAcceptedView>
     parent: _entrance,
     curve: const Interval(.25, 1, curve: Curves.easeOutCubic),
   );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.job != null && widget.onPoll != null) {
+      Future<void>.microtask(() => widget.onPoll!());
+    }
+  }
 
   @override
   void dispose() {

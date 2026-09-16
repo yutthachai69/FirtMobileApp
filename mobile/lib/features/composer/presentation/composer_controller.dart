@@ -128,6 +128,45 @@ class ComposerController extends ChangeNotifier {
     }
   }
 
+  /// Refreshes the accepted job until it reaches a terminal state.
+  ///
+  /// A transient status read failure leaves the accepted result intact; the
+  /// next dashboard refresh can resume tracking without showing a false error.
+  Future<PublishJob?> pollUntilTerminal({
+    int maxAttempts = 15,
+    Duration interval = const Duration(seconds: 2),
+  }) async {
+    final initial = result;
+    if (initial == null) return null;
+    var current = initial;
+    if (!_isPollable(current.status)) return current;
+
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      if (_isTerminal(current.status)) return current;
+      if (attempt > 0) await Future<void>.delayed(interval);
+      try {
+        current = await auth.authorized(
+          (access) => api.get(access, current.id),
+        );
+        result = current;
+        notifyListeners();
+      } catch (_) {
+        return current;
+      }
+    }
+    return current;
+  }
+
+  static bool _isTerminal(String status) => switch (status) {
+    'published' || 'failed' || 'cancelled' => true,
+    _ => false,
+  };
+
+  static bool _isPollable(String status) => switch (status) {
+    'queued' || 'uploading' || 'processing' => true,
+    _ => false,
+  };
+
   static String _newKey() {
     final r = Random.secure();
     final bytes = List<int>.generate(16, (_) => r.nextInt(256));

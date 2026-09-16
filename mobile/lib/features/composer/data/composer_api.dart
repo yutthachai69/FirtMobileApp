@@ -14,6 +14,8 @@ abstract interface class ComposerApi {
     required String idempotencyKey,
     DateTime? scheduledAt,
   });
+
+  Future<PublishJob> get(String access, String jobId);
 }
 
 class PublishJob {
@@ -22,9 +24,9 @@ class PublishJob {
   final String status;
 
   factory PublishJob.fromJson(Map<String, dynamic> j) => PublishJob(
-        id: j['id'] as String,
-        status: j['status'] as String? ?? 'scheduled',
-      );
+    id: j['id'] as String,
+    status: j['status'] as String? ?? 'scheduled',
+  );
 }
 
 class HttpComposerApi implements ComposerApi {
@@ -66,5 +68,15 @@ class HttpComposerApi implements ComposerApi {
       },
     );
     return PublishJob.fromJson(data['job'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<PublishJob> get(String access, String jobId) async {
+    final data = await client.get('/v1/publish-jobs/$jobId', access: access);
+    final raw = data['job'];
+    if (raw is! Map<String, dynamic>) {
+      throw StateError('Job response did not include a publish job');
+    }
+    return PublishJob.fromJson(raw);
   }
 }
