@@ -33,6 +33,7 @@ class Opportunity {
   static List<Opportunity> scan({
     required List<ShowcaseProduct> products,
     required ContentStore store,
+    bool includeOrderMetrics = true,
   }) {
     final out = <Opportunity>[];
     for (final p in products) {
@@ -40,12 +41,14 @@ class Opportunity {
       final published = jobs
           .where((j) => j.status == JobStatus.published)
           .toList();
-      final revenue = published.fold<int>(
-        0,
-        (sum, j) => sum + mockOrdersFor(j) * p.commissionBaht,
-      );
+      final revenue = includeOrderMetrics
+          ? published.fold<int>(
+              0,
+              (sum, j) => sum + mockOrdersFor(j) * p.commissionBaht,
+            )
+          : 0;
 
-      if (published.isNotEmpty && revenue >= 400) {
+      if (includeOrderMetrics && published.isNotEmpty && revenue >= 400) {
         out.add(
           Opportunity(
             kind: OpportunityKind.proven,
@@ -76,7 +79,8 @@ class Opportunity {
             kind: OpportunityKind.highCommission,
             product: p,
             headline: 'คอมมิชชันสูง',
-            detail: 'ได้ ฿${p.commissionBaht}/ชิ้น (${p.commissionPercent}%) '
+            detail:
+                'ได้ ฿${p.commissionBaht}/ชิ้น (${p.commissionPercent}%) '
                 'ยังไม่มีคลิป',
           ),
         );

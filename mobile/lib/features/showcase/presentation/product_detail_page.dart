@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../core/config/app_config.dart';
 import '../../home/domain/content_store.dart';
 import '../../home/domain/home_data.dart';
 import '../domain/showcase_product.dart';
@@ -434,10 +435,13 @@ class _ProductContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final jobs = store?.byProduct(product.id) ?? const [];
     final posted = jobs.where((j) => j.status == JobStatus.published).toList();
-    final revenue = posted.fold<int>(
-      0,
-      (sum, j) => sum + mockOrdersFor(j) * product.commissionBaht,
-    );
+    final showMetrics = AppConfig.isDemo;
+    final revenue = showMetrics
+        ? posted.fold<int>(
+            0,
+            (sum, j) => sum + mockOrdersFor(j) * product.commissionBaht,
+          )
+        : 0;
 
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
@@ -476,7 +480,7 @@ class _ProductContent extends StatelessWidget {
               style: TextStyle(color: context.t.textSecondary, fontSize: 12),
             ),
           ] else ...[
-            if (posted.isNotEmpty) ...[
+            if (showMetrics && posted.isNotEmpty) ...[
               const SizedBox(height: Spacing.sm),
               Text(
                 'รายได้รวมโดยประมาณ ฿$revenue',
@@ -494,7 +498,7 @@ class _ProductContent extends StatelessWidget {
             for (final job in jobs)
               _ClipRow(
                 job: job,
-                orders: mockOrdersFor(job),
+                orders: showMetrics ? mockOrdersFor(job) : 0,
                 onTap: () => context.go('/content/${job.id}'),
               ),
           ],

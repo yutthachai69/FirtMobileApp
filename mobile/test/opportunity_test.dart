@@ -91,4 +91,13 @@ void main() {
     expect(find.text('create'), findsOneWidget);
     expect(createdFor, isNotEmpty);
   });
+
+  test('live scan does not infer proven revenue from mock orders', () {
+    final list = Opportunity.scan(
+      products: ShowcaseProduct.mock,
+      store: ContentStore(),
+      includeOrderMetrics: false,
+    );
+    expect(list.where((o) => o.kind == OpportunityKind.proven), isEmpty);
+  });
 }

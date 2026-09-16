@@ -254,6 +254,7 @@ class _ShowcasePageState extends State<ShowcasePage> {
                 opportunities: Opportunity.scan(
                   products: catalog,
                   store: widget.store!,
+                  includeOrderMetrics: AppConfig.isDemo,
                 ),
                 onOpen: (p) => context.go('/showcase/${p.id}'),
                 onCreate: (p) => context.go('/create', extra: p),
