@@ -52,6 +52,10 @@ Accepted publish jobs now poll their server status from the Composer and stop
 on `published`, `failed`, or `cancelled`. A status-read failure preserves the
 accepted state so the dashboard can continue recovery on its next refresh.
 
+Live publish jobs now carry the selected catalog `product_id` in their platform
+options, allowing the shared job snapshot and Product Detail view to keep
+product-to-content links after a real publish.
+
 ## แผนดำเนินงานถัดไปจาก 65% ไป Internal Beta
 
 ลำดับนี้ให้ความสำคัญกับเส้นทางหลักที่ผู้ใช้ต้องทำได้จริงก่อนเพิ่มฟีเจอร์ใหม่:

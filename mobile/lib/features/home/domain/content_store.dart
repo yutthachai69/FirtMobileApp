@@ -62,6 +62,9 @@ class ContentStore extends ChangeNotifier {
       a.status == b.status &&
       a.scheduledAt == b.scheduledAt &&
       a.caption == b.caption &&
+      a.productId == b.productId &&
+      a.sourceLabel == b.sourceLabel &&
+      a.remixOfId == b.remixOfId &&
       a.errorMessage == b.errorMessage &&
       a.permalink == b.permalink;
 

@@ -493,6 +493,7 @@ class _RelayAppState extends ConsumerState<RelayApp> {
               api: HttpComposerApi(ref.read(apiClientProvider)),
               contentId: args.contentId,
               connectionId: args.connectionId,
+              productId: args.productId,
               videoDurationSec: args.videoDurationSec,
               isAigc: args.isAigc,
               idempotencyKey: args.idempotencyKey,

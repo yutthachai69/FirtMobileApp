@@ -66,6 +66,7 @@ Future<ComposerController> _openPage(
   WidgetTester tester, {
   required FakeComposerApi api,
   bool isAigc = false,
+  String? productId,
 }) async {
   // จอจำลองสูงพอให้ ListView สร้าง widget ครบทั้งหน้า
   // ไม่งั้นปุ่มโพสต์กับข้อความยินยอมจะอยู่นอกจอและหาไม่เจอ
@@ -82,6 +83,7 @@ Future<ComposerController> _openPage(
     api: api,
     contentId: 'content_1',
     connectionId: 'conn_1',
+    productId: productId,
     videoDurationSec: 30,
     isAigc: isAigc,
   );
@@ -218,5 +220,20 @@ void main() {
     expect(api.lastOptions?['privacy_level'], 'PUBLIC_TO_EVERYONE');
     // UI ถามเป็น allow แต่ TikTok รับเป็น disable
     expect(api.lastOptions?['disable_comment'], isTrue);
+  });
+
+  testWidgets('publish carries the selected product id for live content links', (
+    tester,
+  ) async {
+    final api = FakeComposerApi(info: _info());
+    final controller = await _openPage(
+      tester,
+      api: api,
+      productId: 'product-42',
+    );
+    controller.setPrivacy(PrivacyLevel.publicToEveryone);
+    await controller.submit();
+
+    expect(api.lastOptions?['product_id'], 'product-42');
   });
 }

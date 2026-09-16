@@ -179,6 +179,7 @@ class _CreatePageState extends State<CreatePage> {
         extra: ComposerArgs(
           contentId: c.contentId!,
           connectionId: connection.id,
+          productId: product.id,
           videoDurationSec: _trimmedDuration,
           isAigc: false,
           idempotencyKey: c.intent.id,
@@ -339,6 +340,7 @@ class ComposerArgs {
     required this.connectionId,
     required this.videoDurationSec,
     required this.isAigc,
+    this.productId,
     this.idempotencyKey,
   });
 
@@ -346,6 +348,7 @@ class ComposerArgs {
   final String connectionId;
   final int videoDurationSec;
   final bool isAigc;
+  final String? productId;
   final String? idempotencyKey;
 }
 

@@ -156,4 +156,16 @@ void main() {
       }
     });
   });
+  test('publish job reads product_id from platform options', () {
+    final job = PublishJob.fromJson({
+      'id': 'job-1',
+      'content_id': 'content-1',
+      'platform': 'tiktok',
+      'status': 'published',
+      'scheduled_at': '2026-09-05T12:00:00Z',
+      'platform_options': {'product_id': 'product-42'},
+    });
+
+    expect(job.productId, 'product-42');
+  });
 }

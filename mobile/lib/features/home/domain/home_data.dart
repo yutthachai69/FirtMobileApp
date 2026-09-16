@@ -130,7 +130,8 @@ class PublishJob {
     errorMessage: json['last_error'] is Map
         ? ((json['last_error'] as Map)['message'] as String? ?? '')
         : '',
-    productId: json['product_id'] as String?,
+    productId: json['product_id'] as String? ??
+        ((json['platform_options'] as Map?)?['product_id'] as String?),
     remixOfId: json['remix_of_id'] as String?,
   );
 }

@@ -14,6 +14,7 @@ class ComposerController extends ChangeNotifier {
     required this.api,
     required this.contentId,
     required this.connectionId,
+    this.productId,
     required int videoDurationSec,
     required bool isAigc,
     String? idempotencyKey,
@@ -27,6 +28,7 @@ class ComposerController extends ChangeNotifier {
   final ComposerApi api;
   final String contentId;
   final String connectionId;
+  final String? productId;
 
   ComposerState _state;
   ComposerState get state => _state;
@@ -106,12 +108,17 @@ class ComposerController extends ChangeNotifier {
     error = null;
 
     try {
+      final options = <String, dynamic>{
+        ..._state.toPlatformOptions(),
+        if (productId != null && productId!.trim().isNotEmpty)
+          'product_id': productId,
+      };
       result = await auth.authorized(
         (access) => api.schedule(
           access,
           contentId: contentId,
           connectionId: connectionId,
-          platformOptions: _state.toPlatformOptions(),
+          platformOptions: options,
           idempotencyKey: _idempotencyKey,
           scheduledAt: _state.scheduledAt,
         ),
