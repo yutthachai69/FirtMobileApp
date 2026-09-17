@@ -6,7 +6,7 @@ import 'package:relaycontent/features/auth/data/auth_api.dart';
 import 'support/fakes.dart';
 
 void main() {
-  test('real backend: register, login, restart, me and logout', () async {
+  test('real backend: auth and live data endpoints', () async {
     final dio = Dio(
       BaseOptions(
         baseUrl: const String.fromEnvironment(
@@ -33,6 +33,31 @@ void main() {
     await auth.authenticate(email, password);
     expect(auth.phase, SessionPhase.signedIn, reason: auth.error);
     expect(auth.account?.id, registered.account.id);
+
+    final accessHeaders = {
+      'Authorization': 'Bearer ${registered.tokens.access}',
+    };
+    for (final path in const [
+      '/v1/products',
+      '/v1/contents',
+      '/v1/publish-jobs',
+    ]) {
+      final response = await dio.get<Map<String, dynamic>>(
+        path,
+        queryParameters: const {'limit': 50},
+        options: Options(headers: accessHeaders),
+      );
+      expect(response.statusCode, 200, reason: path);
+      final data = response.data ?? const <String, dynamic>{};
+      final key = switch (path) {
+        '/v1/products' => 'products',
+        '/v1/contents' => 'contents',
+        '/v1/publish-jobs' => 'jobs',
+        _ => path.split('/').last,
+      };
+      expect(data[key], isA<List>(), reason: 'Expected $key list');
+    }
+
     final restarted = AuthController(api, store);
     await restarted.restore();
     expect(restarted.phase, SessionPhase.signedIn, reason: restarted.error);

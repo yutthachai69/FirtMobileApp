@@ -56,6 +56,9 @@ Live publish jobs now carry the selected catalog `product_id` in their platform
 options, allowing the shared job snapshot and Product Detail view to keep
 product-to-content links after a real publish.
 
+The opt-in mobile live-backend smoke test now covers authenticated catalog,
+content, and publish-job list endpoints in addition to the auth lifecycle.
+
 ## แผนดำเนินงานถัดไปจาก 65% ไป Internal Beta
 
 ลำดับนี้ให้ความสำคัญกับเส้นทางหลักที่ผู้ใช้ต้องทำได้จริงก่อนเพิ่มฟีเจอร์ใหม่:
