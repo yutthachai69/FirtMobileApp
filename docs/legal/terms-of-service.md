@@ -1,3 +1,9 @@
+---
+layout: default
+title: RelayContent Terms of Service
+permalink: /legal/terms-of-service.html
+---
+
 # RelayContent Terms of Service
 
 **Effective date:** 17 September 2026

@@ -1,3 +1,9 @@
+---
+layout: default
+title: RelayContent Privacy Policy
+permalink: /legal/privacy-policy.html
+---
+
 # RelayContent Privacy Policy
 
 **Effective date:** 17 September 2026
